@@ -28,6 +28,44 @@ static CGFloat const kTabMinHeight = 250;
 
 static NSInteger const kInvalidTag = -99;
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+static void TRPrepareLegacyInspectorContentView(NSView* view, NSRect* viewRect, BOOL resizesVertically)
+{
+    view.translatesAutoresizingMaskIntoConstraints = YES;
+    view.autoresizingMask = resizesVertically ? NSViewWidthSizable | NSViewHeightSizable : NSViewWidthSizable;
+    viewRect->origin = NSZeroPoint;
+}
+
+static void TRClampLegacyResizableInspectorFrame(NSRect* windowRect, NSRect* viewRect)
+{
+    CGFloat const heightDeficit = kTabMinHeight - NSHeight(*viewRect);
+    if (heightDeficit <= 0.0)
+    {
+        return;
+    }
+
+    viewRect->size.height = kTabMinHeight;
+    windowRect->origin.y -= heightDeficit;
+    windowRect->size.height += heightDeficit;
+}
+#endif
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+@interface InfoActivityViewController (LegacyInspectorLayout)
+
+- (CGFloat)legacyContentHeightForWidth:(CGFloat)width;
+- (void)updateLegacyLayoutForWidth:(CGFloat)width height:(CGFloat)height;
+
+@end
+
+@interface InfoOptionsViewController (LegacyInspectorLayout)
+
+- (CGFloat)legacyContentHeightForWidth:(CGFloat)width;
+- (void)updateLegacyLayoutForWidth:(CGFloat)width height:(CGFloat)height;
+
+@end
+#endif
+
 typedef NS_ENUM(NSUInteger, TabTag) {
     TabTagGeneral = 0,
     TabTagActivity = 1,
@@ -42,6 +80,15 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 @property(nonatomic, copy) NSArray* fTorrents;
 
 @property(nonatomic) CGFloat fMinWindowWidth;
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+@property(nonatomic) BOOL fUpdatingWindowLayout;
+@property(nonatomic) CGFloat fLegacyCurrentContentHeight;
+@property(nonatomic) CGFloat fLegacyInspectorChromeHeight;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+@property(nonatomic) CGFloat fLegacyLiveResizeContentHeight;
+#endif
+@property(nonatomic) NSMutableDictionary* fLegacyMinimumWidths;
+#endif
 
 @property(nonatomic) NSViewController<InfoViewController>* fViewController;
 @property(nonatomic) NSInteger fCurrentTabTag;
@@ -58,6 +105,18 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 @property(nonatomic) IBOutlet NSTextField* fNameField;
 @property(nonatomic) IBOutlet NSTextField* fBasicInfoField;
 @property(nonatomic) IBOutlet NSTextField* fNoneSelectedField;
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+- (CGFloat)legacyFixedContentHeightForWindowWidth:(CGFloat)width;
+- (BOOL)isLegacyFixedHeightPane;
+- (CGFloat)legacyMinimumWidthForView:(NSView*)view;
+- (void)reflowLegacyStackViewIfNeeded;
+- (void)syncLegacyFixedContentViewWithWindowWidth:(CGFloat)width;
+- (void)syncLegacyInspectorContentViewFrameWithWindow;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+- (void)resizeLegacyFixedHeightPaneAfterLiveResize;
+#endif
+#endif
 
 @end
 
@@ -81,6 +140,9 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 
     CGFloat const windowHeight = NSHeight(window.frame);
     self.fMinWindowWidth = window.minSize.width;
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    self.fLegacyMinimumWidths = [NSMutableDictionary dictionary];
+#endif
 
     [window setFrameAutosaveName:@"InspectorWindow"];
     [window setFrameUsingName:@"InspectorWindow"];
@@ -173,6 +235,42 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 
 - (void)windowWasResized:(NSNotification*)notification
 {
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    if (self.fUpdatingWindowLayout)
+    {
+        return;
+    }
+
+    self.fUpdatingWindowLayout = YES;
+    @try
+    {
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+        if ([self isLegacyFixedHeightPane])
+        {
+            [self syncLegacyFixedContentViewWithWindowWidth:NSWidth(self.window.frame)];
+        }
+        else
+#endif
+        {
+            [self syncLegacyInspectorContentViewFrameWithWindow];
+        }
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+        if (self.fViewController == self.fOptionsViewController)
+        {
+            [self.fOptionsViewController checkWindowSize];
+        }
+        else if (self.fViewController == self.fActivityViewController)
+        {
+            [self.fActivityViewController checkWindowSize];
+        }
+#endif
+    }
+    @finally
+    {
+        self.fUpdatingWindowLayout = NO;
+    }
+#else
     if (self.fViewController == self.fOptionsViewController)
     {
         [self.fOptionsViewController checkWindowSize];
@@ -181,7 +279,180 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     {
         [self.fActivityViewController checkWindowSize];
     }
+#endif
 }
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+- (CGFloat)legacyFixedContentHeightForWindowWidth:(CGFloat)width
+{
+    if (self.fViewController == self.fActivityViewController)
+    {
+        return [self.fActivityViewController legacyContentHeightForWidth:width];
+    }
+    else if (self.fViewController == self.fOptionsViewController)
+    {
+        return [self.fOptionsViewController legacyContentHeightForWidth:width];
+    }
+
+    return 0.0;
+}
+
+- (BOOL)isLegacyFixedHeightPane
+{
+    return self.fViewController == self.fActivityViewController || self.fViewController == self.fOptionsViewController;
+}
+
+- (CGFloat)legacyMinimumWidthForView:(NSView*)view
+{
+    NSNumber* key = [NSNumber numberWithInteger:self.fCurrentTabTag];
+    NSNumber* minimumWidth = [self.fLegacyMinimumWidths objectForKey:key];
+    if (minimumWidth == nil)
+    {
+        CGFloat width = NSWidth(view.frame);
+        if (width <= 0.0)
+        {
+            width = self.fMinWindowWidth;
+        }
+
+        minimumWidth = [NSNumber numberWithDouble:width];
+        [self.fLegacyMinimumWidths setObject:minimumWidth forKey:key];
+    }
+
+    return MAX(self.fMinWindowWidth, minimumWidth.doubleValue);
+}
+
+- (void)reflowLegacyStackViewIfNeeded
+{
+    if (self.fViewController == self.fActivityViewController)
+    {
+        [self.fActivityViewController checkLayout];
+    }
+    else if (self.fViewController == self.fOptionsViewController)
+    {
+        [self.fOptionsViewController checkLayout];
+    }
+}
+
+- (void)syncLegacyFixedContentViewWithWindowWidth:(CGFloat)width
+{
+    CGFloat const preferredContentHeight = [self legacyFixedContentHeightForWindowWidth:width];
+    if (preferredContentHeight <= 0.0)
+    {
+        return;
+    }
+
+    CGFloat contentHeight = preferredContentHeight;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+    if (self.fLegacyLiveResizeContentHeight > 0.0 && [self.fViewController.view inLiveResize])
+    {
+        contentHeight = self.fLegacyLiveResizeContentHeight;
+    }
+#endif
+
+    if (self.fViewController == self.fActivityViewController)
+    {
+        [self.fActivityViewController updateLegacyLayoutForWidth:width height:contentHeight];
+    }
+    else if (self.fViewController == self.fOptionsViewController)
+    {
+        [self.fOptionsViewController updateLegacyLayoutForWidth:width height:contentHeight];
+    }
+
+    CGFloat const windowHeight = contentHeight + self.fLegacyInspectorChromeHeight;
+    self.window.minSize = NSMakeSize(self.window.minSize.width, windowHeight);
+    self.window.maxSize = NSMakeSize(FLT_MAX, windowHeight);
+    self.fLegacyCurrentContentHeight = contentHeight;
+}
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+- (void)windowWillStartLiveResize:(NSNotification*)notification
+{
+    if (notification.object == self.window && [self isLegacyFixedHeightPane])
+    {
+        self.fLegacyLiveResizeContentHeight = NSHeight(self.fViewController.view.frame);
+    }
+}
+
+- (void)resizeLegacyFixedHeightPaneAfterLiveResize
+{
+    CGFloat const contentHeight = [self legacyFixedContentHeightForWindowWidth:NSWidth(self.window.frame)];
+    if (contentHeight <= 0.0)
+    {
+        return;
+    }
+
+    CGFloat const windowHeight = contentHeight + self.fLegacyInspectorChromeHeight;
+    NSRect windowRect = self.window.frame;
+    if (ABS(NSHeight(windowRect) - windowHeight) > 0.5)
+    {
+        windowRect.origin.y = NSMaxY(windowRect) - windowHeight;
+        windowRect.size.height = windowHeight;
+        [self.window setFrame:windowRect display:YES animate:NO];
+    }
+
+    [self syncLegacyFixedContentViewWithWindowWidth:NSWidth(windowRect)];
+}
+
+- (void)windowDidEndLiveResize:(NSNotification*)notification
+{
+    if (notification.object == self.window && [self isLegacyFixedHeightPane])
+    {
+        self.fLegacyLiveResizeContentHeight = 0.0;
+        [self resizeLegacyFixedHeightPaneAfterLiveResize];
+    }
+}
+#endif
+
+- (void)syncLegacyInspectorContentViewFrameWithWindow
+{
+    if (!self.fViewController || !self.fViewController.view.superview || !self.window)
+    {
+        return;
+    }
+
+    BOOL const viewCanResizeVertically = [self.fViewController respondsToSelector:@selector(saveViewSize)];
+    NSView* view = self.fViewController.view;
+    NSRect viewRect = view.frame;
+    TRPrepareLegacyInspectorContentView(view, &viewRect, viewCanResizeVertically);
+    viewRect.size.width = NSWidth(self.window.frame);
+
+    if (viewCanResizeVertically && self.fLegacyInspectorChromeHeight > 0.0)
+    {
+        viewRect.size.height = MAX(kTabMinHeight, NSHeight(self.window.frame) - self.fLegacyInspectorChromeHeight);
+    }
+
+    view.frame = viewRect;
+    [self reflowLegacyStackViewIfNeeded];
+    self.fLegacyCurrentContentHeight = NSHeight(viewRect);
+}
+
+- (NSSize)windowWillResize:(NSWindow*)sender toSize:(NSSize)frameSize
+{
+    if (!self.fUpdatingWindowLayout && sender == self.window && self.fViewController &&
+        ![self.fViewController respondsToSelector:@selector(saveViewSize)])
+    {
+        CGFloat contentHeight = self.fLegacyCurrentContentHeight;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+        CGFloat const fixedContentHeight = [self legacyFixedContentHeightForWindowWidth:frameSize.width];
+        if (fixedContentHeight > 0.0)
+        {
+            contentHeight = self.fLegacyLiveResizeContentHeight > 0.0 ? self.fLegacyLiveResizeContentHeight : fixedContentHeight;
+        }
+#endif
+        CGFloat const windowHeight = contentHeight + self.fLegacyInspectorChromeHeight;
+        frameSize.height = windowHeight > 0.0 ? windowHeight : NSHeight(sender.frame);
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+        if (fixedContentHeight > 0.0)
+        {
+            sender.minSize = NSMakeSize(sender.minSize.width, frameSize.height);
+            sender.maxSize = NSMakeSize(FLT_MAX, frameSize.height);
+        }
+#endif
+    }
+
+    return frameSize;
+}
+#endif
 
 - (void)setInfoForTorrents:(NSArray*)torrents
 {
@@ -238,6 +509,10 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     CGFloat oldHeight = 0;
     if (oldTabTag != kInvalidTag)
     {
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+        NSView* oldView = self.fViewController.view;
+        [self syncLegacyInspectorContentViewFrameWithWindow];
+#endif
         if ([self.fViewController respondsToSelector:@selector(saveViewSize)])
         {
             [self.fViewController saveViewSize];
@@ -248,8 +523,12 @@ typedef NS_ENUM(NSUInteger, TabTag) {
             [self.fViewController clearView];
         }
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+        oldHeight = self.fLegacyCurrentContentHeight > 0.0 ? self.fLegacyCurrentContentHeight : NSHeight(oldView.frame);
+#else
         NSView* oldView = self.fViewController.view;
         oldHeight = NSHeight(oldView.frame);
+#endif
 
         //remove old view
         [oldView removeFromSuperview];
@@ -336,7 +615,18 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     [self.fViewController updateInfo];
 
     NSRect windowRect = window.frame, viewRect = view.frame;
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    CGFloat minWindowWidth = [self legacyMinimumWidthForView:view];
+#else
     CGFloat minWindowWidth = MAX(self.fMinWindowWidth, view.fittingSize.width);
+#endif
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    BOOL const viewCanResizeVertically = [self.fViewController respondsToSelector:@selector(saveViewSize)];
+
+    TRPrepareLegacyInspectorContentView(view, &viewRect, viewCanResizeVertically);
+    viewRect.size.width = NSWidth(windowRect);
+    view.frame = viewRect;
+#endif
 
     //special case for Activity and Options views
     if (self.fViewController == self.fActivityViewController)
@@ -356,12 +646,34 @@ typedef NS_ENUM(NSUInteger, TabTag) {
         viewRect = [self.fOptionsViewController viewRect];
     }
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    CGFloat viewHeightDifference = NSHeight(viewRect) - oldHeight;
+#else
     CGFloat const viewHeightDifference = NSHeight(viewRect) - oldHeight;
+#endif
     windowRect.origin.y -= viewHeightDifference;
     windowRect.size.height += viewHeightDifference;
     windowRect.size.width = MAX(NSWidth(windowRect), minWindowWidth);
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    if (self.fViewController == self.fActivityViewController || self.fViewController == self.fOptionsViewController)
+    {
+        viewRect.size.width = NSWidth(windowRect);
+        view.frame = viewRect;
+        [self reflowLegacyStackViewIfNeeded];
+        viewRect = self.fViewController == self.fActivityViewController ? [self.fActivityViewController viewRect] :
+                                                                          [self.fOptionsViewController viewRect];
+        CGFloat const revisedViewHeightDifference = NSHeight(viewRect) - oldHeight;
+        windowRect.origin.y -= revisedViewHeightDifference - viewHeightDifference;
+        windowRect.size.height += revisedViewHeightDifference - viewHeightDifference;
+    }
+#endif
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    if (viewCanResizeVertically) //a little bit hacky, but avoids requiring an extra method
+#else
     if ([self.fViewController respondsToSelector:@selector(saveViewSize)]) //a little bit hacky, but avoids requiring an extra method
+#endif
     {
         if (window.screen)
         {
@@ -376,18 +688,48 @@ typedef NS_ENUM(NSUInteger, TabTag) {
             }
         }
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+        TRClampLegacyResizableInspectorFrame(&windowRect, &viewRect);
+#endif
         window.minSize = NSMakeSize(minWindowWidth, NSHeight(windowRect) - NSHeight(viewRect) + kTabMinHeight);
         window.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
     }
     else
     {
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+        window.minSize = NSMakeSize(minWindowWidth, NSHeight(windowRect));
+        window.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
+#else
         window.minSize = NSMakeSize(minWindowWidth, NSHeight(windowRect));
         window.maxSize = NSMakeSize(FLT_MAX, NSHeight(windowRect));
+#endif
     }
 
     viewRect.size.width = NSWidth(windowRect);
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    TRPrepareLegacyInspectorContentView(view, &viewRect, viewCanResizeVertically);
+    self.fLegacyInspectorChromeHeight = NSHeight(windowRect) - NSHeight(viewRect);
+    self.fLegacyCurrentContentHeight = NSHeight(viewRect);
+#endif
     view.frame = viewRect;
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    BOOL const wasUpdatingWindowLayout = self.fUpdatingWindowLayout;
+    self.fUpdatingWindowLayout = YES;
+    @try
+    {
+        [window setFrame:windowRect display:YES animate:NO];
+        view.frame = viewRect;
+        view.hidden = NO;
+        [window.contentView addSubview:view];
+        [self syncLegacyInspectorContentViewFrameWithWindow];
+        [window display];
+    }
+    @finally
+    {
+        self.fUpdatingWindowLayout = wasUpdatingWindowLayout;
+    }
+#else
     if (self.fViewController == self.fActivityViewController)
     {
         self.fActivityViewController.view.hidden = YES;
@@ -418,6 +760,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     [window.contentView
         addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[tabs]-0-[view]-0-|" options:0 metrics:nil
                                                                  views:@{ @"tabs" : self.fTabs, @"view" : view }]];
+#endif
 
     if ((self.fCurrentTabTag == TabTagFile || oldTabTag == TabTagFile) &&
         ([QLPreviewPanel sharedPreviewPanelExists] && [[QLPreviewPanel sharedPreviewPanel] isVisible]))
