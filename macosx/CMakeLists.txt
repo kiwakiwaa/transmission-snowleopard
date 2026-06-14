@@ -221,6 +221,7 @@ target_sources(${TR_NAME}-mac
         LegacyFormatters.mm
         LegacyPowerActivity.h
         LegacyPowerActivity.mm
+        LegacyPopover.h
         LegacySegmentedControl.h
         LegacySegmentedControl.mm
         LegacySheets.h
@@ -315,6 +316,7 @@ target_sources(${TR_NAME}-mac
 if(TR_MACOS_SNOW_LEOPARD_COMPAT)
     target_sources(${TR_NAME}-mac
         PRIVATE
+            LegacyPopover.mm
             PLWeakCompatibilityStubs.h
             PLWeakCompatibilityStubs.mm)
 endif()

@@ -395,6 +395,9 @@ static void removeKeRangerRansomware()
 @property(nonatomic) URLSheetWindowController* fUrlSheetController;
 
 @property(nonatomic) BOOL fGlobalPopoverShown;
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+@property(nonatomic) NSPopover* fLegacyGlobalPopover;
+#endif
 @property(nonatomic) NSView* fPositioningView;
 @property(nonatomic) BOOL fSoundPlaying;
 
@@ -3697,6 +3700,10 @@ static void removeKeRangerRansomware()
 {
     if (self.fGlobalPopoverShown)
     {
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+        [self.fLegacyGlobalPopover close];
+        self.fLegacyGlobalPopover = nil;
+#endif
         return;
     }
 
@@ -3722,6 +3729,10 @@ static void removeKeRangerRansomware()
     {
         [popover showRelativeToRect:senderView.bounds ofView:senderView preferredEdge:NSMaxYEdge];
     }
+
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+    self.fLegacyGlobalPopover = popover;
+#endif
 }
 
 //don't show multiple popovers when clicking the gear button repeatedly
@@ -3734,6 +3745,9 @@ static void removeKeRangerRansomware()
 {
     [self.fPositioningView removeFromSuperview];
     self.fGlobalPopoverShown = NO;
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+    self.fLegacyGlobalPopover = nil;
+#endif
 }
 
 - (void)menuNeedsUpdate:(NSMenu*)menu

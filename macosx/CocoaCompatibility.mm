@@ -351,18 +351,6 @@ static void TRLegacyReloadTableWhenReady(NSTableView* tableView)
 
 @end
 
-@implementation NSPopover
-
-@synthesize behavior;
-@synthesize contentViewController;
-@synthesize delegate;
-
-- (void)showRelativeToRect:(NSRect)positioningRect ofView:(NSView*)positioningView preferredEdge:(NSRectEdge)preferredEdge
-{
-}
-
-@end
-
 @implementation NSSharingService
 
 @synthesize title;

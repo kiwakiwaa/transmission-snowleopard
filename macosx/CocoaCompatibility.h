@@ -135,23 +135,10 @@ static inline uint32_t arc4random_uniform(uint32_t upper_bound)
 @class NSSharingServicePicker;
 @class NSSharingContentScope;
 
-@protocol NSPopoverDelegate
-@end
-
 @protocol NSSharingServiceDelegate
 @end
 
 @protocol NSSharingServicePickerDelegate
-@end
-
-typedef NSInteger NSPopoverBehavior;
-static NSPopoverBehavior const NSPopoverBehaviorTransient = 0;
-
-@interface NSPopover : NSObject
-@property(nonatomic) NSPopoverBehavior behavior;
-@property(nonatomic, retain) NSViewController* contentViewController;
-@property(nonatomic, assign) id<NSPopoverDelegate> delegate;
-- (void)showRelativeToRect:(NSRect)positioningRect ofView:(NSView*)positioningView preferredEdge:(NSRectEdge)preferredEdge;
 @end
 
 @interface NSSharingService : NSObject
@@ -170,6 +157,8 @@ static NSPopoverBehavior const NSPopoverBehaviorTransient = 0;
 
 @interface NSSharingContentScope : NSObject
 @end
+
+#import "LegacyPopover.h"
 
 typedef NSUInteger NSRegularExpressionOptions;
 typedef NSUInteger NSMatchingOptions;
