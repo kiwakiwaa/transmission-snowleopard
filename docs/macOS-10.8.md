@@ -15,6 +15,8 @@ cmake --build --preset macos-10.8
 
 The preset uses `cmake/MacOSLegacyToolchain.cmake` with a 10.8 deployment target and SDK.
 
+Set `TR_RAISE_FILE_DESCRIPTOR_LIMIT=ON` to raise the app's startup file descriptor soft limit to 1024.
+
 Override nonstandard paths with:
 
 - `CMAKE_OSX_SYSROOT`: path to `MacOSX10.8.sdk`

@@ -8,12 +8,16 @@
 #import <AppKit/AppKit.h>
 #endif
 
+#import "FileDescriptorLimit.h"
+
 #include <libtransmission/transmission.h>
 
 #include <libtransmission/utils.h>
 
 int main(int argc, char** argv)
 {
+    TRRaiseFileDescriptorLimit();
+
     tr_lib_init();
 
     tr_locale_set_global("");

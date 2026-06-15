@@ -168,6 +168,8 @@ target_sources(${TR_NAME}-mac
         FileListNode.mm
         FileCheckCellView.h
         FileCheckCellView.mm
+        FileDescriptorLimit.h
+        FileDescriptorLimit.mm
         FileNameCellView.h
         FileNameCellView.mm
         FileOutlineController.h
@@ -324,6 +326,7 @@ endif()
 target_compile_definitions(${TR_NAME}-mac
     PRIVATE
         TR_ENABLE_SPARKLE=$<BOOL:${TR_ENABLE_SPARKLE}>
+        TR_RAISE_FILE_DESCRIPTOR_LIMIT=$<BOOL:${TR_RAISE_FILE_DESCRIPTOR_LIMIT}>
         TR_MACOS_SNOW_LEOPARD_COMPAT=$<BOOL:${TR_MACOS_SNOW_LEOPARD_COMPAT}>)
 
 if(TR_ENABLE_SPARKLE)
