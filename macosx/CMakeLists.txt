@@ -4,7 +4,7 @@ if(CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS TR_MACOS_LEGACY_SUPPORT_MINIMUM)
 endif()
 
 set(TR_MACOS_USE_SOURCE_IMAGE_ASSETS OFF)
-if(TR_MACOS_SNOW_LEOPARD_COMPAT)
+if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
     set(TR_MACOS_USE_SOURCE_IMAGE_ASSETS ON)
 endif()
 
@@ -36,7 +36,7 @@ set(TR_OBJC_WEAK_REF __weak)
 set(TR_MACOS_OBJC_ARC_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:-fobjc-arc>")
 set(TR_MACOS_OBJC_WEAK_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:-fobjc-weak>")
 set(TR_MACOS_ARCLITE_LINK_OPTIONS)
-if(TR_MACOS_SNOW_LEOPARD_COMPAT)
+if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
     set(TR_MACOS_OBJC_WEAK_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:SHELL:-Xclang -fobjc-runtime-has-weak>")
 
     if(NOT TR_MACOS_ARCLITE_LIBRARY OR NOT EXISTS "${TR_MACOS_ARCLITE_LIBRARY}")
@@ -97,7 +97,7 @@ add_link_options(
     $<$<LINK_LANGUAGE:C,CXX>:-dead_strip>
     ${TR_MACOS_ARCLITE_LINK_OPTIONS})
 
-if(CMAKE_OSX_DEPLOYMENT_TARGET VERSION_GREATER_EQUAL 12.0)
+if(NOT TR_MACOS_DEPLOYMENT_BEFORE_12_0)
     add_subdirectory(QuickLookExtension)
 endif()
 add_subdirectory(QuickLookPlugin)
@@ -106,8 +106,20 @@ add_subdirectory(VDKQueue)
 add_executable(${TR_NAME}-mac MACOSX_BUNDLE)
 
 set(TR_ENABLE_SPARKLE ON)
-if(CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.9)
+if(TR_MACOS_DEPLOYMENT_BEFORE_10_9)
     set(TR_ENABLE_SPARKLE OFF)
+endif()
+
+set(TR_MACOS_XIB_COMPAT_10_6 OFF)
+set(TR_MACOS_XIB_COMPAT_10_8 OFF)
+set(TR_MACOS_USES_COMPAT_STACK_XIBS OFF)
+if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
+    set(TR_MACOS_XIB_COMPAT_10_6 ON)
+elseif(TR_MACOS_DEPLOYMENT_BEFORE_10_9)
+    set(TR_MACOS_XIB_COMPAT_10_8 ON)
+endif()
+if(TR_MACOS_XIB_COMPAT_10_6 OR TR_MACOS_XIB_COMPAT_10_8)
+    set(TR_MACOS_USES_COMPAT_STACK_XIBS ON)
 endif()
 
 set(TR_SPARKLE_INFO_PLIST_KEYS "")
@@ -315,7 +327,7 @@ target_sources(${TR_NAME}-mac
         WebSeedTableView.h
         WebSeedTableView.mm)
 
-if(TR_MACOS_SNOW_LEOPARD_COMPAT)
+if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
     target_sources(${TR_NAME}-mac
         PRIVATE
             LegacyPopover.mm
@@ -326,8 +338,7 @@ endif()
 target_compile_definitions(${TR_NAME}-mac
     PRIVATE
         TR_ENABLE_SPARKLE=$<BOOL:${TR_ENABLE_SPARKLE}>
-        TR_RAISE_FILE_DESCRIPTOR_LIMIT=$<BOOL:${TR_RAISE_FILE_DESCRIPTOR_LIMIT}>
-        TR_MACOS_SNOW_LEOPARD_COMPAT=$<BOOL:${TR_MACOS_SNOW_LEOPARD_COMPAT}>)
+        TR_RAISE_FILE_DESCRIPTOR_LIMIT=$<BOOL:${TR_RAISE_FILE_DESCRIPTOR_LIMIT}>)
 
 if(TR_ENABLE_SPARKLE)
     target_sources(${TR_NAME}-mac
@@ -335,7 +346,7 @@ if(TR_ENABLE_SPARKLE)
             SparkleProxy.mm)
 endif()
 
-if(TR_MACOS_MOUNTAIN_LION_COMPAT)
+if(TR_MACOS_TARGET_BEFORE_11_0)
     target_compile_options(${TR_NAME}-mac PRIVATE
         -include ${CMAKE_CURRENT_SOURCE_DIR}/CocoaCompatibility.h
         -Wno-nullability-completeness)
@@ -352,7 +363,7 @@ set(XIB_FILES
     MessageWindow.xib
     StatusBar.xib
     URLSheetWindow.xib)
-if(NOT (TR_MACOS_MOUNTAIN_LION_COMPAT AND CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.9))
+if(NOT TR_MACOS_USES_COMPAT_STACK_XIBS)
     list(APPEND XIB_FILES
         FilterBar.xib
         StatsWindow.xib)
@@ -438,7 +449,7 @@ set(COMPILED_IMAGE_ASSETS
     "${CMAKE_CURRENT_BINARY_DIR}/${APPICON_NAME}.icns")
 
 set(TR_LEGACY_IMAGE_ASSET_COMMANDS)
-if(TR_MACOS_LEGACY_COMPAT)
+if(TR_MACOS_TARGET_BEFORE_11_0)
     foreach(IMG IN LISTS IMAGESETS)
         list(APPEND COMPILED_IMAGE_ASSETS
             "${CMAKE_CURRENT_BINARY_DIR}/${IMG}.png"
@@ -540,7 +551,7 @@ set(BASE_XIB_FILES
     MainMenu.xib
     PrefsWindow.xib)
 set(BASE_XIB_SOURCE_FILES ${BASE_XIB_FILES})
-if(TR_MACOS_MOUNTAIN_LION_COMPAT AND CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.9)
+if(TR_MACOS_USES_COMPAT_STACK_XIBS)
     list(REMOVE_ITEM BASE_XIB_SOURCE_FILES
         InfoActivityView.xib
         InfoOptionsView.xib
@@ -586,13 +597,13 @@ target_sources(${TR_NAME}-mac
     PRIVATE
         ${RESOURCES})
 
-if(TR_MACOS_SNOW_LEOPARD_COMPAT)
-    set(TR_MACOS_SNOW_LEOPARD_XIB_FILES
+if(TR_MACOS_XIB_COMPAT_10_6)
+    set(TR_MACOS_XIB_COMPAT_10_6_FILES
         ${XIB_FILES}
         FilterBar.xib
         StatsWindow.xib)
 
-    foreach(XIB_FILE IN LISTS TR_MACOS_SNOW_LEOPARD_XIB_FILES)
+    foreach(XIB_FILE IN LISTS TR_MACOS_XIB_COMPAT_10_6_FILES)
         get_filename_component(XIB_NAME_WLE "${XIB_FILE}" NAME_WLE)
 
         tr_wrap_xib(${TR_NAME}-mac
@@ -626,7 +637,7 @@ else()
         ${BASE_XIB_SOURCE_FILES})
 endif()
 
-if(TR_MACOS_MOUNTAIN_LION_COMPAT AND CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.9 AND NOT TR_MACOS_SNOW_LEOPARD_COMPAT)
+if(TR_MACOS_XIB_COMPAT_10_8)
     tr_wrap_xib(${TR_NAME}-mac
         MountainLionXibs/FilterBar.xib
         "${CMAKE_CURRENT_BINARY_DIR}/FilterBar.nib"
@@ -669,7 +680,7 @@ target_link_libraries(${TR_NAME}-mac
         "-framework Quartz"
         "-framework Security")
 
-if(CMAKE_OSX_DEPLOYMENT_TARGET VERSION_GREATER_EQUAL 11.0)
+if(NOT TR_MACOS_TARGET_BEFORE_11_0)
     target_link_libraries(${TR_NAME}-mac PRIVATE "-weak_framework UniformTypeIdentifiers")
 endif()
 
@@ -684,7 +695,7 @@ if(USERNOTIFICATIONS_FRAMEWORK)
     target_link_libraries(${TR_NAME}-mac PRIVATE "-weak_framework UserNotifications")
 endif()
 
-if(NOT CMAKE_GENERATOR STREQUAL Xcode AND NOT TR_MACOS_SNOW_LEOPARD_COMPAT)
+if(NOT CMAKE_GENERATOR STREQUAL Xcode AND NOT TR_MACOS_DEPLOYMENT_BEFORE_10_7)
     set(TR_MACOS_CODESIGN_COMMAND ${CODESIGN_EXECUTABLE})
     if(CODESIGN_ALLOCATE_EXECUTABLE)
         set(TR_MACOS_CODESIGN_COMMAND
