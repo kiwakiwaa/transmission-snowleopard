@@ -181,15 +181,14 @@ typedef struct PieceInfo
         int const row = index / across;
         int const col = index % across;
 
-        cellBounds[index] = [NSValue valueWithRect:NSMakeRect(
-                                                       col * (cellWidth + kBetweenPadding) + kBetweenPadding + extraBorder,
-                                                       fullWidth - (row + 1) * (cellWidth + kBetweenPadding) - extraBorder,
-                                                       cellWidth,
-                                                       cellWidth)];
+        [cellBounds addObject:[NSValue valueWithRect:NSMakeRect(
+                                                        col * (cellWidth + kBetweenPadding) + kBetweenPadding + extraBorder,
+                                                        fullWidth - (row + 1) * (cellWidth + kBetweenPadding) - extraBorder,
+                                                        cellWidth,
+                                                        cellWidth)]];
 
-        cellColors[index] = showAvailability ?
-            [self availabilityColor:oldInfo.available[index] newVal:info.available[index] noBlink:first] :
-            [self completenessColor:oldInfo.complete[index] newVal:info.complete[index] noBlink:first];
+        [cellColors addObject:showAvailability ? [self availabilityColor:oldInfo.available[index] newVal:info.available[index] noBlink:first] :
+                                                 [self completenessColor:oldInfo.complete[index] newVal:info.complete[index] noBlink:first]];
     }
 
     // build an image with the cells
@@ -201,12 +200,24 @@ typedef struct PieceInfo
             {
                 cFillRects[i] = [(NSValue*)[cellBounds objectAtIndex:i] rectValue];
             }
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+            NSColor* __unsafe_unretained cFillColors[kMaxCells];
+#else
             NSColor* cFillColors[kMaxCells];
+#endif
             for (int i = 0; i < numCells; ++i)
             {
                 cFillColors[i] = cellColors[i];
             }
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+            for (int i = 0; i < numCells; ++i)
+            {
+                [cFillColors[i] setFill];
+                NSRectFill(cFillRects[i]);
+            }
+#else
             NSRectFillListWithColors(cFillRects, cFillColors, numCells);
+#endif
             return YES;
         }];
         self.needsDisplay = YES;
