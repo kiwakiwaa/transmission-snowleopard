@@ -113,6 +113,28 @@ typedef NS_ENUM(NSUInteger, ToolbarGroupTag) { //
     ToolbarGroupTagResume = 1
 };
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+// Mountain Lion uses the old NSButtonCell drawing path for selected template-image tinting.
+// Apple documents NSButton.bezelStyle as ignored when the button is not bordered:
+// https://developer.apple.com/documentation/appkit/nsbutton/bezelstyle-swift.property
+// Setting bordered=NO hides the bottom-bar frame, but also bypasses the 10.8 selected-content tint.
+// Keep the button bordered and suppress only the bezel hook that Apple documents as border drawing:
+// https://developer.apple.com/documentation/appkit/nsbuttoncell/drawbezel(withframe:in:)
+// TODO: check if needed for 10.7
+@interface MountainLionSpeedLimitButtonCell : NSButtonCell
+@end
+
+@implementation MountainLionSpeedLimitButtonCell
+
+- (void)drawBezelWithFrame:(NSRect)frame inView:(NSView*)controlView
+{
+    (void)frame;
+    (void)controlView;
+}
+
+@end
+#endif
+
 typedef NSString* SortType NS_TYPED_EXTENSIBLE_ENUM;
 
 static SortType const SortTypeDate = @"Date";
@@ -382,6 +404,10 @@ static void removeKeRangerRansomware()
 
 @property(nonatomic) NSMutableArray* fAutoImportedNames;
 @property(nonatomic) NSTimer* fAutoImportTimer;
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+- (void)updateMountainLionSpeedLimitButton;
+#endif
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
 @property(nonatomic) NSURLSession* fSession;
@@ -753,6 +779,25 @@ static void removeKeRangerRansomware()
     self.fSpeedLimitButton.toolTip = NSLocalizedString(
         @"Speed Limit overrides the total bandwidth limits with its own limits.",
         "Main window -> 2nd bottom left button (turtle) tooltip");
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    [self.fSpeedLimitButton unbind:NSValueBinding];
+    NSImage* speedLimitImage = self.fSpeedLimitButton.image.copy;
+    [speedLimitImage setTemplate:YES];
+
+    // Mountain Lion's decoded XIB cell does not keep the selected template-image tint.
+    MountainLionSpeedLimitButtonCell* speedLimitCell = [[MountainLionSpeedLimitButtonCell alloc] initImageCell:speedLimitImage];
+    [speedLimitCell setButtonType:NSPushOnPushOffButton];
+    speedLimitCell.bezelStyle = NSTexturedSquareBezelStyle;
+    speedLimitCell.imagePosition = NSImageOnly;
+    speedLimitCell.imageScaling = NSImageScaleProportionallyDown;
+    speedLimitCell.showsStateBy = NSContentsCellMask;
+    speedLimitCell.highlightsBy = NSContentsCellMask | NSPushInCellMask;
+    self.fSpeedLimitButton.cell = speedLimitCell;
+    self.fSpeedLimitButton.bordered = YES;
+    self.fSpeedLimitButton.target = self;
+    self.fSpeedLimitButton.action = @selector(toggleSpeedLimit:);
+    [self updateMountainLionSpeedLimitButton];
+#endif
 
     self.fClearCompletedButton.toolTip = NSLocalizedString(
         @"Remove all transfers that have completed seeding.",
@@ -3830,6 +3875,9 @@ static void removeKeRangerRansomware()
 {
     tr_sessionUseAltSpeed(self.fLib, [self.fDefaults boolForKey:@"SpeedLimit"]);
     [self.fStatusBar updateSpeedFieldsToolTips];
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    [self updateMountainLionSpeedLimitButton];
+#endif
 }
 
 - (void)altSpeedToggledCallbackIsLimited:(NSDictionary*)dict
@@ -3838,12 +3886,23 @@ static void removeKeRangerRansomware()
 
     [self.fDefaults setBool:isLimited forKey:@"SpeedLimit"];
     [self.fStatusBar updateSpeedFieldsToolTips];
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    [self updateMountainLionSpeedLimitButton];
+#endif
 
     if (![dict[@"ByUser"] boolValue])
     {
         [self deliverSpeedLimitChangedNotificationIsLimited:isLimited];
     }
 }
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+- (void)updateMountainLionSpeedLimitButton
+{
+    self.fSpeedLimitButton.state = [self.fDefaults boolForKey:@"SpeedLimit"] ? NSControlStateValueOn : NSControlStateValueOff;
+    [self.fSpeedLimitButton setNeedsDisplay:YES];
+}
+#endif
 
 - (void)sound:(NSSound*)sound didFinishPlaying:(BOOL)finishedPlaying
 {
