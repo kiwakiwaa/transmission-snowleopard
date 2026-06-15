@@ -4257,7 +4257,7 @@ static void removeKeRangerRansomware()
         //check if any torrent files can be added
         BOOL torrent = NO;
         NSArray* files = [pasteboard readObjectsForClasses:@[ NSURL.class ]
-                                                   options:@{ NSPasteboardURLReadingFileURLsOnlyKey : @YES }];
+                                                   options:@{ NSPasteboardURLReadingFileURLsOnlyKey : [NSNumber numberWithBool:YES] }];
         for (NSURL* fileToParse in files)
         {
             if ([[NSWorkspace.sharedWorkspace typeOfFile:fileToParse.path error:NULL] isEqualToString:@"org.bittorrent.torrent"] ||
@@ -4331,7 +4331,7 @@ static void removeKeRangerRansomware()
 
         //create an array of files that can be opened
         NSArray* files = [pasteboard readObjectsForClasses:@[ NSURL.class ]
-                                                   options:@{ NSPasteboardURLReadingFileURLsOnlyKey : @YES }];
+                                                   options:@{ NSPasteboardURLReadingFileURLsOnlyKey : [NSNumber numberWithBool:YES] }];
         NSMutableArray* filesToOpen = [NSMutableArray arrayWithCapacity:files.count];
         for (NSURL* file in files)
         {
