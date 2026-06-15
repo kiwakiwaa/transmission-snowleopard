@@ -19,7 +19,14 @@
 
 - (instancetype)initForWindow:(NSWindow*)window
 {
-    if ((self = ([super initWithContentRect:window.frame styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:NO])))
+    if ((self = ([super initWithContentRect:window.frame
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
+                                  styleMask:NSWindowStyleMaskBorderless
+#else
+                                  styleMask:NSBorderlessWindowMask
+#endif
+                                    backing:NSBackingStoreBuffered
+                                      defer:NO])))
     {
         self.backgroundColor = [NSColor colorWithCalibratedWhite:0.0 alpha:0.5];
         self.alphaValue = 0.0;

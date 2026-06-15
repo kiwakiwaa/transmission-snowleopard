@@ -4,6 +4,10 @@
 
 #include <libtransmission/string-utils.h>
 
+#import <Security/SecItem.h>
+#import <Security/SecKeychain.h>
+#import <Security/SecKeychainItem.h>
+
 #import "VDKQueue.h"
 
 #ifndef TR_ENABLE_SPARKLE
@@ -789,7 +793,11 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
 + (int)dateToTimeSum:(NSDate*)date
 {
     NSCalendar* calendar = NSCalendar.currentCalendar;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+    NSDateComponents* components = [calendar components:NSCalendarUnitHour | NSCalendarUnitMinute fromDate:date];
+#else
     NSDateComponents* components = [calendar components:NSHourCalendarUnit | NSMinuteCalendarUnit fromDate:date];
+#endif
     return static_cast<int>(components.hour * 60 + components.minute);
 }
 
@@ -864,7 +872,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
 
 - (IBAction)setDefaultForMagnets:(id)sender
 {
-    PrefsController* __weak weakSelf = self;
+    PrefsController* TR_OBJC_WEAK_REF weakSelf = self;
     [self.fDefaultAppHelper setDefaultForMagnetURLs:^{
         [weakSelf updateDefaultsStates];
     }];
@@ -872,7 +880,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
 
 - (IBAction)setDefaultForTorrentFiles:(id)sender
 {
-    PrefsController* __weak weakSelf = self;
+    PrefsController* TR_OBJC_WEAK_REF weakSelf = self;
     [self.fDefaultAppHelper setDefaultForTorrentFiles:^{
         [weakSelf updateDefaultsStates];
     }];
@@ -1628,13 +1636,42 @@ static NSString* getOSStatusDescription(OSStatus errorCode)
 
 - (void)updateRPCPassword
 {
-    CFTypeRef data;
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+    // SecItem exists on 10.6, but its generic-password class starts in 10.7.
+    UInt32 passwordLength = 0;
+    void* passwordData = NULL;
+    OSStatus result = SecKeychainFindGenericPassword(
+        NULL,
+        (UInt32)strlen(kRPCKeychainService),
+        kRPCKeychainService,
+        (UInt32)strlen(kRPCKeychainName),
+        kRPCKeychainName,
+        &passwordLength,
+        &passwordData,
+        NULL);
+    if (result != noErr && result != errSecItemNotFound)
+    {
+        NSLog(@"Problem accessing Keychain: %@", getOSStatusDescription(result));
+    }
+
+    if (result == noErr && passwordData != NULL)
+    {
+        NSString* password = [[NSString alloc] initWithBytes:passwordData length:passwordLength encoding:NSUTF8StringEncoding];
+        if (password != nil)
+        {
+            tr_sessionSetRPCPassword(self.fHandle, password.UTF8String);
+            self.fRPCPassword = password;
+        }
+        SecKeychainItemFreeContent(NULL, passwordData);
+    }
+#else
+    CFTypeRef data = NULL;
     OSStatus result = SecItemCopyMatching(
         (__bridge CFDictionaryRef) @{
             (NSString*)kSecClass : (NSString*)kSecClassGenericPassword,
             (NSString*)kSecAttrAccount : @(kRPCKeychainName),
             (NSString*)kSecAttrService : @(kRPCKeychainService),
-            (NSString*)kSecReturnData : @YES,
+            (NSString*)kSecReturnData : [NSNumber numberWithBool:YES],
         },
         &data);
     if (result != noErr && result != errSecItemNotFound)
@@ -1647,11 +1684,68 @@ static NSString* getOSStatusDescription(OSStatus errorCode)
         tr_sessionSetRPCPassword(self.fHandle, password);
         self.fRPCPassword = @(password);
     }
+#endif
 }
 
 - (void)setKeychainPassword:(char const*)password
 {
-    CFTypeRef item;
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+    // SecItem exists on 10.6, but its generic-password class starts in 10.7
+    SecKeychainItemRef item = NULL;
+    OSStatus result = SecKeychainFindGenericPassword(
+        NULL,
+        (UInt32)strlen(kRPCKeychainService),
+        kRPCKeychainService,
+        (UInt32)strlen(kRPCKeychainName),
+        kRPCKeychainName,
+        NULL,
+        NULL,
+        &item);
+    if (result != noErr && result != errSecItemNotFound)
+    {
+        NSLog(@"Problem accessing Keychain: %@", getOSStatusDescription(result));
+        return;
+    }
+
+    size_t passwordLength = strlen(password);
+    if (item != NULL)
+    {
+        if (passwordLength > 0) // found and needed, so update it
+        {
+            result = SecKeychainItemModifyAttributesAndData(item, NULL, (UInt32)passwordLength, password);
+            if (result != noErr)
+            {
+                NSLog(@"Problem updating Keychain item: %@", getOSStatusDescription(result));
+            }
+        }
+        else // found and not needed, so remove it
+        {
+            result = SecKeychainItemDelete(item);
+            if (result != noErr)
+            {
+                NSLog(@"Problem removing Keychain item: %@", getOSStatusDescription(result));
+            }
+        }
+        CFRelease(item);
+    }
+    else if (result == errSecItemNotFound && passwordLength > 0)
+    {
+        result = SecKeychainAddGenericPassword(
+            NULL,
+            (UInt32)strlen(kRPCKeychainService),
+            kRPCKeychainService,
+            (UInt32)strlen(kRPCKeychainName),
+            kRPCKeychainName,
+            (UInt32)passwordLength,
+            password,
+            NULL);
+        if (result != noErr)
+        {
+            NSLog(@"Problem adding Keychain item: %@", getOSStatusDescription(result));
+        }
+    }
+#else
+    CFTypeRef item = NULL;
     OSStatus result = SecItemCopyMatching(
         (__bridge CFDictionaryRef) @{
             (NSString*)kSecClass : (NSString*)kSecClassGenericPassword,
@@ -1716,6 +1810,7 @@ static NSString* getOSStatusDescription(OSStatus errorCode)
             }
         }
     }
+#endif
 }
 
 - (void)updateRPCWhitelist

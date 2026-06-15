@@ -7,7 +7,7 @@
 #import "Torrent.h"
 
 @interface FileCheckCellView ()
-@property(nonatomic, weak) NSButton* checkButton;
+@property(nonatomic, TR_OBJC_WEAK) NSButton* checkButton;
 @end
 
 @implementation FileCheckCellView

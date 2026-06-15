@@ -3,9 +3,7 @@
 // License text can be found in the licenses/ folder.
 
 #import "InfoOptionsViewController.h"
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
 #import "LegacyStackView.h"
-#endif
 #import "NSStringAdditions.h"
 #import "Torrent.h"
 #import "Utils.h"
@@ -26,6 +24,23 @@ static NSInteger const kInvalidValue = -99;
 
 static CGFloat const kStackViewInset = 12.0;
 static CGFloat const kStackViewSpacing = 8.0;
+
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+static CGFloat const kLegacyFlatPriorityOriginY = 125.0;
+static CGFloat const kLegacyFlatPriorityMinimumY = 125.0;
+static CGFloat const kLegacyFlatPriorityWidth = 234.0;
+static CGFloat const kLegacyFlatPriorityHeight = 132.0;
+static CGFloat const kLegacyFlatSeedingWidth = 318.0;
+static CGFloat const kLegacyFlatSeedingHeight = 134.0;
+
+static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationView, CGFloat originY)
+{
+    NSRect frame = subview.frame;
+    frame.origin.y -= originY;
+    subview.frame = frame;
+    [destinationView addSubview:subview];
+}
+#endif
 
 @interface InfoOptionsViewController ()
 
@@ -66,6 +81,11 @@ static CGFloat const kStackViewSpacing = 8.0;
 @property(nonatomic, readonly) CGFloat fHorizLayoutWidth;
 @property(nonatomic, readonly) CGFloat fVertLayoutHeight;
 
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+- (void)upgradeLegacyFlatOptionsViewIfNeeded;
+- (void)resetLegacyFlatSectionFrames;
+#endif
+
 @end
 
 @implementation InfoOptionsViewController
@@ -83,9 +103,14 @@ static CGFloat const kStackViewSpacing = 8.0;
 - (void)awakeFromNib
 {
     [super awakeFromNib];
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+    [self upgradeLegacyFlatOptionsViewIfNeeded];
+#endif
+    TRCheckExpectedStackViewClass(self.fOptionsStackView, NSStringFromClass(self.class), @"fOptionsStackView");
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
     self.fOptionsStackView.translatesAutoresizingMaskIntoConstraints = YES;
     self.fOptionsStackView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    self.fOptionsStackView.autoresizesSubviews = NO;
 #endif
     [self checkWindowSize];
 
@@ -96,6 +121,60 @@ static CGFloat const kStackViewSpacing = 8.0;
                                                name:@"UpdateOptionsNotification"
                                              object:nil];
 }
+
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+- (void)upgradeLegacyFlatOptionsViewIfNeeded
+{
+    if (self.fOptionsStackView != nil && self.fPriorityView != nil && self.fSeedingView != nil)
+    {
+        return;
+    }
+
+    NSArray* flatSubviews = [self.view.subviews copy];
+    if (flatSubviews.count == 0)
+    {
+        return;
+    }
+
+    LegacyStackView* stackView = [[LegacyStackView alloc] initWithFrame:NSInsetRect(self.view.bounds, kStackViewInset, kStackViewInset)];
+    stackView.orientation = TRLegacyStackViewOrientationVertical;
+    stackView.alignment = TRLegacyStackViewAlignmentLeading;
+    stackView.spacing = kStackViewSpacing;
+    stackView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    stackView.autoresizesSubviews = NO;
+
+    NSView* priorityView = [[NSView alloc] initWithFrame:NSMakeRect(0.0, 0.0, kLegacyFlatPriorityWidth, kLegacyFlatPriorityHeight)];
+    priorityView.autoresizingMask = NSViewMaxXMargin | NSViewMinYMargin;
+
+    NSView* seedingView = [[NSView alloc] initWithFrame:NSMakeRect(0.0, 0.0, kLegacyFlatSeedingWidth, kLegacyFlatSeedingHeight)];
+    seedingView.autoresizingMask = NSViewMaxXMargin | NSViewMaxYMargin;
+
+    for (NSView* subview in flatSubviews)
+    {
+        BOOL const isPrioritySubview = NSMinY(subview.frame) >= kLegacyFlatPriorityMinimumY;
+        TRMoveLegacyInspectorSubview(subview, isPrioritySubview ? priorityView : seedingView, isPrioritySubview ? kLegacyFlatPriorityOriginY : 0.0);
+    }
+
+    [stackView addSubview:priorityView];
+    [stackView addSubview:seedingView];
+    [self.view addSubview:stackView];
+
+    self.fOptionsStackView = stackView;
+    self.fPriorityView = priorityView;
+    self.fSeedingView = seedingView;
+}
+
+- (void)resetLegacyFlatSectionFrames
+{
+    NSRect priorityFrame = self.fPriorityView.frame;
+    priorityFrame.size = NSMakeSize(kLegacyFlatPriorityWidth, kLegacyFlatPriorityHeight);
+    self.fPriorityView.frame = priorityFrame;
+
+    NSRect seedingFrame = self.fSeedingView.frame;
+    seedingFrame.size = NSMakeSize(kLegacyFlatSeedingWidth, kLegacyFlatSeedingHeight);
+    self.fSeedingView.frame = seedingFrame;
+}
+#endif
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
 - (CGFloat)layoutWidth
@@ -125,6 +204,48 @@ static CGFloat const kStackViewSpacing = 8.0;
     return NSHeight(self.fPriorityView.frame) + NSHeight(self.fSeedingView.frame) + (2 * kStackViewInset) + kStackViewSpacing;
 }
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+- (CGFloat)legacyContentHeightForWidth:(CGFloat)width
+{
+    return width >= self.fHorizLayoutWidth + 1 ? self.fHorizLayoutHeight : self.fVertLayoutHeight;
+}
+
+- (void)updateLegacyLayoutStateForWidth:(CGFloat)width
+{
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+    [self resetLegacyFlatSectionFrames];
+#endif
+    if (width >= self.fHorizLayoutWidth + 1)
+    {
+        self.fOptionsStackView.orientation = TRLegacyStackViewOrientationHorizontal;
+        self.fOptionsStackView.alignment = TRLegacyStackViewAlignmentTop;
+        self.fCurrentHeight = self.fHorizLayoutHeight;
+    }
+    else
+    {
+        self.fOptionsStackView.orientation = TRLegacyStackViewOrientationVertical;
+        self.fOptionsStackView.alignment = TRLegacyStackViewAlignmentLeading;
+        self.fCurrentHeight = self.fVertLayoutHeight;
+    }
+}
+
+- (void)updateLegacyLayoutForWidth:(CGFloat)width
+{
+    [self updateLegacyLayoutForWidth:width height:[self legacyContentHeightForWidth:width]];
+}
+
+- (void)updateLegacyLayoutForWidth:(CGFloat)width height:(CGFloat)height
+{
+    [self updateLegacyLayoutStateForWidth:width];
+    NSRect viewRect = self.view.frame;
+    viewRect.origin = NSZeroPoint;
+    viewRect.size.width = width;
+    viewRect.size.height = height;
+    self.view.frame = viewRect;
+    [self layoutLegacyStackView];
+}
+#endif
+
 - (CGFloat)fHeightChange
 {
     return self.oldHeight - self.fCurrentHeight;
@@ -133,7 +254,10 @@ static CGFloat const kStackViewSpacing = 8.0;
 - (NSRect)viewRect
 {
     NSRect viewRect = self.view.frame;
-
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    viewRect.origin = NSZeroPoint;
+    viewRect.size.height = self.fCurrentHeight;
+#else
     CGFloat difference = self.fHeightChange;
 
     // we check for existence of self.view.window
@@ -142,24 +266,14 @@ static CGFloat const kStackViewSpacing = 8.0;
     {
         viewRect.size.height -= difference;
     }
-
+#endif
     return viewRect;
 }
 
 - (void)checkLayout
 {
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
-    if (self.layoutWidth >= self.fHorizLayoutWidth + 1)
-    {
-        self.fOptionsStackView.orientation = TRLegacyStackViewOrientationHorizontal;
-        self.fCurrentHeight = self.fHorizLayoutHeight;
-    }
-    else
-    {
-        self.fOptionsStackView.orientation = TRLegacyStackViewOrientationVertical;
-        self.fCurrentHeight = self.fVertLayoutHeight;
-    }
-
+    [self updateLegacyLayoutStateForWidth:self.layoutWidth];
     [self layoutLegacyStackView];
 #else
     if (NSWidth(self.view.window.frame) >= self.fHorizLayoutWidth + 1)
@@ -177,7 +291,11 @@ static CGFloat const kStackViewSpacing = 8.0;
 
 - (void)checkWindowSize
 {
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    self.oldHeight = self.view.window ? NSHeight(self.view.frame) : self.fCurrentHeight;
+#else
     self.oldHeight = self.fCurrentHeight;
+#endif
 
     [self updateWindowLayout];
 }
@@ -191,19 +309,41 @@ static CGFloat const kStackViewSpacing = 8.0;
         [self checkLayout];
 
         CGFloat difference = self.fHeightChange;
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+        if (self.oldHeight <= 0.0)
+        {
+            difference = -self.fCurrentHeight;
+        }
+        else if (difference == 0.0)
+        {
+            return;
+        }
+#endif
 
         NSRect windowRect = self.view.window.frame;
         windowRect.origin.y += difference;
         windowRect.size.height -= difference;
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+        self.view.window.minSize = NSMakeSize(self.view.window.minSize.width, NSHeight(windowRect));
+        self.view.window.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
+#else
         self.view.window.minSize = NSMakeSize(self.view.window.minSize.width, NSHeight(windowRect));
         self.view.window.maxSize = NSMakeSize(FLT_MAX, NSHeight(windowRect));
+#endif
 
         self.view.frame = [self viewRect];
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
         [self layoutLegacyStackView];
 #endif
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+        [self.view.window setFrame:windowRect display:YES animate:NO];
+#elif MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+        BOOL const liveResize = [self.view inLiveResize];
+        [self.view.window setFrame:windowRect display:!liveResize animate:!liveResize];
+#else
         [self.view.window setFrame:windowRect display:YES animate:YES];
+#endif
     }
     else
     {

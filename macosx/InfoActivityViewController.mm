@@ -6,9 +6,7 @@
 #include <libtransmission/utils.h> //tr_getRatio()
 
 #import "InfoActivityViewController.h"
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
 #import "LegacyStackView.h"
-#endif
 #import "LegacyFormatters.h"
 #import "NSStringAdditions.h"
 #import "PiecesView.h"
@@ -22,6 +20,32 @@ typedef NS_ENUM(NSUInteger, PiecesControlSegment) {
 static CGFloat const kStackViewInset = 12.0;
 static CGFloat const kStackViewHorizontalSpacing = 20.0;
 static CGFloat const kStackViewVerticalSpacing = 8.0;
+
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+static CGFloat const kLegacyFlatTransferOriginX = 14.0;
+static CGFloat const kLegacyFlatTransferOriginY = 132.0;
+static CGFloat const kLegacyFlatTransferMinimumY = 132.0;
+static CGFloat const kLegacyFlatTransferWidth = 334.0;
+static CGFloat const kLegacyFlatTransferHeight = 198.0;
+static CGFloat const kLegacyFlatDatesOriginX = 11.0;
+static CGFloat const kLegacyFlatDatesOriginY = 4.0;
+static CGFloat const kLegacyFlatDatesWidth = 139.0;
+static CGFloat const kLegacyFlatDatesHeight = 128.0;
+
+static BOOL TRLegacyInspectorSubviewIsSeparator(NSView* subview)
+{
+    return [subview isKindOfClass:NSBox.class] && (NSWidth(subview.frame) <= 5.0 || NSHeight(subview.frame) <= 5.0);
+}
+
+static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationView, NSPoint sectionOrigin)
+{
+    NSRect frame = subview.frame;
+    frame.origin.x -= sectionOrigin.x;
+    frame.origin.y -= sectionOrigin.y;
+    subview.frame = frame;
+    [destinationView addSubview:subview];
+}
+#endif
 
 @interface InfoActivityViewController ()
 
@@ -58,6 +82,11 @@ static CGFloat const kStackViewVerticalSpacing = 8.0;
 @property(nonatomic, readonly) CGFloat fHorizLayoutWidth;
 @property(nonatomic, readonly) CGFloat fVertLayoutHeight;
 
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+- (void)upgradeLegacyFlatActivityViewIfNeeded;
+- (void)resetLegacyFlatSectionFrames;
+#endif
+
 @end
 
 @implementation InfoActivityViewController
@@ -75,12 +104,79 @@ static CGFloat const kStackViewVerticalSpacing = 8.0;
 - (void)awakeFromNib
 {
     [super awakeFromNib];
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+    [self upgradeLegacyFlatActivityViewIfNeeded];
+#endif
+    TRCheckExpectedStackViewClass(self.fActivityStackView, NSStringFromClass(self.class), @"fActivityStackView");
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
     self.fActivityStackView.translatesAutoresizingMaskIntoConstraints = YES;
     self.fActivityStackView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    self.fActivityStackView.autoresizesSubviews = NO;
 #endif
     [self checkWindowSize];
 }
+
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+- (void)upgradeLegacyFlatActivityViewIfNeeded
+{
+    if (self.fActivityStackView != nil && self.fTransferView != nil && self.fDatesView != nil)
+    {
+        return;
+    }
+
+    NSArray* flatSubviews = [self.view.subviews copy];
+    if (flatSubviews.count == 0)
+    {
+        return;
+    }
+
+    LegacyStackView* stackView = [[LegacyStackView alloc] initWithFrame:NSInsetRect(self.view.bounds, kStackViewInset, kStackViewInset)];
+    stackView.orientation = TRLegacyStackViewOrientationVertical;
+    stackView.alignment = TRLegacyStackViewAlignmentLeading;
+    stackView.spacing = kStackViewVerticalSpacing;
+    stackView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    stackView.autoresizesSubviews = NO;
+
+    NSView* transferView = [[NSView alloc] initWithFrame:NSMakeRect(0.0, 0.0, kLegacyFlatTransferWidth, kLegacyFlatTransferHeight)];
+    transferView.autoresizingMask = NSViewMaxXMargin | NSViewMinYMargin;
+
+    NSView* datesView = [[NSView alloc] initWithFrame:NSMakeRect(0.0, 0.0, kLegacyFlatDatesWidth, kLegacyFlatDatesHeight)];
+    datesView.autoresizingMask = NSViewMaxXMargin | NSViewMaxYMargin;
+
+    for (NSView* subview in flatSubviews)
+    {
+        if (TRLegacyInspectorSubviewIsSeparator(subview))
+        {
+            [subview removeFromSuperview];
+            continue;
+        }
+
+        BOOL const isTransferSubview = NSMinY(subview.frame) >= kLegacyFlatTransferMinimumY;
+        NSPoint const sectionOrigin = isTransferSubview ? NSMakePoint(kLegacyFlatTransferOriginX, kLegacyFlatTransferOriginY) :
+                                                          NSMakePoint(kLegacyFlatDatesOriginX, kLegacyFlatDatesOriginY);
+        TRMoveLegacyInspectorSubview(subview, isTransferSubview ? transferView : datesView, sectionOrigin);
+    }
+
+    [stackView addSubview:transferView];
+    [stackView addSubview:datesView];
+    [self.view addSubview:stackView];
+
+    self.fActivityStackView = stackView;
+    self.fTransferView = transferView;
+    self.fDatesView = datesView;
+}
+
+- (void)resetLegacyFlatSectionFrames
+{
+    NSRect transferFrame = self.fTransferView.frame;
+    transferFrame.size = NSMakeSize(kLegacyFlatTransferWidth, kLegacyFlatTransferHeight);
+    self.fTransferView.frame = transferFrame;
+
+    NSRect datesFrame = self.fDatesView.frame;
+    datesFrame.size = NSMakeSize(kLegacyFlatDatesWidth, kLegacyFlatDatesHeight);
+    self.fDatesView.frame = datesFrame;
+}
+#endif
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
 - (CGFloat)layoutWidth
@@ -110,27 +206,21 @@ static CGFloat const kStackViewVerticalSpacing = 8.0;
     return NSHeight(self.fTransferView.frame) + NSHeight(self.fDatesView.frame) + (2 * kStackViewInset) + kStackViewVerticalSpacing;
 }
 
-- (CGFloat)fHeightChange
-{
-    return self.oldHeight - self.fCurrentHeight;
-}
-
-- (NSRect)viewRect
-{
-    NSRect viewRect = self.view.frame;
-
-    CGFloat difference = self.fHeightChange;
-    viewRect.size.height -= difference;
-
-    return viewRect;
-}
-
-- (void)checkLayout
-{
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
-    if (self.layoutWidth >= self.fHorizLayoutWidth + 1)
+- (CGFloat)legacyContentHeightForWidth:(CGFloat)width
+{
+    return width >= self.fHorizLayoutWidth + 1 ? self.fHorizLayoutHeight : self.fVertLayoutHeight;
+}
+
+- (void)updateLegacyLayoutStateForWidth:(CGFloat)width
+{
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+    [self resetLegacyFlatSectionFrames];
+#endif
+    if (width >= self.fHorizLayoutWidth + 1)
     {
         self.fActivityStackView.orientation = TRLegacyStackViewOrientationHorizontal;
+        self.fActivityStackView.alignment = TRLegacyStackViewAlignmentTop;
 
         //add some padding between views in horizontal layout
         self.fActivityStackView.spacing = kStackViewHorizontalSpacing;
@@ -139,10 +229,51 @@ static CGFloat const kStackViewVerticalSpacing = 8.0;
     else
     {
         self.fActivityStackView.orientation = TRLegacyStackViewOrientationVertical;
+        self.fActivityStackView.alignment = TRLegacyStackViewAlignmentLeading;
         self.fActivityStackView.spacing = kStackViewVerticalSpacing;
         self.fCurrentHeight = self.fVertLayoutHeight;
     }
+}
 
+- (void)updateLegacyLayoutForWidth:(CGFloat)width
+{
+    [self updateLegacyLayoutForWidth:width height:[self legacyContentHeightForWidth:width]];
+}
+
+- (void)updateLegacyLayoutForWidth:(CGFloat)width height:(CGFloat)height
+{
+    [self updateLegacyLayoutStateForWidth:width];
+    NSRect viewRect = self.view.frame;
+    viewRect.origin = NSZeroPoint;
+    viewRect.size.width = width;
+    viewRect.size.height = height;
+    self.view.frame = viewRect;
+    [self layoutLegacyStackView];
+}
+#endif
+
+- (CGFloat)fHeightChange
+{
+    return self.oldHeight - self.fCurrentHeight;
+}
+
+- (NSRect)viewRect
+{
+    NSRect viewRect = self.view.frame;
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    viewRect.origin = NSZeroPoint;
+    viewRect.size.height = self.fCurrentHeight;
+#else
+    CGFloat difference = self.fHeightChange;
+    viewRect.size.height -= difference;
+#endif
+    return viewRect;
+}
+
+- (void)checkLayout
+{
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    [self updateLegacyLayoutStateForWidth:self.layoutWidth];
     [self layoutLegacyStackView];
 #else
     if (NSWidth(self.view.window.frame) >= self.fHorizLayoutWidth + 1)
@@ -164,7 +295,11 @@ static CGFloat const kStackViewVerticalSpacing = 8.0;
 
 - (void)checkWindowSize
 {
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    self.oldHeight = self.view.window ? NSHeight(self.view.frame) : self.fCurrentHeight;
+#else
     self.oldHeight = self.fCurrentHeight;
+#endif
 
     [self updateWindowLayout];
 }
@@ -181,19 +316,41 @@ static CGFloat const kStackViewVerticalSpacing = 8.0;
 #endif
 
     CGFloat difference = self.fHeightChange;
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    if (self.oldHeight <= 0.0)
+    {
+        difference = -self.fCurrentHeight;
+    }
+    else if (difference == 0.0)
+    {
+        return;
+    }
+#endif
 
     NSRect windowRect = self.view.window.frame;
     windowRect.origin.y += difference;
     windowRect.size.height -= difference;
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+    self.view.window.minSize = NSMakeSize(self.view.window.minSize.width, NSHeight(windowRect));
+    self.view.window.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
+#else
     self.view.window.minSize = NSMakeSize(self.view.window.minSize.width, NSHeight(windowRect));
     self.view.window.maxSize = NSMakeSize(FLT_MAX, NSHeight(windowRect));
+#endif
 
     self.view.frame = [self viewRect];
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
     [self layoutLegacyStackView];
 #endif
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+    [self.view.window setFrame:windowRect display:YES animate:NO];
+#elif MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    BOOL const liveResize = [self.view inLiveResize];
+    [self.view.window setFrame:windowRect display:!liveResize animate:!liveResize];
+#else
     [self.view.window setFrame:windowRect display:YES animate:YES];
+#endif
 }
 
 - (void)setInfoForTorrents:(NSArray*)torrents

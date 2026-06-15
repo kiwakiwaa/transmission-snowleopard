@@ -32,6 +32,6 @@
 
 @property(nonatomic) IBOutlet NSView* fTorrentProgressBarView;
 
-@property(nonatomic, weak) TorrentTableView* fTorrentTableView;
+@property(nonatomic, TR_OBJC_WEAK) TorrentTableView* fTorrentTableView;
 
 @end

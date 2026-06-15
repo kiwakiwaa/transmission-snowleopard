@@ -3,15 +3,24 @@
 // License text can be found in the licenses/ folder.
 
 #import "PortChecker.h"
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
 #import "LegacyURLRequest.h"
+#endif
 
 static NSTimeInterval const kCheckFireInterval = 3.0;
 
 @interface PortChecker ()
 
-@property(nonatomic, weak) NSObject<PortCheckerDelegate>* fDelegate;
+@property(nonatomic, TR_OBJC_WEAK) NSObject<PortCheckerDelegate>* fDelegate;
 @property(nonatomic) PortStatus fStatus;
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+@property(nonatomic) NSURLSession* fSession;
+@property(nonatomic) NSURLSessionDataTask* fTask;
+#else
 @property(nonatomic) TRURLRequestTask* fTask;
+#endif
 
 @property(nonatomic) NSTimer* fTimer;
 
@@ -23,6 +32,10 @@ static NSTimeInterval const kCheckFireInterval = 3.0;
 {
     if ((self = [super init]))
     {
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+        _fSession = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.ephemeralSessionConfiguration delegate:nil
+                                             delegateQueue:nil];
+#endif
         _fDelegate = delegate;
 
         _fStatus = PortStatusChecking;
@@ -56,6 +69,10 @@ static NSTimeInterval const kCheckFireInterval = 3.0;
 
     [self.fTask cancel];
     self.fTask = nil;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+    [self.fSession invalidateAndCancel];
+    self.fSession = nil;
+#endif
 }
 
 #pragma mark - Private
@@ -69,7 +86,11 @@ static NSTimeInterval const kCheckFireInterval = 3.0;
                                                       cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData
                                                   timeoutInterval:15.0];
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+    self.fTask = [self.fSession dataTaskWithRequest:portProbeRequest completionHandler:^(NSData* data, NSURLResponse*, NSError* error) {
+#else
     self.fTask = [TRURLRequestTask dataTaskWithRequest:portProbeRequest completionHandler:^(NSData* data, NSURLResponse*, NSError* error) {
+#endif
         self.fTask = nil;
         if (error)
         {

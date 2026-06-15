@@ -66,7 +66,7 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
 @property(nonatomic, readonly) BOOL fCanToggleDelete;
 @property(nonatomic) NSInteger fGroupValue;
 
-@property(nonatomic, weak) NSTimer* fTimer;
+@property(nonatomic, TR_OBJC_WEAK) NSTimer* fTimer;
 
 @property(nonatomic) TorrentDeterminationType fGroupValueDetermination;
 

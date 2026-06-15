@@ -30,8 +30,9 @@ static NSString* TRStringByDetectingEncoding(std::string_view sv)
     {
         return convertedString;
     }
-#endif
 
+    return nil;
+#else
     NSStringEncoding const encodings[] = {
         NSWindowsCP1252StringEncoding,  NSISOLatin1StringEncoding,         NSMacOSRomanStringEncoding,
         NSWindowsCP1250StringEncoding,  NSWindowsCP1251StringEncoding,     NSWindowsCP1253StringEncoding,
@@ -50,6 +51,7 @@ static NSString* TRStringByDetectingEncoding(std::string_view sv)
     }
 
     return nil;
+#endif
 }
 
 std::string tr_strv_to_utf8_string(std::string_view sv)

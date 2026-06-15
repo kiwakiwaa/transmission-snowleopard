@@ -33,6 +33,9 @@ typedef NS_ENUM(NSUInteger, AddType) { //
 
 @interface Controller : NSObject<
                             NSApplicationDelegate,
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 110000
+                            NSMenuItemValidation,
+#endif
                             NSPopoverDelegate,
                             NSSharingServiceDelegate,
                             NSSharingServicePickerDelegate,

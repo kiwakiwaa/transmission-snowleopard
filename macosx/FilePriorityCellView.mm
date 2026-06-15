@@ -57,8 +57,8 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 #endif
 
 @interface FilePriorityCellView ()
-@property(nonatomic, weak) NSSegmentedControl* segmentedControl;
-@property(nonatomic, weak) NSView* iconsContainerView;
+@property(nonatomic, TR_OBJC_WEAK) NSSegmentedControl* segmentedControl;
+@property(nonatomic, TR_OBJC_WEAK) NSView* iconsContainerView;
 @property(nonatomic, strong) NSTrackingArea* trackingArea;
 @end
 

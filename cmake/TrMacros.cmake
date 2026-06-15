@@ -623,6 +623,62 @@ function(tr_wrap_xib TGT INPUT_FILE OUTPUT_FILE OUTPUT_FOLDER)
         FILES ${OUTPUT_FILE})
 endfunction()
 
+function(tr_wrap_localized_xib TGT INPUT_FILE OUTPUT_FILE OUTPUT_FOLDER STRINGS_FILE)
+    if(NOT IBTOOL_EXECUTABLE)
+        find_program(IBTOOL_EXECUTABLE ibtool REQUIRED)
+    endif()
+
+    if(NOT PERL_EXECUTABLE)
+        find_program(PERL_EXECUTABLE perl REQUIRED)
+    endif()
+
+    if(OUTPUT_FOLDER)
+        string(PREPEND OUTPUT_FOLDER "/")
+    endif()
+
+    get_filename_component(OUTPUT_FILE_DIR "${OUTPUT_FILE}" DIRECTORY)
+    get_filename_component(OUTPUT_FILE_NAME_WE "${OUTPUT_FILE}" NAME_WE)
+    set(BASE_STRINGS_FILE "${OUTPUT_FILE_DIR}/${OUTPUT_FILE_NAME_WE}.base.strings")
+    set(FILTERED_STRINGS_FILE "${OUTPUT_FILE_DIR}/${OUTPUT_FILE_NAME_WE}.filtered.strings")
+
+    add_custom_command(
+        OUTPUT ${OUTPUT_FILE} ${BASE_STRINGS_FILE} ${FILTERED_STRINGS_FILE}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUT_FILE_DIR}
+        COMMAND ${IBTOOL_EXECUTABLE} --export-strings-file ${BASE_STRINGS_FILE} ${INPUT_FILE}
+        COMMAND ${PERL_EXECUTABLE}
+            ${CMAKE_SOURCE_DIR}/cmake/FilterXibStrings.pl
+            ${STRINGS_FILE}
+            ${BASE_STRINGS_FILE}
+            ${FILTERED_STRINGS_FILE}
+        COMMAND ${IBTOOL_EXECUTABLE} --import-strings-file ${FILTERED_STRINGS_FILE} --compile ${OUTPUT_FILE} ${INPUT_FILE}
+        DEPENDS
+            ${INPUT_FILE}
+            ${STRINGS_FILE}
+            ${CMAKE_SOURCE_DIR}/cmake/FilterXibStrings.pl
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        VERBATIM)
+
+    target_sources(${TGT}
+        PRIVATE
+            ${INPUT_FILE}
+            ${OUTPUT_FILE})
+
+    set(RESOURCES_DIR Resources)
+    if(NOT CMAKE_GENERATOR STREQUAL Xcode)
+        string(APPEND RESOURCES_DIR "${OUTPUT_FOLDER}")
+    endif()
+    set_source_files_properties(
+        ${OUTPUT_FILE}
+        PROPERTIES
+            MACOSX_PACKAGE_LOCATION "${RESOURCES_DIR}")
+
+    source_group("Resources${OUTPUT_FOLDER}"
+        FILES ${INPUT_FILE})
+
+    source_group("Generated Files${OUTPUT_FOLDER}"
+        FILES ${OUTPUT_FILE})
+endfunction()
+
 function(tr_target_xib_files TGT)
     foreach(ARG IN LISTS ARGN)
         get_filename_component(ARG_DIR "${ARG}" DIRECTORY)

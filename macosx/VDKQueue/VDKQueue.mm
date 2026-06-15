@@ -125,7 +125,7 @@ NSString const* VDKQueueAccessRevocationNotification = @"VDKQueueAccessWasRevoke
     @synchronized(self)
     {
         // Are we already watching this path?
-        VDKQueuePathEntry* pathEntry = _watchedPathEntries[path];
+        VDKQueuePathEntry* pathEntry = [_watchedPathEntries objectForKey:path];
 
         if (pathEntry)
         {
@@ -150,7 +150,7 @@ NSString const* VDKQueueAccessRevocationNotification = @"VDKQueueAccessWasRevoke
 
             pathEntry.subscriptionFlags = flags;
 
-            _watchedPathEntries[path] = pathEntry;
+            [_watchedPathEntries setObject:pathEntry forKey:path];
             kevent(_coreQueueFD, &ev, 1, NULL, 0, &nullts);
 
             // Start the thread that fetches and processes our events if it's not already running.
@@ -272,7 +272,7 @@ NSString const* VDKQueueAccessRevocationNotification = @"VDKQueueAccessWasRevoke
 
     @synchronized(self)
     {
-        if (_watchedPathEntries[aPath])
+        if ([_watchedPathEntries objectForKey:aPath])
         {
             // Only add this path if we don't already have it.
             return;

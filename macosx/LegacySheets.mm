@@ -39,6 +39,7 @@
 
 - (void)alertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo
 {
+    [alert.window orderOut:nil];
     if (self.handler)
     {
         self.handler(returnCode);

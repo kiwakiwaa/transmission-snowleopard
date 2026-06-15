@@ -18,6 +18,21 @@
 #endif
 #endif
 
+#ifndef __has_include
+#define __has_include(x) 0
+#endif
+
+#if __has_include(<UserNotifications/UserNotifications.h>)
+#define TR_HAS_USER_NOTIFICATIONS 1
+#if __has_feature(modules)
+@import UserNotifications;
+#else
+#import <UserNotifications/UserNotifications.h>
+#endif
+#else
+#define TR_HAS_USER_NOTIFICATIONS 0
+#endif
+
 #include <atomic> /* atomic, atomic_fetch_add_explicit, memory_order_relaxed */
 
 #include <libtransmission/transmission.h>
@@ -32,7 +47,10 @@
 
 #import "CocoaCompatibility.h"
 #import "LegacyArchiving.h"
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
 #import "LegacyURLRequest.h"
+#endif
 
 #import "Controller.h"
 #import "Torrent.h"
@@ -68,7 +86,9 @@
 #import "ExpandedPathToIconTransformer.h"
 #import "VersionComparator.h"
 #import "PowerManager.h"
+#if !TR_HAS_USER_NOTIFICATIONS
 #import "SystemNotificationController.h"
+#endif
 #import "Utils.h"
 
 typedef NSString* ToolbarItemIdentifier NS_TYPED_EXTENSIBLE_ENUM;
@@ -93,6 +113,28 @@ typedef NS_ENUM(NSUInteger, ToolbarGroupTag) { //
     ToolbarGroupTagResume = 1
 };
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+// Mountain Lion uses the old NSButtonCell drawing path for selected template-image tinting.
+// Apple documents NSButton.bezelStyle as ignored when the button is not bordered:
+// https://developer.apple.com/documentation/appkit/nsbutton/bezelstyle-swift.property
+// Setting bordered=NO hides the bottom-bar frame, but also bypasses the 10.8 selected-content tint.
+// Keep the button bordered and suppress only the bezel hook that Apple documents as border drawing:
+// https://developer.apple.com/documentation/appkit/nsbuttoncell/drawbezel(withframe:in:)
+// TODO: check if needed for 10.7
+@interface MountainLionSpeedLimitButtonCell : NSButtonCell
+@end
+
+@implementation MountainLionSpeedLimitButtonCell
+
+- (void)drawBezelWithFrame:(NSRect)frame inView:(NSView*)controlView
+{
+    (void)frame;
+    (void)controlView;
+}
+
+@end
+#endif
+
 typedef NSString* SortType NS_TYPED_EXTENSIBLE_ENUM;
 
 static SortType const SortTypeDate = @"Date";
@@ -104,6 +146,15 @@ static SortType const SortTypeOrder = @"Order";
 static SortType const SortTypeActivity = @"Activity";
 static SortType const SortTypeSize = @"Size";
 static SortType const SortTypeETA = @"ETA";
+
+static NSString* TRStringByRemovingPercentEncoding(NSString* string)
+{
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+    return string.stringByRemovingPercentEncoding;
+#else
+    return [string stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+#endif
+}
 
 typedef NS_ENUM(NSUInteger, SortTag) {
     SortTagOrder = 0,
@@ -135,6 +186,14 @@ static NSTimeInterval const kUpdateUISeconds = 1.0;
 
 static NSString* const kTransferPlist = @"Transfers.plist";
 
+#if TR_HAS_USER_NOTIFICATIONS
+static NSString* const kNotificationActionShow = @"actionShow";
+static NSString* const kNotificationCategoryShow = @"categoryShow";
+#endif
+
+static NSString* const kNotificationUserInfoHashKey = @"Hash";
+static NSString* const kNotificationUserInfoLocationKey = @"Location";
+
 static NSString* const kWebsiteURL = @"https://transmissionbt.com/";
 static NSString* const kForumURL = @"https://forum.transmissionbt.com/";
 static NSString* const kGithubURL = @"https://github.com/transmission/transmission";
@@ -146,6 +205,7 @@ static void initUnits()
 {
     using Config = tr::Values::Config;
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
     // use a random value to avoid possible pluralization issues with 1 or 0 (an example is if we use 1 for bytes,
     // we'd get "byte" when we'd want "bytes" for the generic libtransmission value at least)
     int const ArbitraryPluralNumber = 17;
@@ -163,6 +223,13 @@ static void initUnits()
     NSString* g_str = [unitFormatter stringFromByteCount:ArbitraryPluralNumber];
     unitFormatter.allowedUnits = NSByteCountFormatterUseTB;
     NSString* t_str = [unitFormatter stringFromByteCount:ArbitraryPluralNumber];
+#else
+    NSString* b_str = @"bytes";
+    NSString* k_str = @"KB";
+    NSString* m_str = @"MB";
+    NSString* g_str = @"GB";
+    NSString* t_str = @"TB";
+#endif
     Config::memory = { Config::Base::Kilo, b_str.UTF8String, k_str.UTF8String,
                        m_str.UTF8String,   g_str.UTF8String, t_str.UTF8String };
     Config::storage = { Config::Base::Kilo, b_str.UTF8String, k_str.UTF8String,
@@ -267,7 +334,19 @@ static void removeKeRangerRansomware()
     NSLog(@"OSX.KeRanger.A ransomware removal completed, proceeding to normal operation");
 }
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if TR_HAS_USER_NOTIFICATIONS
+@interface Controller ()<NSURLSessionDataDelegate, NSURLSessionDownloadDelegate, PowerManagerDelegate, UNUserNotificationCenterDelegate>
+#else
+@interface Controller ()<NSURLSessionDataDelegate, NSURLSessionDownloadDelegate, PowerManagerDelegate, SystemNotificationControllerDelegate>
+#endif
+#else
+#if TR_HAS_USER_NOTIFICATIONS
+@interface Controller ()<PowerManagerDelegate, UNUserNotificationCenterDelegate>
+#else
 @interface Controller ()<PowerManagerDelegate, SystemNotificationControllerDelegate>
+#endif
+#endif
 
 @property(nonatomic) IBOutlet NSWindow* fWindow;
 @property(nonatomic) NSLayoutConstraint* fMinHeightConstraint;
@@ -319,12 +398,22 @@ static void removeKeRangerRansomware()
 @property(nonatomic, readonly) BOOL fPauseOnLaunch;
 
 @property(nonatomic) Badger* fBadger;
+#if !TR_HAS_USER_NOTIFICATIONS
 @property(nonatomic) SystemNotificationController* fNotificationController;
+#endif
 
 @property(nonatomic) NSMutableArray* fAutoImportedNames;
 @property(nonatomic) NSTimer* fAutoImportTimer;
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+- (void)updateMountainLionSpeedLimitButton;
+#endif
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+@property(nonatomic) NSURLSession* fSession;
+#else
 @property(nonatomic) NSMutableDictionary* fURLDownloadTasks;
+#endif
 
 @property(nonatomic) NSMutableSet* fAddingTransfers;
 
@@ -332,6 +421,9 @@ static void removeKeRangerRansomware()
 @property(nonatomic) URLSheetWindowController* fUrlSheetController;
 
 @property(nonatomic) BOOL fGlobalPopoverShown;
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+@property(nonatomic) NSPopover* fLegacyGlobalPopover;
+#endif
 @property(nonatomic) NSView* fPositioningView;
 @property(nonatomic) BOOL fSoundPlaying;
 
@@ -383,8 +475,10 @@ static void removeKeRangerRansomware()
     if ((self = [super init]))
     {
         _fDefaults = NSUserDefaults.standardUserDefaults;
+#if !TR_HAS_USER_NOTIFICATIONS
         _fNotificationController = [[SystemNotificationController alloc] init];
         _fNotificationController.delegate = self;
+#endif
 
         //checks for old version speeds of -1
         if ([_fDefaults integerForKey:@"UploadLimit"] < 0)
@@ -578,7 +672,13 @@ static void removeKeRangerRansomware()
         _fDisplayedTorrents = [[NSMutableArray alloc] init];
         _fTorrentHashes = [[NSMutableDictionary alloc] init];
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+        NSURLSessionConfiguration* configuration = NSURLSessionConfiguration.defaultSessionConfiguration;
+        configuration.requestCachePolicy = NSURLRequestReloadIgnoringLocalAndRemoteCacheData;
+        _fSession = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:nil];
+#else
         _fURLDownloadTasks = [[NSMutableDictionary alloc] init];
+#endif
 
         _fInfoController = [[InfoWindowController alloc] init];
 
@@ -679,6 +779,25 @@ static void removeKeRangerRansomware()
     self.fSpeedLimitButton.toolTip = NSLocalizedString(
         @"Speed Limit overrides the total bandwidth limits with its own limits.",
         "Main window -> 2nd bottom left button (turtle) tooltip");
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    [self.fSpeedLimitButton unbind:NSValueBinding];
+    NSImage* speedLimitImage = self.fSpeedLimitButton.image.copy;
+    [speedLimitImage setTemplate:YES];
+
+    // Mountain Lion's decoded XIB cell does not keep the selected template-image tint.
+    MountainLionSpeedLimitButtonCell* speedLimitCell = [[MountainLionSpeedLimitButtonCell alloc] initImageCell:speedLimitImage];
+    [speedLimitCell setButtonType:NSPushOnPushOffButton];
+    speedLimitCell.bezelStyle = NSTexturedSquareBezelStyle;
+    speedLimitCell.imagePosition = NSImageOnly;
+    speedLimitCell.imageScaling = NSImageScaleProportionallyDown;
+    speedLimitCell.showsStateBy = NSContentsCellMask;
+    speedLimitCell.highlightsBy = NSContentsCellMask | NSPushInCellMask;
+    self.fSpeedLimitButton.cell = speedLimitCell;
+    self.fSpeedLimitButton.bordered = YES;
+    self.fSpeedLimitButton.target = self;
+    self.fSpeedLimitButton.action = @selector(toggleSpeedLimit:);
+    [self updateMountainLionSpeedLimitButton];
+#endif
 
     self.fClearCompletedButton.toolTip = NSLocalizedString(
         @"Remove all transfers that have completed seeding.",
@@ -855,7 +974,31 @@ static void removeKeRangerRansomware()
 
 - (void)applicationWillFinishLaunching:(NSNotification*)notification
 {
+#if TR_HAS_USER_NOTIFICATIONS
+    if (@available(macOS 10.14, *))
+    {
+        UNUserNotificationCenter.currentNotificationCenter.delegate = self;
+
+        UNNotificationAction* actionShow = [UNNotificationAction actionWithIdentifier:kNotificationActionShow
+                                                                                title:NSLocalizedString(@"Show", "notification button")
+                                                                              options:UNNotificationActionOptionForeground];
+        UNNotificationCategory* categoryShow = [UNNotificationCategory categoryWithIdentifier:kNotificationCategoryShow
+                                                                                      actions:@[ actionShow ]
+                                                                            intentIdentifiers:@[]
+                                                                                      options:UNNotificationCategoryOptionNone];
+        [UNUserNotificationCenter.currentNotificationCenter setNotificationCategories:[NSSet setWithObject:categoryShow]];
+        [UNUserNotificationCenter.currentNotificationCenter
+            requestAuthorizationWithOptions:(UNAuthorizationOptionSound | UNAuthorizationOptionAlert | UNAuthorizationOptionBadge)
+                          completionHandler:^(BOOL /*granted*/, NSError* _Nullable error) {
+                              if (error.code > 0)
+                              {
+                                  NSLog(@"UserNotifications not configured: %@", error.localizedDescription);
+                              }
+                          }];
+    }
+#else
     [self.fNotificationController configureUserNotifications];
+#endif
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification*)notification
@@ -893,7 +1036,20 @@ static void removeKeRangerRansomware()
                                                         andEventID:kAEOpenContents];
 
     //if we were opened from a user notification, do the corresponding action
+#if TR_HAS_USER_NOTIFICATIONS
+    if (@available(macOS 10.14, *))
+    {
+        UNNotificationResponse* launchNotification = notification.userInfo[NSApplicationLaunchUserNotificationKey];
+        if (launchNotification)
+        {
+            [self userNotificationCenter:UNUserNotificationCenter.currentNotificationCenter
+                didReceiveNotificationResponse:launchNotification withCompletionHandler:^{
+                }];
+        }
+    }
+#else
     [self.fNotificationController handleLaunchNotificationFromApplicationNotification:notification];
+#endif
 
     //auto importing
     [self checkAutoImportDirectory];
@@ -1054,12 +1210,17 @@ static void removeKeRangerRansomware()
         }
     }
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+    //remove all torrent downloads
+    [self.fSession invalidateAndCancel];
+#else
     //remove all torrent downloads
     for (TRURLRequestTask* task in [self.fURLDownloadTasks allValues])
     {
         [task cancel];
     }
     [self.fURLDownloadTasks removeAllObjects];
+#endif
 
     //remember window states
     [self.fDefaults setBool:[self.fInfoController.window isVisible] forKey:@"InfoVisible"];
@@ -1128,6 +1289,8 @@ static void removeKeRangerRansomware()
 
 #pragma mark - URL Downloads
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+
 - (void)forgetURLDownloadForKey:(NSString*)urlKey
 {
     if (urlKey)
@@ -1135,6 +1298,8 @@ static void removeKeRangerRansomware()
         [self.fURLDownloadTasks removeObjectForKey:urlKey];
     }
 }
+
+#endif
 
 - (BOOL)validateTorrentDownloadResponse:(NSURLResponse*)response originalURLString:(NSString*)originalURLString
 {
@@ -1147,7 +1312,7 @@ static void removeKeRangerRansomware()
     NSString* message = [NSString
         stringWithFormat:NSLocalizedString(@"It appears that the file \"%@\" from %@ is not a torrent file.", "Download not a torrent -> message"),
                          suggestedName ?: @"",
-                         [originalURLString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+                         TRStringByRemovingPercentEncoding(originalURLString)];
     dispatch_async(dispatch_get_main_queue(), ^{
         NSAlert* alert = [[NSAlert alloc] init];
         [alert addButtonWithTitle:NSLocalizedString(@"OK", "Download not a torrent -> button")];
@@ -1201,7 +1366,7 @@ static void removeKeRangerRansomware()
 
     NSString* message = [NSString
         stringWithFormat:NSLocalizedString(@"The torrent could not be downloaded from %@: %@.", "Torrent download failed -> message"),
-                         [originalURLString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding],
+                         TRStringByRemovingPercentEncoding(originalURLString),
                          error.localizedDescription];
     dispatch_async(dispatch_get_main_queue(), ^{
         NSAlert* alert = [[NSAlert alloc] init];
@@ -1211,6 +1376,62 @@ static void removeKeRangerRansomware()
         [alert runModal];
     });
 }
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+
+#pragma mark - NSURLSessionDelegate
+
+- (void)URLSession:(NSURLSession*)session
+              dataTask:(NSURLSessionDataTask*)dataTask
+    didReceiveResponse:(NSURLResponse*)response
+     completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler
+{
+    (void)session;
+
+    if ([self validateTorrentDownloadResponse:response originalURLString:dataTask.originalRequest.URL.absoluteString])
+    {
+        completionHandler(NSURLSessionResponseBecomeDownload);
+        return;
+    }
+
+    completionHandler(NSURLSessionResponseCancel);
+}
+
+- (void)URLSession:(NSURLSession*)session
+                 dataTask:(NSURLSessionDataTask*)dataTask
+    didBecomeDownloadTask:(NSURLSessionDownloadTask*)downloadTask
+{
+    (void)session;
+    (void)dataTask;
+    (void)downloadTask;
+}
+
+- (void)URLSession:(NSURLSession*)session
+                 downloadTask:(NSURLSessionDownloadTask*)downloadTask
+    didFinishDownloadingToURL:(NSURL*)location
+{
+    (void)session;
+
+    [self openDownloadedTorrentAtURL:location
+                            response:downloadTask.response
+                   originalURLString:downloadTask.originalRequest.URL.absoluteString];
+}
+
+- (void)URLSession:(NSURLSession*)session task:(NSURLSessionTask*)task didCompleteWithError:(NSError*)error
+{
+    (void)session;
+
+    if (!error)
+    {
+        return;
+    }
+
+    NSString* originalURLString = task.originalRequest.URL.absoluteString;
+    NSString* currentURLString = task.currentRequest.URL.absoluteString ?: originalURLString;
+    [self showTorrentDownloadError:error originalURLString:originalURLString currentURLString:currentURLString];
+}
+
+#endif
 
 #pragma mark -
 
@@ -1660,6 +1881,21 @@ static void removeKeRangerRansomware()
             return;
         }
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+        [self.fSession getAllTasksWithCompletionHandler:^(NSArray* tasks) {
+            for (NSURLSessionTask* task in tasks)
+            {
+                if ([task.originalRequest.URL isEqual:url])
+                {
+                    NSLog(@"Already downloading %@", url);
+                    return;
+                }
+            }
+
+            NSURLSessionDataTask* download = [self.fSession dataTaskWithURL:url];
+            [download resume];
+        }];
+#else
         NSString* urlKey = url.absoluteString;
         if ([self.fURLDownloadTasks objectForKey:urlKey])
         {
@@ -1686,6 +1922,7 @@ static void removeKeRangerRansomware()
                   }];
         [self.fURLDownloadTasks setObject:task forKey:urlKey];
         [task resume];
+#endif
     }
 }
 
@@ -2006,6 +2243,11 @@ static void removeKeRangerRansomware()
 
     //set up helpers to remove from the table
     __block BOOL beganUpdate = NO;
+    void (^finishRemoval)(void) = ^{
+        [self removeTorrentsImpl:torrents deleteData:deleteData];
+
+        [self fullUpdateUI];
+    };
 
     void (^doTableRemoval)(NSMutableArray*, id) = ^(NSMutableArray* displayedTorrents, id parent) {
         NSIndexSet* indexes = [displayedTorrents indexesOfObjectsWithOptions:NSEnumerationConcurrent
@@ -2017,16 +2259,16 @@ static void removeKeRangerRansomware()
         {
             if (!beganUpdate)
             {
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+                [self.fTableView beginUpdates];
+#else
                 [NSAnimationContext beginGrouping]; //this has to be before we set the completion handler (#4874)
 
                 //we can't closeRemoveTorrent: until it's no longer in the GUI at all
-                NSAnimationContext.currentContext.completionHandler = ^{
-                    [self removeTorrentsImpl:torrents deleteData:deleteData];
-
-                    [self fullUpdateUI];
-                };
+                NSAnimationContext.currentContext.completionHandler = finishRemoval;
 
                 [self.fTableView beginUpdates];
+#endif
                 beganUpdate = YES;
             }
 
@@ -2054,7 +2296,11 @@ static void removeKeRangerRansomware()
         if (beganUpdate)
         {
             [self.fTableView endUpdates];
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+            finishRemoval();
+#else
             [NSAnimationContext endGrouping];
+#endif
         }
     }
 
@@ -2464,6 +2710,85 @@ static void removeKeRangerRansomware()
     self.fTotalTorrentsField.stringValue = totalTorrentsString;
 }
 
+#pragma mark - User Notifications
+
+- (void)deliverDownloadCompleteNotificationWithTorrent:(Torrent*)torrent location:(NSString*)location
+{
+    NSString* title = NSLocalizedString(@"Download Complete", "notification title");
+    NSMutableDictionary* userInfo = [NSMutableDictionary dictionaryWithObject:torrent.hashString forKey:kNotificationUserInfoHashKey];
+    if (location)
+    {
+        userInfo[kNotificationUserInfoLocationKey] = location;
+    }
+
+    [self deliverNotificationWithIdentifier:[@"Download Complete " stringByAppendingString:torrent.hashString] title:title body:torrent.name
+                                   userInfo:userInfo
+                              hasShowAction:YES];
+}
+
+- (void)deliverSeedingCompleteNotificationWithTorrent:(Torrent*)torrent location:(NSString*)location
+{
+    NSString* title = NSLocalizedString(@"Seeding Complete", "notification title");
+    NSMutableDictionary* userInfo = [NSMutableDictionary dictionaryWithObject:torrent.hashString forKey:kNotificationUserInfoHashKey];
+    if (location)
+    {
+        userInfo[kNotificationUserInfoLocationKey] = location;
+    }
+
+    [self deliverNotificationWithIdentifier:[@"Seeding Complete " stringByAppendingString:torrent.hashString] title:title body:torrent.name
+                                   userInfo:userInfo
+                              hasShowAction:YES];
+}
+
+- (void)deliverSpeedLimitChangedNotificationIsLimited:(BOOL)isLimited
+{
+    NSString* title = isLimited ? NSLocalizedString(@"Speed Limit Auto Enabled", "notification title") :
+                                  NSLocalizedString(@"Speed Limit Auto Disabled", "notification title");
+    NSString* body = NSLocalizedString(@"Bandwidth settings changed", "notification description");
+
+    [self deliverNotificationWithIdentifier:@"Bandwidth settings changed" title:title body:body userInfo:nil hasShowAction:NO];
+}
+
+- (void)deliverTorrentFileAutoAddedNotificationWithFileName:(NSString*)fileName
+{
+    NSString* title = NSLocalizedString(@"Torrent File Auto Added", "notification title");
+
+    [self deliverNotificationWithIdentifier:[@"Torrent File Auto Added " stringByAppendingString:fileName] title:title body:fileName
+                                   userInfo:nil
+                              hasShowAction:NO];
+}
+
+- (void)deliverNotificationWithIdentifier:(NSString*)identifier
+                                    title:(NSString*)title
+                                     body:(NSString*)body
+                                 userInfo:(NSDictionary*)userInfo
+                            hasShowAction:(BOOL)hasShowAction
+{
+#if TR_HAS_USER_NOTIFICATIONS
+    if (@available(macOS 10.14, *))
+    {
+        UNMutableNotificationContent* content = [[UNMutableNotificationContent alloc] init];
+        content.title = title;
+        content.body = body;
+        if (hasShowAction)
+        {
+            content.categoryIdentifier = kNotificationCategoryShow;
+        }
+        if (userInfo)
+        {
+            content.userInfo = userInfo;
+        }
+
+        UNNotificationRequest* request = [UNNotificationRequest requestWithIdentifier:identifier content:content trigger:nil];
+        [UNUserNotificationCenter.currentNotificationCenter addNotificationRequest:request withCompletionHandler:nil];
+    }
+#else
+    [self.fNotificationController deliverNotificationWithIdentifier:identifier title:title body:body userInfo:userInfo
+                                                     hasShowAction:hasShowAction];
+#endif
+}
+
+#if !TR_HAS_USER_NOTIFICATIONS
 #pragma mark - SystemNotificationControllerDelegate
 
 - (void)systemNotificationController:(SystemNotificationController*)controller
@@ -2477,14 +2802,47 @@ static void removeKeRangerRansomware()
 {
     [self didActivateNotificationByActionShowWithUserInfo:userInfo];
 }
+#endif
+
+#if TR_HAS_USER_NOTIFICATIONS
+#pragma mark - UNUserNotificationCenterDelegate
+
+- (void)userNotificationCenter:(UNUserNotificationCenter*)center
+       willPresentNotification:(UNNotification*)notification
+         withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler
+{
+    completionHandler((UNNotificationPresentationOptions)-1);
+}
+
+- (void)userNotificationCenter:(UNUserNotificationCenter*)center
+    didReceiveNotificationResponse:(UNNotificationResponse*)response
+             withCompletionHandler:(void (^)(void))completionHandler
+{
+    if (!response.notification.request.content.userInfo.count)
+    {
+        completionHandler();
+        return;
+    }
+
+    if ([response.actionIdentifier isEqualToString:UNNotificationDefaultActionIdentifier])
+    {
+        [self didActivateNotificationByDefaultActionWithUserInfo:response.notification.request.content.userInfo];
+    }
+    else if ([response.actionIdentifier isEqualToString:kNotificationActionShow])
+    {
+        [self didActivateNotificationByActionShowWithUserInfo:response.notification.request.content.userInfo];
+    }
+    completionHandler();
+}
+#endif
 
 - (void)didActivateNotificationByActionShowWithUserInfo:(NSDictionary*)userInfo
 {
-    Torrent* torrent = [self torrentForHash:userInfo[@"Hash"]];
+    Torrent* torrent = [self torrentForHash:userInfo[kNotificationUserInfoHashKey]];
     NSString* location = torrent.dataLocation;
     if (!location)
     {
-        location = userInfo[@"Location"];
+        location = userInfo[kNotificationUserInfoLocationKey];
     }
     if (location)
     {
@@ -2494,7 +2852,7 @@ static void removeKeRangerRansomware()
 
 - (void)didActivateNotificationByDefaultActionWithUserInfo:(NSDictionary*)userInfo
 {
-    Torrent* torrent = [self torrentForHash:userInfo[@"Hash"]];
+    Torrent* torrent = [self torrentForHash:userInfo[kNotificationUserInfoHashKey]];
     if (!torrent)
     {
         return;
@@ -2605,8 +2963,7 @@ static void removeKeRangerRansomware()
         }
 
         NSString* location = torrent.dataLocation;
-        [self.fNotificationController deliverDownloadCompleteNotificationWithTorrentName:torrent.name hashString:torrent.hashString
-                                                                                location:location];
+        [self deliverDownloadCompleteNotificationWithTorrent:torrent location:location];
 
         if (![self.fWindow isMainWindow])
         {
@@ -2642,8 +2999,7 @@ static void removeKeRangerRansomware()
     }
 
     NSString* location = torrent.dataLocation;
-    [self.fNotificationController deliverSeedingCompleteNotificationWithTorrentName:torrent.name hashString:torrent.hashString
-                                                                           location:location];
+    [self deliverSeedingCompleteNotificationWithTorrent:torrent location:location];
 
     //removing from the list calls fullUpdateUI
     if (torrent.removeWhenFinishSeeding)
@@ -3370,6 +3726,26 @@ static void removeKeRangerRansomware()
     {
         [self.fTableView endUpdates];
     }
+
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+    if (groupRows)
+    {
+        for (TorrentGroup* group in self.fDisplayedTorrents)
+        {
+            if ([self.fTableView isGroupCollapsed:group.groupIndex])
+            {
+                [self.fTableView collapseItem:group];
+            }
+            else
+            {
+                [self.fTableView expandItem:group];
+            }
+        }
+    }
+    [self.fTableView setNeedsDisplay:YES];
+    [self.fTableView displayIfNeeded];
+#endif
+
     [NSAnimationContext endGrouping];
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
@@ -3398,6 +3774,10 @@ static void removeKeRangerRansomware()
 {
     if (self.fGlobalPopoverShown)
     {
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+        [self.fLegacyGlobalPopover close];
+        self.fLegacyGlobalPopover = nil;
+#endif
         return;
     }
 
@@ -3423,6 +3803,10 @@ static void removeKeRangerRansomware()
     {
         [popover showRelativeToRect:senderView.bounds ofView:senderView preferredEdge:NSMaxYEdge];
     }
+
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+    self.fLegacyGlobalPopover = popover;
+#endif
 }
 
 //don't show multiple popovers when clicking the gear button repeatedly
@@ -3435,6 +3819,9 @@ static void removeKeRangerRansomware()
 {
     [self.fPositioningView removeFromSuperview];
     self.fGlobalPopoverShown = NO;
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+    self.fLegacyGlobalPopover = nil;
+#endif
 }
 
 - (void)menuNeedsUpdate:(NSMenu*)menu
@@ -3488,6 +3875,9 @@ static void removeKeRangerRansomware()
 {
     tr_sessionUseAltSpeed(self.fLib, [self.fDefaults boolForKey:@"SpeedLimit"]);
     [self.fStatusBar updateSpeedFieldsToolTips];
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    [self updateMountainLionSpeedLimitButton];
+#endif
 }
 
 - (void)altSpeedToggledCallbackIsLimited:(NSDictionary*)dict
@@ -3496,12 +3886,23 @@ static void removeKeRangerRansomware()
 
     [self.fDefaults setBool:isLimited forKey:@"SpeedLimit"];
     [self.fStatusBar updateSpeedFieldsToolTips];
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    [self updateMountainLionSpeedLimitButton];
+#endif
 
     if (![dict[@"ByUser"] boolValue])
     {
-        [self.fNotificationController deliverSpeedLimitChangedNotificationIsLimited:isLimited];
+        [self deliverSpeedLimitChangedNotificationIsLimited:isLimited];
     }
 }
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+- (void)updateMountainLionSpeedLimitButton
+{
+    self.fSpeedLimitButton.state = [self.fDefaults boolForKey:@"SpeedLimit"] ? NSControlStateValueOn : NSControlStateValueOff;
+    [self.fSpeedLimitButton setNeedsDisplay:YES];
+}
+#endif
 
 - (void)sound:(NSSound*)sound didFinishPlaying:(BOOL)finishedPlaying
 {
@@ -3605,7 +4006,7 @@ static void removeKeRangerRansomware()
 
         [self openFiles:@[ fullFile ] addType:AddTypeAuto forcePath:nil];
 
-        [self.fNotificationController deliverTorrentFileAutoAddedNotificationWithFileName:file];
+        [self deliverTorrentFileAutoAddedNotificationWithFileName:file];
     }
 }
 
@@ -3856,7 +4257,7 @@ static void removeKeRangerRansomware()
         //check if any torrent files can be added
         BOOL torrent = NO;
         NSArray* files = [pasteboard readObjectsForClasses:@[ NSURL.class ]
-                                                   options:@{ NSPasteboardURLReadingFileURLsOnlyKey : @YES }];
+                                                   options:@{ NSPasteboardURLReadingFileURLsOnlyKey : [NSNumber numberWithBool:YES] }];
         for (NSURL* fileToParse in files)
         {
             if ([[NSWorkspace.sharedWorkspace typeOfFile:fileToParse.path error:NULL] isEqualToString:@"org.bittorrent.torrent"] ||
@@ -3930,7 +4331,7 @@ static void removeKeRangerRansomware()
 
         //create an array of files that can be opened
         NSArray* files = [pasteboard readObjectsForClasses:@[ NSURL.class ]
-                                                   options:@{ NSPasteboardURLReadingFileURLsOnlyKey : @YES }];
+                                                   options:@{ NSPasteboardURLReadingFileURLsOnlyKey : [NSNumber numberWithBool:YES] }];
         NSMutableArray* filesToOpen = [NSMutableArray arrayWithCapacity:files.count];
         for (NSURL* file in files)
         {
@@ -4019,13 +4420,14 @@ static void removeKeRangerRansomware()
         return;
     }
 
-    NSView* bottomBar = self.fTotalTorrentsField.superview;
     NSView* layoutView = scrollView.superview ?: contentView;
+    NSView* candidateBottomBar = self.fTotalTorrentsField.superview;
+    NSView* bottomBar = candidateBottomBar != nil && candidateBottomBar != layoutView && candidateBottomBar != contentView ? candidateBottomBar : nil;
     for (NSLayoutConstraint* constraint in [layoutView.constraints copy])
     {
         id firstItem = constraint.firstItem;
         id secondItem = constraint.secondItem;
-        if (firstItem == scrollView || secondItem == scrollView || firstItem == bottomBar || secondItem == bottomBar)
+        if (firstItem == scrollView || secondItem == scrollView || (bottomBar != nil && (firstItem == bottomBar || secondItem == bottomBar)))
         {
             [layoutView removeConstraint:constraint];
         }
@@ -4033,28 +4435,28 @@ static void removeKeRangerRansomware()
 
     scrollView.translatesAutoresizingMaskIntoConstraints = YES;
     self.fTableView.translatesAutoresizingMaskIntoConstraints = YES;
-    bottomBar.translatesAutoresizingMaskIntoConstraints = YES;
 
-    NSRect layoutBounds = layoutView.bounds;
-    CGFloat bottomHeight = bottomBar != nil ? MAX(24.0, NSHeight(bottomBar.frame)) : 0.0;
     if (bottomBar != nil)
     {
+        bottomBar.translatesAutoresizingMaskIntoConstraints = YES;
+        NSRect layoutBounds = layoutView.bounds;
+        CGFloat bottomHeight = MAX(24.0, NSHeight(bottomBar.frame));
         bottomBar.frame = NSMakeRect(0.0, 0.0, NSWidth(layoutBounds), bottomHeight);
         bottomBar.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
-    }
 
-    CGFloat accessoryHeight = 0.0;
-    if (self.fStatusBar != nil && !self.fStatusBar.isHidden)
-    {
-        accessoryHeight += NSHeight(self.fStatusBar.view.frame);
-    }
-    if (self.fFilterBar != nil && !self.fFilterBar.isHidden)
-    {
-        accessoryHeight += NSHeight(self.fFilterBar.view.frame);
-    }
+        CGFloat accessoryHeight = 0.0;
+        if (self.fStatusBar != nil && !self.fStatusBar.isHidden)
+        {
+            accessoryHeight += NSHeight(self.fStatusBar.view.frame);
+        }
+        if (self.fFilterBar != nil && !self.fFilterBar.isHidden)
+        {
+            accessoryHeight += NSHeight(self.fFilterBar.view.frame);
+        }
 
-    CGFloat scrollHeight = MAX(1.0, NSHeight(layoutBounds) - bottomHeight - accessoryHeight);
-    scrollView.frame = NSMakeRect(0.0, bottomHeight, NSWidth(layoutBounds), scrollHeight);
+        CGFloat scrollHeight = MAX(1.0, NSHeight(layoutBounds) - bottomHeight - accessoryHeight);
+        scrollView.frame = NSMakeRect(0.0, bottomHeight, NSWidth(layoutBounds), scrollHeight);
+    }
     scrollView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [scrollView tile];
 
@@ -4644,6 +5046,23 @@ static void removeKeRangerRansomware()
 
     return YES;
 }
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 110000
+- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item
+{
+    if ([(id)item isKindOfClass:NSToolbarItem.class])
+    {
+        return [self validateToolbarItem:(NSToolbarItem*)item];
+    }
+
+    if ([(id)item isKindOfClass:NSMenuItem.class])
+    {
+        return [self validateMenuItem:(NSMenuItem*)item];
+    }
+
+    return YES;
+}
+#endif
 
 - (BOOL)validateMenuItem:(NSMenuItem*)menuItem
 {

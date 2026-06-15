@@ -101,8 +101,13 @@ static NSImage* TRLegacySystemSymbolImage(NSString* symbolName)
     [image lockFocus];
     [[NSColor blackColor] setStroke];
     [[NSColor blackColor] setFill];
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 110000
+    [NSBezierPath setDefaultLineCapStyle:NSLineCapStyleRound];
+    [NSBezierPath setDefaultLineJoinStyle:NSLineJoinStyleRound];
+#else
     [NSBezierPath setDefaultLineCapStyle:NSRoundLineCapStyle];
     [NSBezierPath setDefaultLineJoinStyle:NSRoundLineJoinStyle];
+#endif
     [NSBezierPath setDefaultLineWidth:1.5];
 
     if ([symbolName isEqualToString:@"doc.badge.plus"])

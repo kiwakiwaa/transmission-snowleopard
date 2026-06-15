@@ -11,7 +11,7 @@
 @property(nonatomic, readonly) NSString* name;
 @property(nonatomic, readonly) NSString* path;
 
-@property(nonatomic, weak, readonly) Torrent* torrent;
+@property(nonatomic, TR_OBJC_WEAK, readonly) Torrent* torrent;
 
 @property(nonatomic, readonly) uint64_t size;
 @property(nonatomic, readonly) NSImage* icon;

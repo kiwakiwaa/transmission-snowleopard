@@ -384,6 +384,18 @@ static NSTimeInterval const kUpdateSeconds = 0.75;
     return YES;
 }
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 110000
+- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item
+{
+    if ([(id)item isKindOfClass:NSMenuItem.class])
+    {
+        return [self validateMenuItem:(NSMenuItem*)item];
+    }
+
+    return YES;
+}
+#endif
+
 - (void)changeLevel:(id)sender
 {
     NSInteger level;

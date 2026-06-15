@@ -4,6 +4,216 @@
 
 #import <AppKit/AppKit.h>
 
+#import "ObjectiveCCompatibility.h"
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+typedef NSInteger NSLayoutAttribute;
+typedef NSInteger NSLayoutRelation;
+typedef NSUInteger NSLayoutFormatOptions;
+typedef NSUInteger NSTableViewAnimationOptions;
+
+static NSLayoutAttribute const NSLayoutAttributeNotAnAttribute = 0;
+static NSLayoutAttribute const NSLayoutAttributeBottom = 4;
+static NSLayoutAttribute const NSLayoutAttributeWidth = 7;
+static NSLayoutAttribute const NSLayoutAttributeHeight = 8;
+
+static NSLayoutRelation const NSLayoutRelationLessThanOrEqual = -1;
+static NSLayoutRelation const NSLayoutRelationEqual = 0;
+static NSLayoutRelation const NSLayoutRelationGreaterThanOrEqual = 1;
+
+static NSTableViewAnimationOptions const NSTableViewAnimationSlideLeft = 0;
+static NSTableViewAnimationOptions const NSTableViewAnimationSlideDown = 0;
+static NSTableViewAnimationOptions const NSTableViewAnimationSlideUp = 0;
+static NSTableViewAnimationOptions const NSTableViewAnimationEffectFade = 0;
+
+#ifndef NSWindowCollectionBehaviorFullScreenPrimary
+#define NSWindowCollectionBehaviorFullScreenPrimary NSWindowCollectionBehaviorFullScreenNone
+#endif
+
+static inline uint32_t arc4random_uniform(uint32_t upper_bound)
+{
+    return upper_bound == 0 ? 0 : arc4random() % upper_bound;
+}
+
+#undef NSAssert
+#define NSAssert(condition, desc, ...) \
+    do \
+    { \
+        if (!(condition)) \
+        { \
+            [NSException raise:NSInternalInconsistencyException format:(desc), ##__VA_ARGS__]; \
+        } \
+    } while (0)
+
+@interface NSLayoutConstraint : NSObject
+@property(nonatomic) CGFloat constant;
+@property(nonatomic, getter=isActive) BOOL active;
+@property(nonatomic, assign) id firstItem;
+@property(nonatomic, assign) id secondItem;
+@property(nonatomic) NSLayoutAttribute firstAttribute;
+@property(nonatomic, copy) NSDictionary* animations;
+- (id)animator;
++ (instancetype)constraintWithItem:(id)view1
+                         attribute:(NSLayoutAttribute)attr1
+                         relatedBy:(NSLayoutRelation)relation
+                            toItem:(id)view2
+                         attribute:(NSLayoutAttribute)attr2
+                        multiplier:(CGFloat)multiplier
+                          constant:(CGFloat)c;
++ (NSArray*)constraintsWithVisualFormat:(NSString*)format options:(NSLayoutFormatOptions)opts metrics:(NSDictionary*)metrics views:(NSDictionary*)views;
++ (void)activateConstraints:(NSArray*)constraints;
++ (void)deactivateConstraints:(NSArray*)constraints;
+@end
+
+@interface NSView (TRLegacyAutoLayout)
+@property(nonatomic) BOOL translatesAutoresizingMaskIntoConstraints;
+@property(nonatomic, copy) NSString* identifier;
+@property(nonatomic, readonly) NSSize fittingSize;
+@property(nonatomic, readonly) NSArray* constraints;
+- (void)addConstraint:(NSLayoutConstraint*)constraint;
+- (void)addConstraints:(NSArray*)constraints;
+- (void)removeConstraint:(NSLayoutConstraint*)constraint;
+- (void)removeConstraints:(NSArray*)constraints;
+- (void)layout;
+@end
+
+@interface NSTableCellView : NSView
+@property(nonatomic, retain) NSTextField* textField;
+@property(nonatomic, retain) NSImageView* imageView;
+@property(nonatomic, retain) id objectValue;
+@property(nonatomic) NSBackgroundStyle backgroundStyle;
+@end
+
+@interface NSTableView (TRLegacyTableView)
+@property(nonatomic) BOOL floatsGroupRows;
+- (void)beginUpdates;
+- (void)endUpdates;
+- (void)moveRowAtIndex:(NSInteger)oldIndex toIndex:(NSInteger)newIndex;
+- (void)insertRowsAtIndexes:(NSIndexSet*)indexes withAnimation:(NSTableViewAnimationOptions)animationOptions;
+- (void)removeRowsAtIndexes:(NSIndexSet*)indexes withAnimation:(NSTableViewAnimationOptions)animationOptions;
+- (id)makeViewWithIdentifier:(NSString*)identifier owner:(id)owner;
+- (NSView*)viewAtColumn:(NSInteger)column row:(NSInteger)row makeIfNecessary:(BOOL)makeIfNecessary;
+- (NSInteger)rowForView:(NSView*)view;
+@end
+
+@interface NSBundle (TRLegacyNibLoading)
+- (BOOL)loadNibNamed:(NSString*)nibName owner:(id)owner topLevelObjects:(NSArray**)topLevelObjects;
+@end
+
+@interface NSFileManager (TRLegacyTrash)
+- (BOOL)trashItemAtURL:(NSURL*)url resultingItemURL:(NSURL**)outResultingURL error:(NSError**)error;
+@end
+
+@interface NSOutlineView (TRLegacyTableAnimations)
+- (void)beginUpdates;
+- (void)endUpdates;
+- (void)insertItemsAtIndexes:(NSIndexSet*)indexes inParent:(id)parent withAnimation:(NSTableViewAnimationOptions)animationOptions;
+- (void)removeItemsAtIndexes:(NSIndexSet*)indexes inParent:(id)parent withAnimation:(NSTableViewAnimationOptions)animationOptions;
+- (void)moveItemAtIndex:(NSInteger)fromIndex inParent:(id)oldParent toIndex:(NSInteger)toIndex inParent:(id)newParent;
+@end
+
+@interface NSAnimationContext (TRLegacyAnimationContext)
+@property(nonatomic) BOOL allowsImplicitAnimation;
+@property(nonatomic, copy) void (^completionHandler)(void);
++ (void)runAnimationGroup:(void (^)(NSAnimationContext* context))changes completionHandler:(void (^)(void))completionHandler;
+@end
+
+@interface NSImage (TRLegacyImageDrawing)
++ (NSImage*)imageWithSize:(NSSize)size flipped:(BOOL)drawingHandlerShouldBeCalledWithFlippedContext drawingHandler:(BOOL (^)(NSRect dstRect))drawingHandler;
+@end
+
+@protocol NSWindowRestoration
+@end
+
+@interface NSWindow (TRLegacyRestoration)
+@property(nonatomic) BOOL restorable;
+@property(nonatomic, assign) Class restorationClass;
+- (NSRect)convertRectToScreen:(NSRect)rect;
+@end
+
+@class NSSharingService;
+@class NSSharingServicePicker;
+@class NSSharingContentScope;
+
+@protocol NSSharingServiceDelegate
+@end
+
+@protocol NSSharingServicePickerDelegate
+@end
+
+@interface NSSharingService : NSObject
+@property(nonatomic, copy) NSString* title;
+@property(nonatomic, retain) NSImage* image;
+@property(nonatomic, assign) id<NSSharingServiceDelegate> delegate;
++ (NSArray*)sharingServicesForItems:(NSArray*)items;
+- (void)performWithItems:(NSArray*)items;
+@end
+
+@interface NSSharingServicePicker : NSObject
+@property(nonatomic, assign) id<NSSharingServicePickerDelegate> delegate;
+- (instancetype)initWithItems:(NSArray*)items;
+- (void)showRelativeToRect:(NSRect)positioningRect ofView:(NSView*)positioningView preferredEdge:(NSRectEdge)preferredEdge;
+@end
+
+@interface NSSharingContentScope : NSObject
+@end
+
+#import "LegacyPopover.h"
+
+typedef NSUInteger NSRegularExpressionOptions;
+typedef NSUInteger NSMatchingOptions;
+
+@interface NSRegularExpression : NSObject
+{
+@protected
+    BOOL fMatchesLinks;
+}
++ (instancetype)regularExpressionWithPattern:(NSString*)pattern options:(NSRegularExpressionOptions)options error:(NSError**)error;
+- (NSArray*)matchesInString:(NSString*)string options:(NSMatchingOptions)options range:(NSRange)range;
+- (NSTextCheckingResult*)firstMatchInString:(NSString*)string options:(NSMatchingOptions)options range:(NSRange)range;
+@end
+
+@interface NSDataDetector : NSRegularExpression
++ (instancetype)dataDetectorWithTypes:(uint64_t)checkingTypes error:(NSError**)error;
+@end
+
+@protocol NSURLConnectionDataDelegate
+@end
+
+@protocol NSURLConnectionDownloadDelegate
+@end
+
+#ifndef NSImageNameShareTemplate
+#define NSImageNameShareTemplate @"NSShareTemplate"
+#endif
+
+#ifndef NSFullScreenWindowMask
+#define NSFullScreenWindowMask 0
+#endif
+
+#ifndef DISPATCH_QUEUE_SERIAL
+#define DISPATCH_QUEUE_SERIAL NULL
+#endif
+#endif
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1080
+@interface NSArray (TRObjectSubscripting)
+- (id)objectAtIndexedSubscript:(NSUInteger)idx;
+@end
+
+@interface NSMutableArray (TRObjectSubscripting)
+- (void)setObject:(id)obj atIndexedSubscript:(NSUInteger)idx;
+@end
+
+@interface NSDictionary (TRObjectSubscripting)
+- (id)objectForKeyedSubscript:(id)key;
+@end
+
+@interface NSMutableDictionary (TRObjectSubscripting)
+- (void)setObject:(id)obj forKeyedSubscript:(id<NSCopying>)key;
+@end
+#endif
+
 #import "LegacyColors.h"
 #import "LegacyConstraints.h"
 #import "LegacyPowerActivity.h"
@@ -73,6 +283,18 @@ static inline NSEvent* NSAppCurrentEvent(void)
 
 #ifndef API_AVAILABLE
 #define API_AVAILABLE(...)
+#endif
+
+#ifndef NS_UNAVAILABLE
+#define NS_UNAVAILABLE
+#endif
+
+#ifndef CFBridgingRetain
+#define CFBridgingRetain(X) ((__bridge_retained CFTypeRef)(X))
+#endif
+
+#ifndef CFBridgingRelease
+#define CFBridgingRelease(X) ((__bridge_transfer id)(X))
 #endif
 
 #ifndef NS_TYPED_EXTENSIBLE_ENUM

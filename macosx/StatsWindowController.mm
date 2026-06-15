@@ -140,20 +140,35 @@ tr_session* fLib = NULL;
     auto const statsAll = tr_sessionGetCumulativeStats(fLib);
     auto const statsSession = tr_sessionGetStats(fLib);
 
+    self.fUploadedField.stringValue = [NSString stringForFileSize:statsSession.uploadedBytes];
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
     NSByteCountFormatter* byteFormatter = [[NSByteCountFormatter alloc] init];
     byteFormatter.allowedUnits = NSByteCountFormatterUseBytes;
-
-    self.fUploadedField.stringValue = [NSString stringForFileSize:statsSession.uploadedBytes];
     self.fUploadedField.toolTip = [byteFormatter stringFromByteCount:statsSession.uploadedBytes];
+#else
+    self.fUploadedField.toolTip = [NSString stringWithFormat:@"%llu bytes", static_cast<unsigned long long>(statsSession.uploadedBytes)];
+#endif
     self.fUploadedAllField.stringValue = [NSString
         stringWithFormat:NSLocalizedString(@"%@ total", "stats total"), [NSString stringForFileSize:statsAll.uploadedBytes]];
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
     self.fUploadedAllField.toolTip = [byteFormatter stringFromByteCount:statsAll.uploadedBytes];
+#else
+    self.fUploadedAllField.toolTip = [NSString stringWithFormat:@"%llu bytes", static_cast<unsigned long long>(statsAll.uploadedBytes)];
+#endif
 
     self.fDownloadedField.stringValue = [NSString stringForFileSize:statsSession.downloadedBytes];
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
     self.fDownloadedField.toolTip = [byteFormatter stringFromByteCount:statsSession.downloadedBytes];
+#else
+    self.fDownloadedField.toolTip = [NSString stringWithFormat:@"%llu bytes", static_cast<unsigned long long>(statsSession.downloadedBytes)];
+#endif
     self.fDownloadedAllField.stringValue = [NSString
         stringWithFormat:NSLocalizedString(@"%@ total", "stats total"), [NSString stringForFileSize:statsAll.downloadedBytes]];
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
     self.fDownloadedAllField.toolTip = [byteFormatter stringFromByteCount:statsAll.downloadedBytes];
+#else
+    self.fDownloadedAllField.toolTip = [NSString stringWithFormat:@"%llu bytes", static_cast<unsigned long long>(statsAll.downloadedBytes)];
+#endif
 
     self.fRatioField.stringValue = [NSString stringForRatio:statsSession.ratio];
 

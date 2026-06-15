@@ -15,7 +15,7 @@
 
 @property(nonatomic, class, readonly) PowerManager* shared;
 
-@property(nonatomic, weak) id<PowerManagerDelegate> delegate;
+@property(nonatomic, TR_OBJC_WEAK) id<PowerManagerDelegate> delegate;
 @property(nonatomic) BOOL shouldPreventSleep;
 
 - (instancetype)init NS_UNAVAILABLE;

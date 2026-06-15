@@ -25,7 +25,7 @@
 #import "ProgressBarView.h"
 
 @interface LegacyTorrentTableCell : NSCell
-@property(nonatomic, weak) TorrentTableView* tableView;
+@property(nonatomic, TR_OBJC_WEAK) TorrentTableView* tableView;
 @property(nonatomic, strong) id legacyObjectValue;
 @end
 
@@ -236,6 +236,47 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 
 @implementation TorrentTableView
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+- (void)configureLegacyTorrentColumn
+{
+    NSTableColumn* torrentColumn = [self tableColumnWithIdentifier:@"Torrent"];
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+    // Snow's main XIB currently uses "Torrent"; these fallbacks keep older or edited legacy XIBs cell-renderable.
+    if (torrentColumn == nil)
+    {
+        torrentColumn = [self tableColumnWithIdentifier:@"Group"];
+        torrentColumn.identifier = @"Torrent";
+    }
+    if (torrentColumn == nil && self.tableColumns.count > 0)
+    {
+        torrentColumn = [self.tableColumns objectAtIndex:0];
+        torrentColumn.identifier = @"Torrent";
+    }
+#endif
+    if (torrentColumn == nil)
+    {
+        return;
+    }
+
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+    self.outlineTableColumn = torrentColumn;
+
+    NSArray* columns = [self.tableColumns copy];
+    for (NSTableColumn* column in columns)
+    {
+        if (column != torrentColumn)
+        {
+            [self removeTableColumn:column];
+        }
+    }
+#endif
+
+    LegacyTorrentTableCell* cell = [[LegacyTorrentTableCell alloc] init];
+    cell.tableView = self;
+    [torrentColumn setDataCell:cell];
+}
+#endif
+
 - (instancetype)initWithCoder:(NSCoder*)decoder
 {
     if ((self = [super initWithCoder:decoder]))
@@ -264,10 +305,7 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
         self.indentationPerLevel = 0;
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
-        // The 10.8 main-menu XIB must stay cell-based so this renderer receives row object values.
-        LegacyTorrentTableCell* cell = [[LegacyTorrentTableCell alloc] init];
-        cell.tableView = self;
-        [[self tableColumnWithIdentifier:@"Torrent"] setDataCell:cell];
+        [self configureLegacyTorrentColumn];
 #endif
 
         _piecesBarPercent = [_fDefaults boolForKey:@"PiecesBar"] ? 1.0 : 0.0;
@@ -283,6 +321,9 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 - (void)awakeFromNib
 {
     [super awakeFromNib];
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090 && defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+    [self configureLegacyTorrentColumn];
+#endif
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(refreshTorrentTable) name:@"RefreshTorrentTable"
                                              object:nil];
 }

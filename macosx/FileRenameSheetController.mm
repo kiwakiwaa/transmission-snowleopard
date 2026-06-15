@@ -11,10 +11,10 @@ typedef void (^CompletionBlock)(BOOL);
 
 @interface FileRenameSheetController ()<NSControlTextEditingDelegate>
 
-@property(nonatomic, weak) IBOutlet NSTextField* labelField;
-@property(nonatomic, weak) IBOutlet NSTextField* inputField;
-@property(nonatomic, weak) IBOutlet NSButton* renameButton;
-@property(nonatomic, weak) IBOutlet NSButton* cancelButton;
+@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* labelField;
+@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* inputField;
+@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSButton* renameButton;
+@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSButton* cancelButton;
 
 @property(nonatomic) Torrent* torrent;
 @property(nonatomic) FileListNode* node;

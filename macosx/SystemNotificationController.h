@@ -4,6 +4,18 @@
 
 #import <Foundation/Foundation.h>
 
+#ifndef __has_include
+#define __has_include(x) 0
+#endif
+
+#if __has_include(<UserNotifications/UserNotifications.h>)
+#define TR_HAS_USER_NOTIFICATIONS 1
+#else
+#define TR_HAS_USER_NOTIFICATIONS 0
+#endif
+
+#if !TR_HAS_USER_NOTIFICATIONS
+
 @class SystemNotificationController;
 
 @protocol SystemNotificationControllerDelegate<NSObject>
@@ -17,18 +29,17 @@
 
 @interface SystemNotificationController : NSObject
 
-@property(nonatomic, weak) id<SystemNotificationControllerDelegate> delegate;
+@property(nonatomic, TR_OBJC_WEAK) id<SystemNotificationControllerDelegate> delegate;
 
 - (void)configureUserNotifications;
 - (void)handleLaunchNotificationFromApplicationNotification:(NSNotification*)notification;
 
-- (void)deliverDownloadCompleteNotificationWithTorrentName:(NSString*)torrentName
-                                                hashString:(NSString*)hashString
-                                                  location:(NSString*)location;
-- (void)deliverSeedingCompleteNotificationWithTorrentName:(NSString*)torrentName
-                                               hashString:(NSString*)hashString
-                                                 location:(NSString*)location;
-- (void)deliverSpeedLimitChangedNotificationIsLimited:(BOOL)isLimited;
-- (void)deliverTorrentFileAutoAddedNotificationWithFileName:(NSString*)fileName;
+- (void)deliverNotificationWithIdentifier:(NSString*)identifier
+                                    title:(NSString*)title
+                                     body:(NSString*)body
+                                 userInfo:(NSDictionary*)userInfo
+                            hasShowAction:(BOOL)hasShowAction;
 
 @end
+
+#endif

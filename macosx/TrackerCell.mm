@@ -6,7 +6,10 @@
 #include <libtransmission/web-utils.h> //tr_addressIsIP()
 
 #import "CocoaCompatibility.h"
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
 #import "LegacyURLRequest.h"
+#endif
 
 #import "TrackerCell.h"
 #import "TrackerNode.h"
@@ -24,7 +27,9 @@ static CGFloat const kCountWidth = 60.0;
 // make the favicons accessible to all tracker cells
 static NSCache* fTrackerIconCache;
 static NSMutableSet* fTrackerIconLoading;
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
 static NSMutableDictionary* fTrackerIconTasks;
+#endif
 
 @interface TrackerCell ()
 
@@ -44,7 +49,9 @@ static NSMutableDictionary* fTrackerIconTasks;
 
     fTrackerIconCache = [[NSCache alloc] init];
     fTrackerIconLoading = [[NSMutableSet alloc] init];
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
     fTrackerIconTasks = [[NSMutableDictionary alloc] init];
+#endif
 }
 
 - (instancetype)init
@@ -208,6 +215,38 @@ static NSMutableDictionary* fTrackerIconTasks;
     NSURLRequest* request = [NSURLRequest requestWithURL:[NSURL URLWithString:favIconUrl] cachePolicy:NSURLRequestUseProtocolCachePolicy
                                          timeoutInterval:30.0];
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+    NSURLSessionDataTask* task = [NSURLSession.sharedSession
+        dataTaskWithRequest:request completionHandler:^(NSData* iconData, NSURLResponse* response, NSError* error) {
+            if (error)
+            {
+                NSLog(@"Unable to get tracker icon: task failed (%@)", error.localizedDescription);
+                return;
+            }
+            BOOL ok = ((NSHTTPURLResponse*)response).statusCode == 200 ? YES : NO;
+            if (!ok)
+            {
+                NSLog(@"Unable to get tracker icon: status code not OK (%ld)", (long)((NSHTTPURLResponse*)response).statusCode);
+                return;
+            }
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSImage* icon = [[NSImage alloc] initWithData:iconData];
+                if (icon)
+                {
+                    [fTrackerIconCache setObject:icon forKey:baseAddress];
+
+                    self.controlView.needsDisplay = YES;
+                }
+                else
+                {
+                    [fTrackerIconCache setObject:[NSNull null] forKey:baseAddress];
+                }
+
+                [fTrackerIconLoading removeObject:baseAddress];
+            });
+        }];
+#else
     TRURLRequestTask* task = [TRURLRequestTask
         dataTaskWithRequest:request completionHandler:^(NSData* iconData, NSURLResponse* response, NSError* error) {
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -244,6 +283,7 @@ static NSMutableDictionary* fTrackerIconTasks;
             });
         }];
     [fTrackerIconTasks setObject:task forKey:baseAddress];
+#endif
     [task resume];
 }
 

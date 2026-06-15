@@ -133,5 +133,6 @@ void TRLayoutLegacyTitlebarAccessoryWindow(NSWindow* window)
 #else
 void TRLayoutLegacyTitlebarAccessoryWindow(NSWindow* window)
 {
+    (void)window;
 }
 #endif

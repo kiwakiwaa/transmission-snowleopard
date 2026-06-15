@@ -3,8 +3,74 @@ if(CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS TR_MACOS_LEGACY_SUPPORT_MINIMUM)
     message(FATAL_ERROR "Targeting macOS versions before ${TR_MACOS_LEGACY_SUPPORT_MINIMUM} is not supported for the macOS project, please adjust CMAKE_OSX_DEPLOYMENT_TARGET (${CMAKE_OSX_DEPLOYMENT_TARGET})")
 endif()
 
-find_program(ACTOOL_EXECUTABLE actool REQUIRED)
+set(TR_MACOS_USE_SOURCE_IMAGE_ASSETS OFF)
+if(TR_MACOS_SNOW_LEOPARD_COMPAT)
+    set(TR_MACOS_USE_SOURCE_IMAGE_ASSETS ON)
+endif()
+
 find_program(CODESIGN_EXECUTABLE codesign REQUIRED)
+find_program(XCRUN_EXECUTABLE xcrun)
+if(XCRUN_EXECUTABLE)
+    execute_process(
+        COMMAND ${XCRUN_EXECUTABLE} -find codesign_allocate
+        OUTPUT_VARIABLE TR_MACOS_XCRUN_CODESIGN_ALLOCATE_EXECUTABLE
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE TR_MACOS_XCRUN_CODESIGN_ALLOCATE_RESULT
+        ERROR_QUIET)
+    if(TR_MACOS_XCRUN_CODESIGN_ALLOCATE_RESULT EQUAL 0 AND EXISTS "${TR_MACOS_XCRUN_CODESIGN_ALLOCATE_EXECUTABLE}")
+        set(CODESIGN_ALLOCATE_EXECUTABLE "${TR_MACOS_XCRUN_CODESIGN_ALLOCATE_EXECUTABLE}"
+            CACHE FILEPATH "codesign_allocate executable" FORCE)
+    endif()
+endif()
+if(NOT CODESIGN_ALLOCATE_EXECUTABLE)
+    find_program(CODESIGN_ALLOCATE_EXECUTABLE codesign_allocate)
+endif()
+if(TR_MACOS_USE_SOURCE_IMAGE_ASSETS)
+    find_program(SIPS_EXECUTABLE sips REQUIRED)
+else()
+    find_program(ACTOOL_EXECUTABLE actool REQUIRED)
+endif()
+
+set(TR_OBJC_WEAK_PROPERTY weak)
+set(TR_OBJC_WEAK_REF __weak)
+set(TR_MACOS_OBJC_ARC_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:-fobjc-arc>")
+set(TR_MACOS_OBJC_WEAK_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:-fobjc-weak>")
+set(TR_MACOS_ARCLITE_LINK_OPTIONS)
+if(TR_MACOS_SNOW_LEOPARD_COMPAT)
+    set(TR_MACOS_OBJC_WEAK_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:SHELL:-Xclang -fobjc-runtime-has-weak>")
+
+    if(NOT TR_MACOS_ARCLITE_LIBRARY OR NOT EXISTS "${TR_MACOS_ARCLITE_LIBRARY}")
+        message(FATAL_ERROR "Snow Leopard ARC builds require libarclite_macosx.a, but TR_MACOS_ARCLITE_LIBRARY is not set")
+    endif()
+
+    list(APPEND TR_MACOS_ARCLITE_LINK_OPTIONS "$<$<LINK_LANGUAGE:C,CXX>:-Wl,-force_load,${TR_MACOS_ARCLITE_LIBRARY}>")
+
+    # ARC-lite patches these lazy runtime/class references on 10.6 at load time.
+    foreach(TR_MACOS_ARCLITE_SYMBOL IN ITEMS
+            _objc_retain
+            _objc_release
+            _objc_autorelease
+            _objc_retainAutorelease
+            _objc_retainAutoreleaseReturnValue
+            _objc_retainAutoreleasedReturnValue
+            _objc_unsafeClaimAutoreleasedReturnValue
+            _objc_autoreleaseReturnValue
+            _objc_storeStrong
+            _objc_retainBlock
+            _objc_autoreleasePoolPush
+            _objc_autoreleasePoolPop
+            _objc_alloc
+            _objc_allocWithZone
+            _objc_alloc_init
+            _OBJC_CLASS_$_NSOrderedSet
+            _OBJC_CLASS_$_NSMutableOrderedSet)
+        list(APPEND TR_MACOS_ARCLITE_LINK_OPTIONS "$<$<LINK_LANGUAGE:C,CXX>:-Wl,-U,${TR_MACOS_ARCLITE_SYMBOL}>")
+    endforeach()
+endif()
+
+add_compile_definitions(
+    TR_OBJC_WEAK=${TR_OBJC_WEAK_PROPERTY}
+    TR_OBJC_WEAK_REF=${TR_OBJC_WEAK_REF})
 
 set(MAC_BUNDLE_NAME Transmission)
 
@@ -15,10 +81,10 @@ add_compile_options(
     "$<$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang>:-fno-modules;-Xclang;-fno-cxx-modules>"
 
     # equivalent of XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES for this directory
-    $<$<COMPILE_LANGUAGE:C,CXX>:-fobjc-arc>
+    ${TR_MACOS_OBJC_ARC_COMPILE_OPTIONS}
 
     # equivalent of XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_WEAK YES for this directory
-    $<$<COMPILE_LANGUAGE:C,CXX>:-fobjc-weak>
+    ${TR_MACOS_OBJC_WEAK_COMPILE_OPTIONS}
 
     # GNU extensions are good practice in Objective-C
     $<$<COMPILE_LANGUAGE:C,CXX>:-Wno-gnu>
@@ -28,7 +94,8 @@ add_compile_options(
 
 add_link_options(
     # equivalent of XCODE_ATTRIBUTE_DEAD_CODE_STRIPPING YES for this directory
-    $<$<LINK_LANGUAGE:C,CXX>:-dead_strip>)
+    $<$<LINK_LANGUAGE:C,CXX>:-dead_strip>
+    ${TR_MACOS_ARCLITE_LINK_OPTIONS})
 
 if(CMAKE_OSX_DEPLOYMENT_TARGET VERSION_GREATER_EQUAL 12.0)
     add_subdirectory(QuickLookExtension)
@@ -82,6 +149,7 @@ target_sources(${TR_NAME}-mac
         CocoaCompatibility.mm
         ColorTextField.h
         ColorTextField.mm
+        ObjectiveCCompatibility.h
         Controller.h
         Controller.mm
         CreatorWindowController.h
@@ -100,6 +168,8 @@ target_sources(${TR_NAME}-mac
         FileListNode.mm
         FileCheckCellView.h
         FileCheckCellView.mm
+        FileDescriptorLimit.h
+        FileDescriptorLimit.mm
         FileNameCellView.h
         FileNameCellView.mm
         FileOutlineController.h
@@ -153,12 +223,14 @@ target_sources(${TR_NAME}-mac
         LegacyFormatters.mm
         LegacyPowerActivity.h
         LegacyPowerActivity.mm
+        LegacyPopover.h
         LegacySegmentedControl.h
         LegacySegmentedControl.mm
         LegacySheets.h
         LegacySheets.mm
         LegacyStackView.h
         LegacyStackView.mm
+        LegacySubscripting.mm
         LegacySymbols.h
         LegacySymbols.mm
         LegacyTitlebarAccessory.h
@@ -243,9 +315,19 @@ target_sources(${TR_NAME}-mac
         WebSeedTableView.h
         WebSeedTableView.mm)
 
+if(TR_MACOS_SNOW_LEOPARD_COMPAT)
+    target_sources(${TR_NAME}-mac
+        PRIVATE
+            LegacyPopover.mm
+            PLWeakCompatibilityStubs.h
+            PLWeakCompatibilityStubs.mm)
+endif()
+
 target_compile_definitions(${TR_NAME}-mac
     PRIVATE
-        TR_ENABLE_SPARKLE=$<BOOL:${TR_ENABLE_SPARKLE}>)
+        TR_ENABLE_SPARKLE=$<BOOL:${TR_ENABLE_SPARKLE}>
+        TR_RAISE_FILE_DESCRIPTOR_LIMIT=$<BOOL:${TR_RAISE_FILE_DESCRIPTOR_LIMIT}>
+        TR_MACOS_SNOW_LEOPARD_COMPAT=$<BOOL:${TR_MACOS_SNOW_LEOPARD_COMPAT}>)
 
 if(TR_ENABLE_SPARKLE)
     target_sources(${TR_NAME}-mac
@@ -253,7 +335,7 @@ if(TR_ENABLE_SPARKLE)
             SparkleProxy.mm)
 endif()
 
-if(TR_MACOS_LEGACY_COMPAT)
+if(TR_MACOS_MOUNTAIN_LION_COMPAT)
     target_compile_options(${TR_NAME}-mac PRIVATE
         -include ${CMAKE_CURRENT_SOURCE_DIR}/CocoaCompatibility.h
         -Wno-nullability-completeness)
@@ -270,7 +352,7 @@ set(XIB_FILES
     MessageWindow.xib
     StatusBar.xib
     URLSheetWindow.xib)
-if(NOT TR_MACOS_LEGACY_COMPAT)
+if(NOT (TR_MACOS_MOUNTAIN_LION_COMPAT AND CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.9))
     list(APPEND XIB_FILES
         FilterBar.xib
         StatsWindow.xib)
@@ -355,35 +437,60 @@ endforeach()
 set(COMPILED_IMAGE_ASSETS
     "${CMAKE_CURRENT_BINARY_DIR}/${APPICON_NAME}.icns")
 
+set(TR_LEGACY_IMAGE_ASSET_COMMANDS)
 if(TR_MACOS_LEGACY_COMPAT)
     foreach(IMG IN LISTS IMAGESETS)
         list(APPEND COMPILED_IMAGE_ASSETS
             "${CMAKE_CURRENT_BINARY_DIR}/${IMG}.png"
             "${CMAKE_CURRENT_BINARY_DIR}/${IMG}@2x.png")
+        list(APPEND TR_LEGACY_IMAGE_ASSET_COMMANDS
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${CMAKE_CURRENT_SOURCE_DIR}/${IMAGE_ASSETS_DIR}/${IMG}.imageset/${IMG}.png"
+                "${CMAKE_CURRENT_BINARY_DIR}/${IMG}.png"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${CMAKE_CURRENT_SOURCE_DIR}/${IMAGE_ASSETS_DIR}/${IMG}.imageset/${IMG}@2x.png"
+                "${CMAKE_CURRENT_BINARY_DIR}/${IMG}@2x.png")
     endforeach()
 else()
     list(APPEND COMPILED_IMAGE_ASSETS
         "${CMAKE_CURRENT_BINARY_DIR}/Assets.car")
 endif()
 
-add_custom_command(
-    OUTPUT
-        ${COMPILED_IMAGE_ASSETS}
-        ${APPICON_NAME}.Info.plist
-    COMMAND
-        ${ACTOOL_EXECUTABLE}
-        --compile "${CMAKE_CURRENT_BINARY_DIR}"
-        --platform macosx
-        --minimum-deployment-target ${CMAKE_OSX_DEPLOYMENT_TARGET}
-        --app-icon ${APPICON_NAME}
-        --output-partial-info-plist "${CMAKE_CURRENT_BINARY_DIR}/${APPICON_NAME}.Info.plist"
-        ${IMAGE_ASSETS_DIR}
-    DEPENDS ${IMAGE_ASSETS}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-source_group("Generated Files"
-    FILES
-        ${COMPILED_IMAGE_ASSETS}
-        ${APPICON_NAME}.Info.plist)
+if(TR_MACOS_USE_SOURCE_IMAGE_ASSETS)
+    add_custom_command(
+        OUTPUT ${COMPILED_IMAGE_ASSETS}
+        COMMAND
+            ${SIPS_EXECUTABLE}
+            -s format icns
+            "${CMAKE_CURRENT_SOURCE_DIR}/${APPICONSET_DIR}/icon_512x512.png"
+            --out "${CMAKE_CURRENT_BINARY_DIR}/${APPICON_NAME}.icns"
+        ${TR_LEGACY_IMAGE_ASSET_COMMANDS}
+        DEPENDS ${IMAGE_ASSETS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        VERBATIM)
+    source_group("Generated Files"
+        FILES ${COMPILED_IMAGE_ASSETS})
+else()
+    add_custom_command(
+        OUTPUT
+            ${COMPILED_IMAGE_ASSETS}
+            ${APPICON_NAME}.Info.plist
+        COMMAND
+            ${ACTOOL_EXECUTABLE}
+            --compile "${CMAKE_CURRENT_BINARY_DIR}"
+            --platform macosx
+            --minimum-deployment-target ${CMAKE_OSX_DEPLOYMENT_TARGET}
+            --app-icon ${APPICON_NAME}
+            --output-partial-info-plist "${CMAKE_CURRENT_BINARY_DIR}/${APPICON_NAME}.Info.plist"
+            ${IMAGE_ASSETS_DIR}
+        ${TR_LEGACY_IMAGE_ASSET_COMMANDS}
+        DEPENDS ${IMAGE_ASSETS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    source_group("Generated Files"
+        FILES
+            ${COMPILED_IMAGE_ASSETS}
+            ${APPICON_NAME}.Info.plist)
+endif()
 
 list(APPEND RESOURCES
     ${COMPILED_IMAGE_ASSETS})
@@ -433,7 +540,7 @@ set(BASE_XIB_FILES
     MainMenu.xib
     PrefsWindow.xib)
 set(BASE_XIB_SOURCE_FILES ${BASE_XIB_FILES})
-if(TR_MACOS_LEGACY_COMPAT)
+if(TR_MACOS_MOUNTAIN_LION_COMPAT AND CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.9)
     list(REMOVE_ITEM BASE_XIB_SOURCE_FILES
         InfoActivityView.xib
         InfoOptionsView.xib
@@ -479,29 +586,65 @@ target_sources(${TR_NAME}-mac
     PRIVATE
         ${RESOURCES})
 
-tr_target_xib_files(${TR_NAME}-mac
-    ${XIB_FILES}
-    ${BASE_XIB_SOURCE_FILES})
+if(TR_MACOS_SNOW_LEOPARD_COMPAT)
+    set(TR_MACOS_SNOW_LEOPARD_XIB_FILES
+        ${XIB_FILES}
+        FilterBar.xib
+        StatsWindow.xib)
 
-if(TR_MACOS_LEGACY_COMPAT)
+    foreach(XIB_FILE IN LISTS TR_MACOS_SNOW_LEOPARD_XIB_FILES)
+        get_filename_component(XIB_NAME_WLE "${XIB_FILE}" NAME_WLE)
+
+        tr_wrap_xib(${TR_NAME}-mac
+            SnowLeopardXibs/${XIB_FILE}
+            "${CMAKE_CURRENT_BINARY_DIR}/${XIB_NAME_WLE}.nib"
+            "")
+    endforeach()
+
+    foreach(LANG IN LISTS ENABLED_LINGUAS)
+        foreach(XIB_FILE IN LISTS BASE_XIB_FILES)
+            get_filename_component(XIB_NAME_WLE "${XIB_FILE}" NAME_WLE)
+            set(TR_MACOS_LOCALIZED_XIB_STRINGS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${LANG}.lproj/${XIB_NAME_WLE}.strings")
+
+            if(EXISTS "${TR_MACOS_LOCALIZED_XIB_STRINGS_FILE}")
+                tr_wrap_localized_xib(${TR_NAME}-mac
+                    SnowLeopardXibs/${XIB_FILE}
+                    "${CMAKE_CURRENT_BINARY_DIR}/${LANG}.lproj/${XIB_NAME_WLE}.nib"
+                    ${LANG}.lproj
+                    "${TR_MACOS_LOCALIZED_XIB_STRINGS_FILE}")
+            else()
+                tr_wrap_xib(${TR_NAME}-mac
+                    SnowLeopardXibs/${XIB_FILE}
+                    "${CMAKE_CURRENT_BINARY_DIR}/${LANG}.lproj/${XIB_NAME_WLE}.nib"
+                    ${LANG}.lproj)
+            endif()
+        endforeach()
+    endforeach()
+else()
+    tr_target_xib_files(${TR_NAME}-mac
+        ${XIB_FILES}
+        ${BASE_XIB_SOURCE_FILES})
+endif()
+
+if(TR_MACOS_MOUNTAIN_LION_COMPAT AND CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.9 AND NOT TR_MACOS_SNOW_LEOPARD_COMPAT)
     tr_wrap_xib(${TR_NAME}-mac
-        LegacyXibs/FilterBar.xib
+        MountainLionXibs/FilterBar.xib
         "${CMAKE_CURRENT_BINARY_DIR}/FilterBar.nib"
         "")
     tr_wrap_xib(${TR_NAME}-mac
-        LegacyXibs/StatsWindow.xib
+        MountainLionXibs/StatsWindow.xib
         "${CMAKE_CURRENT_BINARY_DIR}/StatsWindow.nib"
         "")
     tr_wrap_xib(${TR_NAME}-mac
-        LegacyXibs/Base.lproj/InfoActivityView.xib
+        MountainLionXibs/Base.lproj/InfoActivityView.xib
         "${CMAKE_CURRENT_BINARY_DIR}/Base.lproj/InfoActivityView.nib"
         Base.lproj)
     tr_wrap_xib(${TR_NAME}-mac
-        LegacyXibs/Base.lproj/InfoOptionsView.xib
+        MountainLionXibs/Base.lproj/InfoOptionsView.xib
         "${CMAKE_CURRENT_BINARY_DIR}/Base.lproj/InfoOptionsView.nib"
         Base.lproj)
     tr_wrap_xib(${TR_NAME}-mac
-        LegacyXibs/Base.lproj/MainMenu.xib
+        MountainLionXibs/Base.lproj/MainMenu.xib
         "${CMAKE_CURRENT_BINARY_DIR}/Base.lproj/MainMenu.nib"
         Base.lproj)
 endif()
@@ -541,11 +684,19 @@ if(USERNOTIFICATIONS_FRAMEWORK)
     target_link_libraries(${TR_NAME}-mac PRIVATE "-weak_framework UserNotifications")
 endif()
 
-if(NOT CMAKE_GENERATOR STREQUAL Xcode)
+if(NOT CMAKE_GENERATOR STREQUAL Xcode AND NOT TR_MACOS_SNOW_LEOPARD_COMPAT)
+    set(TR_MACOS_CODESIGN_COMMAND ${CODESIGN_EXECUTABLE})
+    if(CODESIGN_ALLOCATE_EXECUTABLE)
+        set(TR_MACOS_CODESIGN_COMMAND
+            ${CMAKE_COMMAND} -E env
+                "CODESIGN_ALLOCATE=${CODESIGN_ALLOCATE_EXECUTABLE}"
+                ${CODESIGN_EXECUTABLE})
+    endif()
+
     add_custom_command(
         TARGET ${TR_NAME}-mac
         POST_BUILD
-        COMMAND ${CODESIGN_EXECUTABLE} -s - $<TARGET_BUNDLE_DIR:${TR_NAME}-mac>)
+        COMMAND ${TR_MACOS_CODESIGN_COMMAND} -s - $<TARGET_BUNDLE_DIR:${TR_NAME}-mac>)
 endif()
 
 set_target_properties(

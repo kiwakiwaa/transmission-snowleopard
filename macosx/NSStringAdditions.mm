@@ -15,6 +15,46 @@
 
 @end
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1080
+static NSString* TRStringForFileSize(uint64_t size, BOOL includeUnit)
+{
+    static char const* const units[] = { "bytes", "KB", "MB", "GB", "TB", "PB", "EB" };
+
+    double value = size;
+    NSUInteger unitIndex = 0;
+    while (value >= 1000.0 && unitIndex + 1 < sizeof(units) / sizeof(units[0]))
+    {
+        value /= 1000.0;
+        ++unitIndex;
+    }
+
+    NSString* valueString = nil;
+    if (unitIndex == 0)
+    {
+        valueString = [NSString stringWithFormat:@"%llu", static_cast<unsigned long long>(size)];
+    }
+    else if (value >= 100.0)
+    {
+        valueString = [NSString stringWithFormat:@"%.0f", value];
+    }
+    else if (value >= 10.0)
+    {
+        valueString = [NSString stringWithFormat:@"%.1f", value];
+    }
+    else
+    {
+        valueString = [NSString stringWithFormat:@"%.2f", value];
+    }
+
+    if (!includeUnit)
+    {
+        return valueString;
+    }
+
+    return [NSString stringWithFormat:@"%@ %@", valueString, [NSString stringWithUTF8String:units[unitIndex]]];
+}
+#endif
+
 @implementation NSString (NSStringAdditions)
 
 + (NSString*)ellipsis
@@ -31,16 +71,24 @@
 // https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/APFS_Guide/VolumeFormatComparison/VolumeFormatComparison.html
 + (NSString*)stringForFileSize:(uint64_t)size
 {
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
     return [NSByteCountFormatter stringFromByteCount:size countStyle:NSByteCountFormatterCountStyleFile];
+#else
+    return TRStringForFileSize(size, YES);
+#endif
 }
 
 // Maximum supported localization is 9.22 EB, which is the maximum supported filesystem size by macOS, 8 EiB.
 // https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/APFS_Guide/VolumeFormatComparison/VolumeFormatComparison.html
 + (NSString*)stringForFilePartialSize:(uint64_t)partialSize fullSize:(uint64_t)fullSize
 {
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
     NSByteCountFormatter* fileSizeFormatter = [[NSByteCountFormatter alloc] init];
 
     NSString* fullSizeString = [fileSizeFormatter stringFromByteCount:fullSize];
+#else
+    NSString* fullSizeString = TRStringForFileSize(fullSize, YES);
+#endif
 
     //figure out the magnitude of the two, since we can't rely on comparing the units because of localization and pluralization issues (for example, "1 byte of 2 bytes")
     BOOL partialUnitsSame;
@@ -56,8 +104,12 @@
         partialUnitsSame = magnitudePartial == magnitudeFull;
     }
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
     fileSizeFormatter.includesUnit = !partialUnitsSame;
     NSString* partialSizeString = [fileSizeFormatter stringFromByteCount:partialSize];
+#else
+    NSString* partialSizeString = TRStringForFileSize(partialSize, !partialUnitsSame);
+#endif
 
     return [NSString stringWithFormat:NSLocalizedString(@"%@ of %@", "file size string"), partialSizeString, fullSizeString];
 }

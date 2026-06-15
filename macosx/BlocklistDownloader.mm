@@ -6,11 +6,23 @@
 #import "BlocklistDownloaderViewController.h"
 #import "BlocklistScheduler.h"
 #import "Controller.h"
-#import "LegacyURLRequest.h"
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#import "LegacyURLRequest.h"
+#endif
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+@interface BlocklistDownloader ()<NSURLSessionDownloadDelegate>
+
+@property(nonatomic) NSURLSession* fSession;
+
+#else
 @interface BlocklistDownloader ()
 
 @property(nonatomic) TRURLRequestTask* fTask;
+
+#endif
+
 @property(nonatomic) NSUInteger fCurrentSize;
 @property(nonatomic) long long fExpectedSize;
 @property(nonatomic) BlocklistDownloadState fState;
@@ -61,13 +73,60 @@ BlocklistDownloader* fBLDownloader = nil;
 {
     [_viewController setFinished];
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+    [self.fSession invalidateAndCancel];
+    self.fSession = nil;
+#else
     [self.fTask cancel];
     self.fTask = nil;
+#endif
 
     [BlocklistScheduler.scheduler updateSchedule];
 
     fBLDownloader = nil;
 }
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+
+- (void)URLSession:(NSURLSession*)session
+                 downloadTask:(NSURLSessionDownloadTask*)downloadTask
+                 didWriteData:(int64_t)bytesWritten
+            totalBytesWritten:(int64_t)totalBytesWritten
+    totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite
+{
+    (void)bytesWritten;
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self.fState = BlocklistDownloadStateDownloading;
+
+        self.fCurrentSize = totalBytesWritten;
+        self.fExpectedSize = totalBytesExpectedToWrite;
+
+        [self.viewController setStatusProgressForCurrentSize:self.fCurrentSize expectedSize:self.fExpectedSize];
+    });
+}
+
+- (void)URLSession:(NSURLSession*)session task:(NSURLSessionTask*)task didCompleteWithError:(NSError*)error
+{
+    (void)session;
+    (void)task;
+
+    if (error)
+    {
+        [self downloadDidFailWithError:error];
+    }
+}
+
+- (void)URLSession:(NSURLSession*)session
+                 downloadTask:(NSURLSessionDownloadTask*)downloadTask
+    didFinishDownloadingToURL:(NSURL*)location
+{
+    (void)session;
+
+    [self downloadDidFinishToURL:location response:downloadTask.response];
+}
+
+#endif
 
 - (void)downloadDidFailWithError:(NSError*)error
 {
@@ -78,7 +137,12 @@ BlocklistDownloader* fBLDownloader = nil;
         [defaults setObject:date forKey:@"BlocklistNewLastUpdate"];
         [BlocklistScheduler.scheduler updateSchedule];
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+        [self.fSession finishTasksAndInvalidate];
+        self.fSession = nil;
+#else
         self.fTask = nil;
+#endif
         fBLDownloader = nil;
     });
 }
@@ -140,7 +204,12 @@ BlocklistDownloader* fBLDownloader = nil;
 
         [NSNotificationCenter.defaultCenter postNotificationName:@"BlocklistUpdated" object:nil];
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+        [self.fSession finishTasksAndInvalidate];
+        self.fSession = nil;
+#else
         self.fTask = nil;
+#endif
         fBLDownloader = nil;
     });
 }
@@ -170,6 +239,14 @@ BlocklistDownloader* fBLDownloader = nil;
 
     NSURL* url = [NSURL URLWithString:urlString];
     NSURLRequest* request = [NSURLRequest requestWithURL:url];
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+    self.fSession = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.ephemeralSessionConfiguration delegate:self
+                                             delegateQueue:nil];
+
+    NSURLSessionDownloadTask* task = [self.fSession downloadTaskWithRequest:request];
+    [task resume];
+#else
     self.fTask = [TRURLRequestTask downloadTaskWithRequest:request
         progressHandler:^(long long bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
             (void)bytesWritten;
@@ -193,6 +270,7 @@ BlocklistDownloader* fBLDownloader = nil;
             }
         }];
     [self.fTask resume];
+#endif
 }
 
 - (BOOL)decompressFrom:(NSURL*)file to:(NSURL*)destination error:(NSError**)error

@@ -227,6 +227,25 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
     return (item ? ((FileListNode*)item).children : self.fFileList)[index];
 }
 
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+- (id)outlineView:(NSOutlineView*)outlineView objectValueForTableColumn:(NSTableColumn*)tableColumn byItem:(id)item
+{
+    FileListNode* node = (FileListNode*)item;
+    NSString* identifier = tableColumn.identifier;
+
+    if ([identifier isEqualToString:@"Name"])
+    {
+        return node.name;
+    }
+    if ([identifier isEqualToString:@"Check"])
+    {
+        return @([node.torrent checkForFiles:node.indexes]);
+    }
+
+    return nil;
+}
+#endif
+
 #pragma mark - NSOutlineViewDelegate
 
 - (NSView*)outlineView:(NSOutlineView*)outlineView viewForTableColumn:(NSTableColumn*)tableColumn item:(id)item
@@ -437,6 +456,18 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
 #pragma mark - NSMenuItemValidation
 
 #warning make real view controller (Leopard-only) so that Command-R will work
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 110000
+- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item
+{
+    if ([(id)item isKindOfClass:NSMenuItem.class])
+    {
+        return [self validateMenuItem:(NSMenuItem*)item];
+    }
+
+    return YES;
+}
+#endif
+
 - (BOOL)validateMenuItem:(NSMenuItem*)menuItem
 {
     if (!self.torrent)
@@ -670,7 +701,7 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
     __block NSUInteger retIndex = NSNotFound;
 
     using FindFileNode = void (^)(FileListNode*, NSArray*, NSIndexSet*, FileListNode*);
-    __weak __block FindFileNode weakFindFileNode;
+    __block TR_OBJC_WEAK_REF FindFileNode weakFindFileNode;
     FindFileNode findFileNode;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wshadow"

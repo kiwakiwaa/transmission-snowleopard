@@ -11,7 +11,7 @@
 @interface TorrentCellControlButton ()
 @property(nonatomic) NSTrackingArea* fTrackingArea;
 @property(nonatomic, copy) NSString* controlImageSuffix;
-@property(nonatomic, weak) IBOutlet TorrentCell* torrentCell;
+@property(nonatomic, TR_OBJC_WEAK) IBOutlet TorrentCell* torrentCell;
 @property(nonatomic, readonly) TorrentTableView* torrentTableView;
 @end
 

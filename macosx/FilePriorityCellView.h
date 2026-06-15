@@ -8,7 +8,7 @@
 
 @interface FilePriorityCellView : NSTableCellView
 
-@property(nonatomic, weak) FileListNode* node;
+@property(nonatomic, TR_OBJC_WEAK) FileListNode* node;
 @property(nonatomic) BOOL hovered;
 
 @end

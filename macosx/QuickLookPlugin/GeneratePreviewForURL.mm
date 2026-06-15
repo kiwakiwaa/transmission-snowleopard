@@ -53,7 +53,7 @@ NSString* generateIconData(NSString* fileExtension, NSUInteger width, NSMutableD
     // we need to do this once per file extension, per size
     NSString* iconFileName = [NSString stringWithFormat:@"%ldx%@.tiff", width, rawFilename];
 
-    if (!allImgProps[iconFileName])
+    if (![allImgProps objectForKey:iconFileName])
     {
         NSImage* icon = [[NSWorkspace sharedWorkspace] iconForFileType:fileExtension];
 
@@ -69,7 +69,7 @@ NSString* generateIconData(NSString* fileExtension, NSUInteger width, NSMutableD
             (NSString*)kQLPreviewPropertyMIMETypeKey : @"image/png",
             (NSString*)kQLPreviewPropertyAttachmentDataKey : iconData
         };
-        allImgProps[iconFileName] = imgProps;
+        [allImgProps setObject:imgProps forKey:iconFileName];
     }
 
     return [@"cid:" stringByAppendingString:iconFileName];

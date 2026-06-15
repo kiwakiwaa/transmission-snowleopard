@@ -40,8 +40,8 @@ typedef NS_ENUM(NSInteger, SegmentTag) {
 @property(nonatomic) IBOutlet NSPopUpButton* fAnnouncedClientIdentityPopUp;
 
 @property(nonatomic) IBOutlet NSWindow* groupRulesSheetWindow;
-@property(nonatomic, weak) IBOutlet NSPredicateEditor* ruleEditor;
-@property(nonatomic, weak) IBOutlet NSLayoutConstraint* ruleEditorHeightConstraint;
+@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSPredicateEditor* ruleEditor;
+@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSLayoutConstraint* ruleEditorHeightConstraint;
 
 @end
 
@@ -142,6 +142,10 @@ typedef NS_ENUM(NSInteger, SegmentTag) {
         NSIndexSet* indexes = TRUnarchiveObjectFromData(
             [pasteboard dataForType:kGroupTableViewDataType],
             [NSSet setWithObject:NSIndexSet.class]);
+        if (indexes == nil || indexes.firstIndex == NSNotFound)
+        {
+            return NO;
+        }
         NSInteger oldRow = indexes.firstIndex;
 
         if (oldRow < newRow)

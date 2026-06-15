@@ -10,7 +10,7 @@
 
 @interface TrackerNode : NSObject
 
-@property(nonatomic, weak, readonly) Torrent* torrent;
+@property(nonatomic, TR_OBJC_WEAK, readonly) Torrent* torrent;
 
 - (instancetype)initWithTrackerView:(tr_tracker_view const*)stat torrent:(Torrent*)torrent;
 

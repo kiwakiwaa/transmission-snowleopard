@@ -7,13 +7,11 @@
     },
     "configurePresets": [
         {
-            "name": "macos-10.8",
-            "displayName": "OS X 10.8 compatibility",
+            "name": "macos-legacy-base",
+            "hidden": true,
             "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build-10.8",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/MacOS108Toolchain.cmake",
                 "ENABLE_CLI": "OFF",
                 "ENABLE_DAEMON": "ON",
                 "ENABLE_GTK": "OFF",
@@ -25,13 +23,45 @@
                 "USE_SYSTEM_DEFAULT": "OFF",
                 "WITH_CRYPTO": "openssl"
             }
+        },
+        {
+            "name": "macos-10.6",
+            "displayName": "Mac OS X 10.6 compatibility",
+            "inherits": "macos-legacy-base",
+            "binaryDir": "${sourceDir}/build-10.6",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/MacOSLegacyToolchain.cmake",
+                "TR_MACOS_DEPLOYMENT_TARGET": "10.6",
+                "TR_MACOS_SDK_VERSION": "10.6"
+            }
+        },
+        {
+            "name": "macos-10.8",
+            "displayName": "OS X 10.8 compatibility",
+            "inherits": "macos-legacy-base",
+            "binaryDir": "${sourceDir}/build-10.8",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/MacOSLegacyToolchain.cmake",
+                "TR_MACOS_DEPLOYMENT_TARGET": "10.8",
+                "TR_MACOS_SDK_VERSION": "10.8"
+            }
         }
     ],
     "buildPresets": [
         {
-            "name": "macos-10.8",
-            "configurePreset": "macos-10.8",
+            "name": "macos-legacy-base",
+            "hidden": true,
             "jobs": 2
+        },
+        {
+            "name": "macos-10.6",
+            "inherits": "macos-legacy-base",
+            "configurePreset": "macos-10.6"
+        },
+        {
+            "name": "macos-10.8",
+            "inherits": "macos-legacy-base",
+            "configurePreset": "macos-10.8"
         }
     ]
 }

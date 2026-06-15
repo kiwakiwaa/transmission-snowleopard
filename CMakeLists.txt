@@ -8,7 +8,7 @@ endif()
 
 # Value should follow latest stable Xcode's RECOMMENDED_MACOSX_DEPLOYMENT_TARGET
 set(MACOS_SUPPORT_MINIMUM 11.0)
-set(TR_MACOS_LEGACY_SUPPORT_MINIMUM 10.8)
+set(TR_MACOS_LEGACY_SUPPORT_MINIMUM 10.6)
 
 # The value of this variable should be set prior to the first project() command invocation.
 # See: https://cmake.org/cmake/help/latest/variable/CMAKE_OSX_DEPLOYMENT_TARGET.html
@@ -25,9 +25,15 @@ endif()
 project(transmission)
 
 set(TR_MACOS_LEGACY_COMPAT OFF)
+set(TR_MACOS_MOUNTAIN_LION_COMPAT OFF)
+set(TR_MACOS_SNOW_LEOPARD_COMPAT OFF)
 if(APPLE AND CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS MACOS_SUPPORT_MINIMUM)
     set(TR_MACOS_LEGACY_COMPAT ON)
+    set(TR_MACOS_MOUNTAIN_LION_COMPAT ON)
     add_compile_definitions(_LIBCPP_DISABLE_AVAILABILITY)
+endif()
+if(APPLE AND CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.7)
+    set(TR_MACOS_SNOW_LEOPARD_COMPAT ON)
 endif()
 
 set(TR_THIRD_PARTY_DIR_NAME third-party)
@@ -86,6 +92,7 @@ option(ENABLE_WERROR "Treat warnings as errors" OFF)
 option(ENABLE_NLS "Enable native language support" ON)
 option(INSTALL_DOC "Build/install documentation" ON)
 option(INSTALL_LIB "Install the library" OFF)
+option(TR_RAISE_FILE_DESCRIPTOR_LIMIT "Raise the process file descriptor soft limit to 1024 at startup" OFF)
 tr_auto_option(USE_SYSTEM_DEFAULT "Default value for USE_SYSTEM_* options" AUTO)
 tr_auto_option(RUN_CLANG_TIDY "Run clang-tidy on the code" ${USE_SYSTEM_DEFAULT})
 tr_auto_option(USE_SYSTEM_EVENT2 "Use system event2 library" ${USE_SYSTEM_DEFAULT})

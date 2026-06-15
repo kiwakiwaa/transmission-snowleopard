@@ -8,6 +8,6 @@
 
 @interface FileNameCellView : NSTableCellView
 
-@property(nonatomic, weak) FileListNode* node;
+@property(nonatomic, TR_OBJC_WEAK) FileListNode* node;
 
 @end
