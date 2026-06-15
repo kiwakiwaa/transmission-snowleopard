@@ -3,6 +3,7 @@
 // License text can be found in the licenses/ folder.
 
 #import "AddWindowController.h"
+#import "CocoaCompatibility.h"
 #import "Controller.h"
 #import "ExpandedPathToIconTransformer.h"
 #import "FileOutlineController.h"
@@ -178,9 +179,11 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
         self.fLocationImageView.image = nil;
     }
 
-    self.fTimer = [NSTimer scheduledTimerWithTimeInterval:kUpdateSeconds target:self selector:@selector(updateFiles)
-                                                 userInfo:nil
-                                                  repeats:YES];
+    __weak __auto_type weakSelf = self;
+    self.fTimer = TRScheduledTimerWithTimeInterval(kUpdateSeconds, YES, ^(NSTimer* _Nonnull) {
+        [weakSelf updateFiles];
+    });
+
     [self updateFiles];
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
     self.window.delegate = (id<NSWindowDelegate>)self;

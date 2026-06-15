@@ -6,6 +6,33 @@
 
 #import "ObjectiveCCompatibility.h"
 
+typedef void (^TRTimerBlock)(NSTimer* timer);
+
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 101200
+@interface NSTimer (TRLegacyBlockTimer)
++ (NSTimer*)tr_scheduledTimerWithTimeInterval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(TRTimerBlock)block;
++ (NSTimer*)tr_timerWithFireDate:(NSDate*)date interval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(TRTimerBlock)block;
+@end
+#endif
+
+static inline NSTimer* TRScheduledTimerWithTimeInterval(NSTimeInterval interval, BOOL repeats, TRTimerBlock block)
+{
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 101200
+    return [NSTimer tr_scheduledTimerWithTimeInterval:interval repeats:repeats block:block];
+#else
+    return [NSTimer scheduledTimerWithTimeInterval:interval repeats:repeats block:block];
+#endif
+}
+
+static inline NSTimer* TRTimerWithFireDate(NSDate* date, NSTimeInterval interval, BOOL repeats, TRTimerBlock block)
+{
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 101200
+    return [NSTimer tr_timerWithFireDate:date interval:interval repeats:repeats block:block];
+#else
+    return [[NSTimer alloc] initWithFireDate:date interval:interval repeats:repeats block:block];
+#endif
+}
+
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
 typedef NSInteger NSLayoutAttribute;
 typedef NSInteger NSLayoutRelation;

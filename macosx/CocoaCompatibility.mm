@@ -4,6 +4,33 @@
 
 #import "CocoaCompatibility.h"
 
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 101200
+
+@implementation NSTimer (TRLegacyBlockTimer)
+
++ (void)tr_fireBlockTimer:(NSTimer*)timer
+{
+    TRTimerBlock block = (TRTimerBlock)timer.userInfo;
+    if (block != nil)
+    {
+        block(timer);
+    }
+}
+
++ (NSTimer*)tr_scheduledTimerWithTimeInterval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(TRTimerBlock)block
+{
+    return [self scheduledTimerWithTimeInterval:interval target:self selector:@selector(tr_fireBlockTimer:) userInfo:[block copy] repeats:repeats];
+}
+
++ (NSTimer*)tr_timerWithFireDate:(NSDate*)date interval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(TRTimerBlock)block
+{
+    return [[self alloc] initWithFireDate:date interval:interval target:self selector:@selector(tr_fireBlockTimer:) userInfo:[block copy] repeats:repeats];
+}
+
+@end
+
+#endif
+
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
 
 #import <objc/runtime.h>

@@ -16,6 +16,7 @@
 #include <libtransmission/web-utils.h> // tr_urlIsValidTracker()
 
 #import "CreatorWindowController.h"
+#import "CocoaCompatibility.h"
 #import "Controller.h"
 #import "NSStringAdditions.h"
 
@@ -622,8 +623,11 @@ static NSMutableSet* creatorWindowControllerSet;
     self.fBuilder->set_source(self.fSource.stringValue.UTF8String);
 
     self.fFuture = self.fBuilder->make_checksums();
-    self.fTimer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(checkProgress) userInfo:nil
-                                                  repeats:YES];
+
+    __weak __auto_type weakSelf = self;
+    self.fTimer = TRScheduledTimerWithTimeInterval(0.1, YES, ^(NSTimer* _Nonnull) {
+        [weakSelf checkProgress];
+    });
 }
 
 - (void)checkProgress

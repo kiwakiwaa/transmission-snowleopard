@@ -4,6 +4,7 @@
 
 #import "BlocklistScheduler.h"
 #import "BlocklistDownloader.h"
+#import "CocoaCompatibility.h"
 
 //thirty second delay before running after option is changed
 static NSTimeInterval const kSmallDelay = 30;
@@ -19,16 +20,14 @@ static NSTimeInterval const kFullWait = 60 * 60 * 24 * 7;
 
 @implementation BlocklistScheduler
 
-BlocklistScheduler* fScheduler = nil;
-
 + (BlocklistScheduler*)scheduler
 {
-    if (!fScheduler)
-    {
-        fScheduler = [[BlocklistScheduler alloc] init];
-    }
-
-    return fScheduler;
+    static BlocklistScheduler* scheduler = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        scheduler = [[BlocklistScheduler alloc] init];
+    });
+    return scheduler;
 }
 
 - (void)updateSchedule
@@ -55,8 +54,10 @@ BlocklistScheduler* fScheduler = nil;
 
     NSDate* useDate = lastUpdateDate ? [lastUpdateDate laterDate:closeDate] : closeDate;
 
-    self.fTimer = [[NSTimer alloc] initWithFireDate:useDate interval:0 target:self selector:@selector(runUpdater) userInfo:nil
-                                            repeats:NO];
+    __weak __auto_type weakSelf = self;
+    self.fTimer = TRTimerWithFireDate(useDate, 0, NO, ^(NSTimer* _Nonnull) {
+        [weakSelf runUpdater];
+    });
 
     //current run loop usually means a second update won't work
     NSRunLoop* loop = NSRunLoop.mainRunLoop;

@@ -262,9 +262,11 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     self.fNatStatus = -1;
 
     [self updatePortStatus];
-    self.fPortStatusTimer = [NSTimer scheduledTimerWithTimeInterval:5.0 target:self selector:@selector(updatePortStatus)
-                                                           userInfo:nil
-                                                            repeats:YES];
+
+    __weak __auto_type weakSelf = self;
+    self.fPortStatusTimer = TRScheduledTimerWithTimeInterval(5.0, YES, ^(NSTimer* _Nonnull) {
+        [weakSelf updatePortStatus];
+    });
 
     //set peer connections
     self.fPeersGlobalField.integerValue = [self.fDefaults integerForKey:@"PeersTotal"];
