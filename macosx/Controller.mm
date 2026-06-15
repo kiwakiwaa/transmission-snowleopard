@@ -4361,13 +4361,14 @@ static void removeKeRangerRansomware()
         return;
     }
 
-    NSView* bottomBar = self.fTotalTorrentsField.superview;
     NSView* layoutView = scrollView.superview ?: contentView;
+    NSView* candidateBottomBar = self.fTotalTorrentsField.superview;
+    NSView* bottomBar = candidateBottomBar != nil && candidateBottomBar != layoutView && candidateBottomBar != contentView ? candidateBottomBar : nil;
     for (NSLayoutConstraint* constraint in [layoutView.constraints copy])
     {
         id firstItem = constraint.firstItem;
         id secondItem = constraint.secondItem;
-        if (firstItem == scrollView || secondItem == scrollView || firstItem == bottomBar || secondItem == bottomBar)
+        if (firstItem == scrollView || secondItem == scrollView || (bottomBar != nil && (firstItem == bottomBar || secondItem == bottomBar)))
         {
             [layoutView removeConstraint:constraint];
         }
@@ -4375,28 +4376,28 @@ static void removeKeRangerRansomware()
 
     scrollView.translatesAutoresizingMaskIntoConstraints = YES;
     self.fTableView.translatesAutoresizingMaskIntoConstraints = YES;
-    bottomBar.translatesAutoresizingMaskIntoConstraints = YES;
 
-    NSRect layoutBounds = layoutView.bounds;
-    CGFloat bottomHeight = bottomBar != nil ? MAX(24.0, NSHeight(bottomBar.frame)) : 0.0;
     if (bottomBar != nil)
     {
+        bottomBar.translatesAutoresizingMaskIntoConstraints = YES;
+        NSRect layoutBounds = layoutView.bounds;
+        CGFloat bottomHeight = MAX(24.0, NSHeight(bottomBar.frame));
         bottomBar.frame = NSMakeRect(0.0, 0.0, NSWidth(layoutBounds), bottomHeight);
         bottomBar.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
-    }
 
-    CGFloat accessoryHeight = 0.0;
-    if (self.fStatusBar != nil && !self.fStatusBar.isHidden)
-    {
-        accessoryHeight += NSHeight(self.fStatusBar.view.frame);
-    }
-    if (self.fFilterBar != nil && !self.fFilterBar.isHidden)
-    {
-        accessoryHeight += NSHeight(self.fFilterBar.view.frame);
-    }
+        CGFloat accessoryHeight = 0.0;
+        if (self.fStatusBar != nil && !self.fStatusBar.isHidden)
+        {
+            accessoryHeight += NSHeight(self.fStatusBar.view.frame);
+        }
+        if (self.fFilterBar != nil && !self.fFilterBar.isHidden)
+        {
+            accessoryHeight += NSHeight(self.fFilterBar.view.frame);
+        }
 
-    CGFloat scrollHeight = MAX(1.0, NSHeight(layoutBounds) - bottomHeight - accessoryHeight);
-    scrollView.frame = NSMakeRect(0.0, bottomHeight, NSWidth(layoutBounds), scrollHeight);
+        CGFloat scrollHeight = MAX(1.0, NSHeight(layoutBounds) - bottomHeight - accessoryHeight);
+        scrollView.frame = NSMakeRect(0.0, bottomHeight, NSWidth(layoutBounds), scrollHeight);
+    }
     scrollView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     [scrollView tile];
 

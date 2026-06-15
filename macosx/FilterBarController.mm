@@ -5,6 +5,9 @@
 #import "FilterBarController.h"
 #import "FilterButton.h"
 #import "GroupsController.h"
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#import "LegacyStackView.h"
+#endif
 #import "NSStringAdditions.h"
 
 FilterType const FilterTypeNone = @"None";
@@ -42,6 +45,10 @@ typedef NS_ENUM(NSInteger, FilterTypeTag) {
 
 @property(nonatomic) IBOutlet NSPopUpButton* fGroupsButton;
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+- (void)layoutLegacyFilterButtons;
+#endif
+
 @end
 
 @implementation FilterBarController
@@ -69,6 +76,10 @@ typedef NS_ENUM(NSInteger, FilterTypeTag) {
     [[self.fSeedFilterButton cell] setBackgroundStyle:NSBackgroundStyleRaised];
     [[self.fPauseFilterButton cell] setBackgroundStyle:NSBackgroundStyleRaised];
     [[self.fErrorFilterButton cell] setBackgroundStyle:NSBackgroundStyleRaised];
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+    [self layoutLegacyFilterButtons];
+#endif
 
     [[(NSSearchFieldCell*)[self.fSearchField cell] searchMenuTemplate] itemWithTag:FilterTypeTagName].title = NSLocalizedString(
         @"Name",
@@ -148,6 +159,48 @@ typedef NS_ENUM(NSInteger, FilterTypeTag) {
     // update when filter change
     self.fSearchField.delegate = self;
 }
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+- (void)layoutLegacyFilterButtons
+{
+    NSView* buttonSuperview = self.fNoFilterButton.superview;
+    if ([buttonSuperview isKindOfClass:LegacyStackView.class])
+    {
+        [(LegacyStackView*)buttonSuperview invalidateLegacyLayout];
+        return;
+    }
+
+    NSMutableArray* buttons = [NSMutableArray arrayWithCapacity:6];
+    for (NSButton* button in @[ self.fNoFilterButton, self.fActiveFilterButton, self.fDownloadFilterButton,
+                                self.fSeedFilterButton, self.fPauseFilterButton ])
+    {
+        if (button != nil)
+        {
+            [buttons addObject:button];
+        }
+    }
+    if (self.fErrorFilterButton != nil)
+    {
+        [buttons addObject:self.fErrorFilterButton];
+    }
+
+    CGFloat const spacing = 1.0;
+    CGFloat x = NSMinX(self.fNoFilterButton.frame);
+    CGFloat const y = NSMinY(self.fNoFilterButton.frame);
+    CGFloat const height = NSHeight(self.fNoFilterButton.frame);
+
+    for (NSButton* button in buttons)
+    {
+        NSRect frame = button.frame;
+        [button sizeToFit];
+        frame.size.width = ceil(NSWidth(button.frame)) + 8.0;
+        frame.size.height = MAX(height, NSHeight(button.frame));
+        frame.origin = NSMakePoint(x, y);
+        button.frame = frame;
+        x = NSMaxX(frame) + spacing;
+    }
+}
+#endif
 
 - (void)setFilter:(id)sender
 {
