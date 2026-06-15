@@ -1,6 +1,6 @@
-# (WIP) Building Transmission for Mac OS X 10.6
+# Building Transmission for Mac OS X 10.6
 
-The repository provides a `macos-10.6` CMake preset for Snow Leopard backporting:
+The repository provides a `macos-10.6` CMake preset for Snow Leopard compatibility:
 
 ```bash
 cmake --preset macos-10.6
