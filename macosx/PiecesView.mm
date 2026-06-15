@@ -200,7 +200,7 @@ typedef struct PieceInfo
             {
                 cFillRects[i] = [(NSValue*)[cellBounds objectAtIndex:i] rectValue];
             }
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
             NSColor* __unsafe_unretained cFillColors[kMaxCells];
 #else
             NSColor* cFillColors[kMaxCells];
@@ -209,7 +209,7 @@ typedef struct PieceInfo
             {
                 cFillColors[i] = cellColors[i];
             }
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
             for (int i = 0; i < numCells; ++i)
             {
                 [cFillColors[i] setFill];

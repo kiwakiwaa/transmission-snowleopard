@@ -18,7 +18,7 @@
     TRCheckExpectedStackViewClass(self.fStackView, NSStringFromClass(self.class), @"fStackView");
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (void)layout
 {
     [super layout];
@@ -93,13 +93,13 @@
 
 - (void)drawRect:(NSRect)dirtyRect
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
     [self layoutTorrentCellForLegacyAppKit];
 #endif
 
     if (self.fTorrentTableView)
     {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         NSInteger const row = [self.fTorrentTableView rowForView:self];
         BOOL const selected = row >= 0 && [self.fTorrentTableView isRowSelected:row];
         if (!selected)
@@ -129,7 +129,7 @@
 
             self.fTorrentPriorityView.image = priorityImage;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
             [self.fStackView setVisibilityPriority:TRLegacyStackViewVisibilityPriorityMustHold forView:self.fTorrentPriorityView];
 #else
             [self.fStackView setVisibilityPriority:NSStackViewVisibilityPriorityMustHold forView:self.fTorrentPriorityView];
@@ -137,7 +137,7 @@
         }
         else
         {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
             [self.fStackView setVisibilityPriority:TRLegacyStackViewVisibilityPriorityNotVisible forView:self.fTorrentPriorityView];
 #else
             [self.fStackView setVisibilityPriority:NSStackViewVisibilityPriorityNotVisible forView:self.fTorrentPriorityView];

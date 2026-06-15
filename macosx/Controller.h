@@ -13,6 +13,7 @@
 #import <Sparkle/SUUpdaterDelegate.h>
 #endif
 
+#include <libtransmission/macos-version.h>
 #include <libtransmission/transmission.h>
 
 #import "VDKQueue.h"
@@ -33,7 +34,7 @@ typedef NS_ENUM(NSUInteger, AddType) { //
 
 @interface Controller : NSObject<
                             NSApplicationDelegate,
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 110000
+#if !TR_MACOS_SDK_BEFORE_11_0
                             NSMenuItemValidation,
 #endif
                             NSPopoverDelegate,

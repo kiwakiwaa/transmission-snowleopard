@@ -4,9 +4,11 @@
 
 #import "LegacyConstraints.h"
 
+#include <libtransmission/macos-version.h>
+
 void TRSetConstraintActive(NSLayoutConstraint* constraint, BOOL active)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     constraint.active = active;
 #else
     id firstItem = [constraint firstItem];

@@ -4,7 +4,9 @@
 
 #import "LegacyPowerActivity.h"
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#include <libtransmission/macos-version.h>
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @implementation NSProcessInfo (TransmissionActivityCompatibility)
 
 - (id<NSObject>)beginActivityWithOptions:(NSActivityOptions)options reason:(NSString*)reason

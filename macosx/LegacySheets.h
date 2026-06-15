@@ -4,7 +4,9 @@
 
 #import <AppKit/AppKit.h>
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#include <libtransmission/macos-version.h>
+
+#if TR_MACOS_SDK_BEFORE_10_9
 typedef NSInteger NSModalResponse;
 static NSModalResponse const NSModalResponseOK = 1;
 static NSModalResponse const NSModalResponseCancel = 0;
@@ -12,7 +14,7 @@ static NSModalResponse const NSModalResponseCancel = 0;
 
 typedef void (^TRSheetCompletionHandler)(NSModalResponse returnCode);
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @interface NSWindow (TransmissionCompatibility)
 - (void)beginSheet:(NSWindow*)sheet completionHandler:(TRSheetCompletionHandler)handler;
 - (void)endSheet:(NSWindow*)sheet;

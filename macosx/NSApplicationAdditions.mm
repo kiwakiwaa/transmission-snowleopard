@@ -4,11 +4,13 @@
 
 #import "NSApplicationAdditions.h"
 
+#include <libtransmission/macos-version.h>
+
 @implementation NSApplication (NSApplicationAdditions)
 
 - (BOOL)isDarkMode
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101400
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_14 && !TR_MACOS_SDK_BEFORE_10_14
     return [self.effectiveAppearance.name isEqualToString:NSAppearanceNameDarkAqua];
 #else
     return NO;

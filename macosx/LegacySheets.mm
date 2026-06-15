@@ -4,6 +4,8 @@
 
 #import "LegacySheets.h"
 
+#include <libtransmission/macos-version.h>
+
 @interface TRSheetCallback : NSObject
 
 @property(nonatomic, copy) TRSheetCompletionHandler handler;
@@ -50,7 +52,7 @@
 
 @end
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @implementation NSWindow (TransmissionCompatibility)
 
 - (void)beginSheet:(NSWindow*)sheet completionHandler:(TRSheetCompletionHandler)handler

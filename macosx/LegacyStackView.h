@@ -4,9 +4,11 @@
 
 #import <AppKit/AppKit.h>
 
+#include <libtransmission/macos-version.h>
+
 FOUNDATION_EXPORT BOOL TRCheckExpectedStackViewClass(id stackView, NSString* ownerName, NSString* outletName);
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 
 typedef NS_ENUM(NSInteger, TRLegacyStackViewOrientation) {
     TRLegacyStackViewOrientationHorizontal = 0,

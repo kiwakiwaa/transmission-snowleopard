@@ -4,6 +4,8 @@
 
 #import "LegacySymbols.h"
 
+#include <libtransmission/macos-version.h>
+
 static void TRStrokeLine(NSPoint start, NSPoint end)
 {
     NSBezierPath* line = [NSBezierPath bezierPath];
@@ -101,7 +103,7 @@ static NSImage* TRLegacySystemSymbolImage(NSString* symbolName)
     [image lockFocus];
     [[NSColor blackColor] setStroke];
     [[NSColor blackColor] setFill];
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 110000
+#if !TR_MACOS_SDK_BEFORE_11_0
     [NSBezierPath setDefaultLineCapStyle:NSLineCapStyleRound];
     [NSBezierPath setDefaultLineJoinStyle:NSLineJoinStyleRound];
 #else
@@ -277,7 +279,7 @@ static NSImage* TRLegacySystemSymbolImage(NSString* symbolName)
 
 NSImage* TRImageForSystemSymbol(NSString* symbolName, NSString* description)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 110000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_11_0 && !TR_MACOS_SDK_BEFORE_11_0
     NSImage* systemImage = [NSImage imageWithSystemSymbolName:symbolName accessibilityDescription:description];
     if (systemImage != nil)
     {

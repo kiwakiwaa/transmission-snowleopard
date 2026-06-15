@@ -4,6 +4,8 @@
 
 #import "LegacyFormatters.h"
 
+#include <libtransmission/macos-version.h>
+
 static NSString* TRLegacyTimeRemainingString(NSTimeInterval interval)
 {
     NSInteger secondsTotal = MAX(0, (NSInteger)interval);
@@ -122,7 +124,7 @@ static NSString* TRLegacyShortDurationString(NSTimeInterval interval)
 
 NSString* TRTimeRemainingString(NSTimeInterval interval)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     static NSDateComponentsFormatter* formatter = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -144,7 +146,7 @@ NSString* TRTimeRemainingString(NSTimeInterval interval)
 
 NSString* TRShortDurationString(NSTimeInterval interval)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     static NSDateComponentsFormatter* formatter = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -163,7 +165,7 @@ NSString* TRShortDurationString(NSTimeInterval interval)
 
 NSString* TRStatsDurationString(NSTimeInterval interval)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     static NSDateComponentsFormatter* formatter = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -183,7 +185,7 @@ NSString* TRStatsDurationString(NSTimeInterval interval)
 
 NSString* TRTrackerCountdownString(NSTimeInterval interval)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     static NSDateComponentsFormatter* formatter = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{

@@ -4,7 +4,9 @@
 
 #import <Foundation/Foundation.h>
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#include <libtransmission/macos-version.h>
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 typedef NSUInteger NSActivityOptions;
 #define NSActivityIdleSystemSleepDisabled 0
 #define NSActivityUserInitiatedAllowingIdleSystemSleep 0

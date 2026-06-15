@@ -6,6 +6,7 @@
 #import "DragOverlayView.h"
 #import "NSStringAdditions.h"
 
+#include <libtransmission/macos-version.h>
 #include <libtransmission/torrent-metainfo.h>
 
 @interface DragOverlayWindow ()
@@ -20,7 +21,7 @@
 - (instancetype)initForWindow:(NSWindow*)window
 {
     if ((self = ([super initWithContentRect:window.frame
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
+#if !TR_MACOS_SDK_BEFORE_10_12
                                   styleMask:NSWindowStyleMaskBorderless
 #else
                                   styleMask:NSBorderlessWindowMask

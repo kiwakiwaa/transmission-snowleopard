@@ -2,6 +2,7 @@
 // It may be used under the MIT (SPDX: MIT) license.
 // License text can be found in the licenses/ folder.
 
+#include <libtransmission/macos-version.h>
 #include <libtransmission/transmission.h>
 
 #import "FileNameCellView.h"
@@ -32,7 +33,7 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
     {
         // Create icon view
         NSImageView* iconView = [[NSImageView alloc] initWithFrame:NSZeroRect];
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         iconView.translatesAutoresizingMaskIntoConstraints = YES;
 #else
         iconView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -43,7 +44,7 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
 
         // Create name field
         NSTextField* nameField = [[NSTextField alloc] initWithFrame:NSZeroRect];
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         nameField.translatesAutoresizingMaskIntoConstraints = YES;
 #else
         nameField.translatesAutoresizingMaskIntoConstraints = NO;
@@ -51,13 +52,13 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
         nameField.editable = NO;
         nameField.selectable = NO;
         nameField.bordered = NO;
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         nameField.backgroundColor = [NSColor clearColor];
 #else
         nameField.backgroundColor = NSColor.clearColor;
 #endif
         nameField.font = [NSFont messageFontOfSize:12.0];
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         [[nameField cell] setLineBreakMode:NSLineBreakByTruncatingMiddle];
 #else
         nameField.lineBreakMode = NSLineBreakByTruncatingMiddle;
@@ -68,7 +69,7 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
 
         // Create status field
         NSTextField* statusField = [[NSTextField alloc] initWithFrame:NSZeroRect];
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         statusField.translatesAutoresizingMaskIntoConstraints = YES;
 #else
         statusField.translatesAutoresizingMaskIntoConstraints = NO;
@@ -76,13 +77,13 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
         statusField.editable = NO;
         statusField.selectable = NO;
         statusField.bordered = NO;
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         statusField.backgroundColor = [NSColor clearColor];
 #else
         statusField.backgroundColor = NSColor.clearColor;
 #endif
         statusField.font = [NSFont messageFontOfSize:9.0];
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         statusField.textColor = [NSColor disabledControlTextColor];
         [[statusField cell] setLineBreakMode:NSLineBreakByTruncatingTail];
 #else
@@ -100,7 +101,7 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
 
 - (void)setupConstraints
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
     NSImageView* iconView = self.iconView;
     NSTextField* nameField = self.nameField;
 
@@ -138,7 +139,7 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
     // Update icon
     self.iconView.image = node.icon;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
     // Update icon size constraints based on folder/file
     CGFloat const imageSize = node.isFolder ? kImageFolderSize : kImageIconSize;
     for (NSLayoutConstraint* constraint in self.iconView.constraints)
@@ -163,7 +164,7 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
                                                   [NSString stringForFileSize:node.size]];
     self.statusField.stringValue = status;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self setNeedsDisplay:YES];
     [self layout];
 #else
@@ -211,7 +212,7 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
     [self updateTooltip];
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (void)layout
 {
     [super layout];
@@ -299,7 +300,7 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
     else
     {
         self.nameField.textColor = NSColor.controlTextColor;
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         self.statusField.textColor = [NSColor disabledControlTextColor];
 #else
         self.statusField.textColor = NSColor.secondaryLabelColor;

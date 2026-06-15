@@ -4,9 +4,11 @@
 
 #import "LegacyStackView.h"
 
+#include <libtransmission/macos-version.h>
+
 static NSString* TRExpectedStackViewClassName()
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     return @"LegacyStackView";
 #else
     return @"NSStackView";
@@ -32,7 +34,7 @@ BOOL TRCheckExpectedStackViewClass(id stackView, NSString* ownerName, NSString* 
     return NO;
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 
 #import <float.h>
 #import <math.h>
@@ -189,7 +191,7 @@ static BOOL TRLegacyStackViewVisibilityPriorityIsNotVisible(TRLegacyStackViewVis
     [self layoutLegacySubviews];
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if !TR_MACOS_SDK_BEFORE_10_7
 - (void)layout
 {
     [super layout];
@@ -438,7 +440,7 @@ static BOOL TRLegacyStackViewVisibilityPriorityIsNotVisible(TRLegacyStackViewVis
         invalidateContentSize(self, invalidateSelector);
     }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if !TR_MACOS_SDK_BEFORE_10_7
     if ([self respondsToSelector:@selector(setNeedsLayout:)])
     {
         self.needsLayout = YES;
@@ -620,7 +622,7 @@ static BOOL TRLegacyStackViewVisibilityPriorityIsNotVisible(TRLegacyStackViewVis
 {
     NSSize size = NSZeroSize;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if !TR_MACOS_SDK_BEFORE_10_7
     if ([subview respondsToSelector:@selector(fittingSize)])
     {
         size = subview.fittingSize;

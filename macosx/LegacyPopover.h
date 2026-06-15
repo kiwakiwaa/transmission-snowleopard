@@ -4,7 +4,9 @@
 
 #import <AppKit/AppKit.h>
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+#include <libtransmission/macos-version.h>
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
 
 @class TRLegacyPopover;
 

@@ -4,7 +4,7 @@
 
 #import "CocoaCompatibility.h"
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 101200
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_12
 
 @implementation NSTimer (TRLegacyBlockTimer)
 
@@ -31,7 +31,7 @@
 
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
 
 #import <objc/runtime.h>
 

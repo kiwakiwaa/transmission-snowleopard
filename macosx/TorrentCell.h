@@ -3,9 +3,12 @@
 // License text can be found in the licenses/ folder.
 
 #import <AppKit/AppKit.h>
+
+#include <libtransmission/macos-version.h>
+
 #import "TorrentTableView.h"
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 #import "LegacyStackView.h"
 #endif
 
@@ -18,7 +21,7 @@
 @property(nonatomic) IBOutlet NSImageView* fIconView;
 @property(nonatomic) IBOutlet NSImageView* fGroupIndicatorView;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @property(nonatomic) IBOutlet LegacyStackView* fStackView;
 #else
 @property(nonatomic) IBOutlet NSStackView* fStackView;

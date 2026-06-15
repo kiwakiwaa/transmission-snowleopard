@@ -795,7 +795,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
 + (int)dateToTimeSum:(NSDate*)date
 {
     NSCalendar* calendar = NSCalendar.currentCalendar;
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     NSDateComponents* components = [calendar components:NSCalendarUnitHour | NSCalendarUnitMinute fromDate:date];
 #else
     NSDateComponents* components = [calendar components:NSHourCalendarUnit | NSMinuteCalendarUnit fromDate:date];
@@ -1638,7 +1638,7 @@ static NSString* getOSStatusDescription(OSStatus errorCode)
 
 - (void)updateRPCPassword
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
     // SecItem exists on 10.6, but its generic-password class starts in 10.7.
     UInt32 passwordLength = 0;
     void* passwordData = NULL;
@@ -1691,7 +1691,7 @@ static NSString* getOSStatusDescription(OSStatus errorCode)
 
 - (void)setKeychainPassword:(char const*)password
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
     // SecItem exists on 10.6, but its generic-password class starts in 10.7
     SecKeychainItemRef item = NULL;
     OSStatus result = SecKeychainFindGenericPassword(

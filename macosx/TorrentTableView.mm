@@ -21,7 +21,7 @@
 #import "TorrentCellControlButton.h"
 #import "TorrentCellRevealButton.h"
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 #import "ProgressBarView.h"
 
 @interface LegacyTorrentTableCell : NSCell
@@ -180,7 +180,7 @@ static CGFloat const kLegacyGroupStatusWidth = 170.0;
 CGFloat const kGroupSeparatorHeight = 18.0;
 
 static NSInteger const kMaxGroup = 999999;
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
 static CGFloat const kErrorImageSize = 20.0;
 #endif
 
@@ -236,11 +236,11 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 
 @implementation TorrentTableView
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (void)configureLegacyTorrentColumn
 {
     NSTableColumn* torrentColumn = [self tableColumnWithIdentifier:@"Torrent"];
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
     // Snow's main XIB currently uses "Torrent"; these fallbacks keep older or edited legacy XIBs cell-renderable.
     if (torrentColumn == nil)
     {
@@ -258,7 +258,7 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
         return;
     }
 
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
     self.outlineTableColumn = torrentColumn;
 
     NSArray* columns = [self.tableColumns copy];
@@ -304,13 +304,13 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
         self.delegate = self;
         self.indentationPerLevel = 0;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         [self configureLegacyTorrentColumn];
 #endif
 
         _piecesBarPercent = [_fDefaults boolForKey:@"PiecesBar"] ? 1.0 : 0.0;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_11 && !TR_MACOS_SDK_BEFORE_10_11
         self.style = NSTableViewStyleFullWidth;
 #endif
     }
@@ -321,7 +321,7 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 - (void)awakeFromNib
 {
     [super awakeFromNib];
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090 && defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9 && TR_MACOS_DEPLOYMENT_BEFORE_10_7
     [self configureLegacyTorrentColumn];
 #endif
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(refreshTorrentTable) name:@"RefreshTorrentTable"
@@ -397,7 +397,7 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 {
     [super reloadDataForRowIndexes:rowIndexes columnIndexes:columnIndexes];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self setNeedsDisplay:YES];
 #else
 
@@ -469,7 +469,7 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
     return [item isKindOfClass:[Torrent class]] ? self.rowHeight : kGroupSeparatorHeight;
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (NSView*)outlineView:(NSOutlineView*)outlineView viewForTableColumn:(NSTableColumn*)tableColumn item:(id)item
 {
     if ([item isKindOfClass:[Torrent class]])
@@ -658,7 +658,7 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (NSRect)frameOfOutlineCellAtRow:(NSInteger)row
 {
     return NSZeroRect;
@@ -745,7 +745,7 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
     NSInteger const row = [self rowAtPoint:point];
     id item = row >= 0 ? [self itemAtRow:row] : nil;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     if (event.clickCount == 1 && [item isKindOfClass:[TorrentGroup class]])
     {
         if ([self pointInLegacyGroupDisclosureRect:point])
@@ -879,7 +879,7 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 
 - (NSRect)iconRectForRow:(NSInteger)row
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     NSRect rowRect = [self rectOfRow:row];
     return NSMakeRect(NSMinX(rowRect) + 13.0, NSMinY(rowRect) + 13.0, 36.0, 36.0);
 #else
@@ -1201,7 +1201,7 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 
 #pragma mark - Private
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (BOOL)pointInLegacyGroupDisclosureRect:(NSPoint)point
 {
     NSInteger row = [self rowAtPoint:point];
@@ -1223,7 +1223,7 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
         return NO;
     }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     NSRect rowRect = [self rectOfRow:row];
     return point.x >= NSMaxX(rowRect) - kLegacyGroupStatusWidth;
 #else

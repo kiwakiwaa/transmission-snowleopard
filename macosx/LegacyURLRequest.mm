@@ -4,9 +4,11 @@
 
 #import "LegacyURLRequest.h"
 
+#include <libtransmission/macos-version.h>
+
 typedef NS_ENUM(NSUInteger, TRURLRequestTaskKind) { TRURLRequestTaskKindData, TRURLRequestTaskKindDownload };
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @interface TRURLRequestTask ()<NSURLSessionDataDelegate, NSURLSessionDownloadDelegate>
 #else
 @interface TRURLRequestTask ()<NSURLConnectionDataDelegate, NSURLConnectionDownloadDelegate>
@@ -22,7 +24,7 @@ typedef NS_ENUM(NSUInteger, TRURLRequestTaskKind) { TRURLRequestTaskKindData, TR
 @property(nonatomic) NSURL* downloadLocation;
 @property(nonatomic) BOOL finished;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @property(nonatomic) NSURLSession* session;
 @property(nonatomic) NSURLSessionTask* task;
 #else
@@ -64,7 +66,7 @@ typedef NS_ENUM(NSUInteger, TRURLRequestTaskKind) { TRURLRequestTaskKindData, TR
 
 - (void)resume
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
     NSURLSessionConfiguration* configuration = NSURLSessionConfiguration.ephemeralSessionConfiguration;
     self.session = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:nil];
     self.task = self.kind == TRURLRequestTaskKindDownload ? [self.session downloadTaskWithRequest:self.request] :
@@ -81,7 +83,7 @@ typedef NS_ENUM(NSUInteger, TRURLRequestTaskKind) { TRURLRequestTaskKindData, TR
 {
     self.finished = YES;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self.task cancel];
     [self.session invalidateAndCancel];
 #else
@@ -128,7 +130,7 @@ typedef NS_ENUM(NSUInteger, TRURLRequestTaskKind) { TRURLRequestTaskKindData, TR
 
 - (void)invalidate
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self.session finishTasksAndInvalidate];
     self.task = nil;
     self.session = nil;
@@ -137,7 +139,7 @@ typedef NS_ENUM(NSUInteger, TRURLRequestTaskKind) { TRURLRequestTaskKindData, TR
 #endif
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
 
 - (void)URLSession:(NSURLSession*)session
               dataTask:(NSURLSessionDataTask*)dataTask

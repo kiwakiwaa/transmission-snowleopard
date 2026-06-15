@@ -28,7 +28,7 @@ static CGFloat const kTabMinHeight = 250;
 
 static NSInteger const kInvalidTag = -99;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 static void TRPrepareLegacyInspectorContentView(NSView* view, NSRect* viewRect, BOOL resizesVertically)
 {
     view.translatesAutoresizingMaskIntoConstraints = YES;
@@ -50,7 +50,7 @@ static void TRClampLegacyResizableInspectorFrame(NSRect* windowRect, NSRect* vie
 }
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @interface InfoActivityViewController (LegacyInspectorLayout)
 
 - (CGFloat)legacyContentHeightForWidth:(CGFloat)width;
@@ -80,11 +80,11 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 @property(nonatomic, copy) NSArray* fTorrents;
 
 @property(nonatomic) CGFloat fMinWindowWidth;
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @property(nonatomic) BOOL fUpdatingWindowLayout;
 @property(nonatomic) CGFloat fLegacyCurrentContentHeight;
 @property(nonatomic) CGFloat fLegacyInspectorChromeHeight;
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7
 @property(nonatomic) CGFloat fLegacyLiveResizeContentHeight;
 #endif
 @property(nonatomic) NSMutableDictionary* fLegacyMinimumWidths;
@@ -106,14 +106,14 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 @property(nonatomic) IBOutlet NSTextField* fBasicInfoField;
 @property(nonatomic) IBOutlet NSTextField* fNoneSelectedField;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (CGFloat)legacyFixedContentHeightForWindowWidth:(CGFloat)width;
 - (BOOL)isLegacyFixedHeightPane;
 - (CGFloat)legacyMinimumWidthForView:(NSView*)view;
 - (void)reflowLegacyStackViewIfNeeded;
 - (void)syncLegacyFixedContentViewWithWindowWidth:(CGFloat)width;
 - (void)syncLegacyInspectorContentViewFrameWithWindow;
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7
 - (void)resizeLegacyFixedHeightPaneAfterLiveResize;
 #endif
 #endif
@@ -140,7 +140,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 
     CGFloat const windowHeight = NSHeight(window.frame);
     self.fMinWindowWidth = window.minSize.width;
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     self.fLegacyMinimumWidths = [NSMutableDictionary dictionary];
 #endif
 
@@ -235,7 +235,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 
 - (void)windowWasResized:(NSNotification*)notification
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     if (self.fUpdatingWindowLayout)
     {
         return;
@@ -244,7 +244,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     self.fUpdatingWindowLayout = YES;
     @try
     {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7
         if ([self isLegacyFixedHeightPane])
         {
             [self syncLegacyFixedContentViewWithWindowWidth:NSWidth(self.window.frame)];
@@ -255,7 +255,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
             [self syncLegacyInspectorContentViewFrameWithWindow];
         }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
         if (self.fViewController == self.fOptionsViewController)
         {
             [self.fOptionsViewController checkWindowSize];
@@ -282,7 +282,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 #endif
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (CGFloat)legacyFixedContentHeightForWindowWidth:(CGFloat)width
 {
     if (self.fViewController == self.fActivityViewController)
@@ -342,7 +342,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     }
 
     CGFloat contentHeight = preferredContentHeight;
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7
     if (self.fLegacyLiveResizeContentHeight > 0.0 && [self.fViewController.view inLiveResize])
     {
         contentHeight = self.fLegacyLiveResizeContentHeight;
@@ -364,7 +364,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     self.fLegacyCurrentContentHeight = contentHeight;
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7
 - (void)windowWillStartLiveResize:(NSNotification*)notification
 {
     if (notification.object == self.window && [self isLegacyFixedHeightPane])
@@ -432,7 +432,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
         ![self.fViewController respondsToSelector:@selector(saveViewSize)])
     {
         CGFloat contentHeight = self.fLegacyCurrentContentHeight;
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7
         CGFloat const fixedContentHeight = [self legacyFixedContentHeightForWindowWidth:frameSize.width];
         if (fixedContentHeight > 0.0)
         {
@@ -441,7 +441,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 #endif
         CGFloat const windowHeight = contentHeight + self.fLegacyInspectorChromeHeight;
         frameSize.height = windowHeight > 0.0 ? windowHeight : NSHeight(sender.frame);
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7
         if (fixedContentHeight > 0.0)
         {
             sender.minSize = NSMakeSize(sender.minSize.width, frameSize.height);
@@ -509,7 +509,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     CGFloat oldHeight = 0;
     if (oldTabTag != kInvalidTag)
     {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         NSView* oldView = self.fViewController.view;
         [self syncLegacyInspectorContentViewFrameWithWindow];
 #endif
@@ -523,7 +523,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
             [self.fViewController clearView];
         }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         oldHeight = self.fLegacyCurrentContentHeight > 0.0 ? self.fLegacyCurrentContentHeight : NSHeight(oldView.frame);
 #else
         NSView* oldView = self.fViewController.view;
@@ -615,12 +615,12 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     [self.fViewController updateInfo];
 
     NSRect windowRect = window.frame, viewRect = view.frame;
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     CGFloat minWindowWidth = [self legacyMinimumWidthForView:view];
 #else
     CGFloat minWindowWidth = MAX(self.fMinWindowWidth, view.fittingSize.width);
 #endif
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     BOOL const viewCanResizeVertically = [self.fViewController respondsToSelector:@selector(saveViewSize)];
 
     TRPrepareLegacyInspectorContentView(view, &viewRect, viewCanResizeVertically);
@@ -646,7 +646,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
         viewRect = [self.fOptionsViewController viewRect];
     }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     CGFloat viewHeightDifference = NSHeight(viewRect) - oldHeight;
 #else
     CGFloat const viewHeightDifference = NSHeight(viewRect) - oldHeight;
@@ -655,7 +655,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     windowRect.size.height += viewHeightDifference;
     windowRect.size.width = MAX(NSWidth(windowRect), minWindowWidth);
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     if (self.fViewController == self.fActivityViewController || self.fViewController == self.fOptionsViewController)
     {
         viewRect.size.width = NSWidth(windowRect);
@@ -669,7 +669,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     }
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     if (viewCanResizeVertically) //a little bit hacky, but avoids requiring an extra method
 #else
     if ([self.fViewController respondsToSelector:@selector(saveViewSize)]) //a little bit hacky, but avoids requiring an extra method
@@ -688,7 +688,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
             }
         }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         TRClampLegacyResizableInspectorFrame(&windowRect, &viewRect);
 #endif
         window.minSize = NSMakeSize(minWindowWidth, NSHeight(windowRect) - NSHeight(viewRect) + kTabMinHeight);
@@ -696,7 +696,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     }
     else
     {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         window.minSize = NSMakeSize(minWindowWidth, NSHeight(windowRect));
         window.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
 #else
@@ -706,14 +706,14 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     }
 
     viewRect.size.width = NSWidth(windowRect);
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     TRPrepareLegacyInspectorContentView(view, &viewRect, viewCanResizeVertically);
     self.fLegacyInspectorChromeHeight = NSHeight(windowRect) - NSHeight(viewRect);
     self.fLegacyCurrentContentHeight = NSHeight(viewRect);
 #endif
     view.frame = viewRect;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     BOOL const wasUpdatingWindowLayout = self.fUpdatingWindowLayout;
     self.fUpdatingWindowLayout = YES;
     @try
@@ -909,7 +909,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
                                      [NSString stringWithFormat:NSLocalizedString(@"%@ total", "Inspector -> selected torrents"),
                                                                 [NSString stringForFileSize:size]]];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_8 && !TR_MACOS_SDK_BEFORE_10_8
                 NSByteCountFormatter* formatter = [[NSByteCountFormatter alloc] init];
                 formatter.allowedUnits = NSByteCountFormatterUseBytes;
                 self.fBasicInfoField.toolTip = [formatter stringFromByteCount:size];
@@ -968,7 +968,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
             }
             self.fBasicInfoField.stringValue = basicString;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_8 && !TR_MACOS_SDK_BEFORE_10_8
             NSByteCountFormatter* formatter = [[NSByteCountFormatter alloc] init];
             formatter.allowedUnits = NSByteCountFormatterUseBytes;
             self.fBasicInfoField.toolTip = [formatter stringFromByteCount:torrent.size];

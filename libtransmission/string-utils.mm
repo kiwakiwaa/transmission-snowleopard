@@ -8,6 +8,7 @@
 #include <string>
 #include <string_view>
 
+#include "libtransmission/macos-version.h"
 #include "libtransmission/string-utils.h"
 
 // macOS implementation of tr_strv_to_utf8_string() that autodetects the encoding.
@@ -15,7 +16,7 @@
 
 static NSString* TRStringByDetectingEncoding(std::string_view sv)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     NSString* convertedString = nil;
     NSStringEncoding const stringEncoding = [NSString
         stringEncodingForData:[NSData dataWithBytes:std::data(sv) length:std::size(sv)]

@@ -3,15 +3,18 @@
 // License text can be found in the licenses/ folder.
 
 #import "BlocklistDownloader.h"
+
+#include <libtransmission/macos-version.h>
+
 #import "BlocklistDownloaderViewController.h"
 #import "BlocklistScheduler.h"
 #import "Controller.h"
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 #import "LegacyURLRequest.h"
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @interface BlocklistDownloader ()<NSURLSessionDownloadDelegate>
 
 @property(nonatomic) NSURLSession* fSession;
@@ -73,7 +76,7 @@ BlocklistDownloader* fBLDownloader = nil;
 {
     [_viewController setFinished];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self.fSession invalidateAndCancel];
     self.fSession = nil;
 #else
@@ -86,7 +89,7 @@ BlocklistDownloader* fBLDownloader = nil;
     fBLDownloader = nil;
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
 
 - (void)URLSession:(NSURLSession*)session
                  downloadTask:(NSURLSessionDownloadTask*)downloadTask
@@ -137,7 +140,7 @@ BlocklistDownloader* fBLDownloader = nil;
         [defaults setObject:date forKey:@"BlocklistNewLastUpdate"];
         [BlocklistScheduler.scheduler updateSchedule];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
         [self.fSession finishTasksAndInvalidate];
         self.fSession = nil;
 #else
@@ -204,7 +207,7 @@ BlocklistDownloader* fBLDownloader = nil;
 
         [NSNotificationCenter.defaultCenter postNotificationName:@"BlocklistUpdated" object:nil];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
         [self.fSession finishTasksAndInvalidate];
         self.fSession = nil;
 #else
@@ -240,7 +243,7 @@ BlocklistDownloader* fBLDownloader = nil;
     NSURL* url = [NSURL URLWithString:urlString];
     NSURLRequest* request = [NSURLRequest requestWithURL:url];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
     self.fSession = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.ephemeralSessionConfiguration delegate:self
                                              delegateQueue:nil];
 

@@ -47,7 +47,7 @@
 #import "CocoaCompatibility.h"
 #import "LegacyArchiving.h"
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 #import "LegacyURLRequest.h"
 #endif
 
@@ -112,7 +112,7 @@ typedef NS_ENUM(NSUInteger, ToolbarGroupTag) { //
     ToolbarGroupTagResume = 1
 };
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_9
 // Mountain Lion uses the old NSButtonCell drawing path for selected template-image tinting.
 // Apple documents NSButton.bezelStyle as ignored when the button is not bordered:
 // https://developer.apple.com/documentation/appkit/nsbutton/bezelstyle-swift.property
@@ -148,7 +148,7 @@ static SortType const SortTypeETA = @"ETA";
 
 static NSString* TRStringByRemovingPercentEncoding(NSString* string)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
     return string.stringByRemovingPercentEncoding;
 #else
     return [string stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
@@ -204,7 +204,7 @@ static void initUnits()
 {
     using Config = tr::Values::Config;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_8 && !TR_MACOS_SDK_BEFORE_10_8
     // use a random value to avoid possible pluralization issues with 1 or 0 (an example is if we use 1 for bytes,
     // we'd get "byte" when we'd want "bytes" for the generic libtransmission value at least)
     int const ArbitraryPluralNumber = 17;
@@ -445,7 +445,7 @@ static void removeKeRangerRansomware()
     NSLog(@"OSX.KeRanger.A ransomware removal completed, proceeding to normal operation");
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
 #if TR_HAS_USER_NOTIFICATIONS
 @interface Controller ()<NSURLSessionDataDelegate, NSURLSessionDownloadDelegate, PowerManagerDelegate, UNUserNotificationCenterDelegate>
 #else
@@ -516,11 +516,11 @@ static void removeKeRangerRansomware()
 @property(nonatomic) NSMutableArray* fAutoImportedNames;
 @property(nonatomic) NSTimer* fAutoImportTimer;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (void)updateMountainLionSpeedLimitButton;
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @property(nonatomic) NSURLSession* fSession;
 #else
 @property(nonatomic) NSMutableDictionary* fURLDownloadTasks;
@@ -532,7 +532,7 @@ static void removeKeRangerRansomware()
 @property(nonatomic) URLSheetWindowController* fUrlSheetController;
 
 @property(nonatomic) BOOL fGlobalPopoverShown;
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
 @property(nonatomic) NSPopover* fLegacyGlobalPopover;
 #endif
 @property(nonatomic) NSView* fPositioningView;
@@ -677,7 +677,7 @@ static void removeKeRangerRansomware()
         _fDisplayedTorrents = [[NSMutableArray alloc] init];
         _fTorrentHashes = [[NSMutableDictionary alloc] init];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
         NSURLSessionConfiguration* configuration = NSURLSessionConfiguration.defaultSessionConfiguration;
         configuration.requestCachePolicy = NSURLRequestReloadIgnoringLocalAndRemoteCacheData;
         _fSession = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:nil];
@@ -739,14 +739,14 @@ static void removeKeRangerRansomware()
     toolbar.autosavesConfiguration = YES;
     toolbar.displayMode = NSToolbarDisplayModeIconOnly;
     self.fWindow.toolbar = toolbar;
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     self.fWindow.toolbar.visible = YES;
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     self.fWindow.toolbarStyle = NSWindowToolbarStyleUnified;
 #endif
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     self.fWindow.titleVisibility = NSWindowTitleHidden;
 #endif
 
@@ -761,7 +761,7 @@ static void removeKeRangerRansomware()
     //set table size
     BOOL const small = [self.fDefaults boolForKey:@"SmallView"];
     self.fTableView.rowHeight = small ? kRowHeightSmall : kRowHeightRegular;
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_13 && !TR_MACOS_SDK_BEFORE_10_13
     self.fTableView.usesAutomaticRowHeights = NO;
 #endif
     self.fTableView.floatsGroupRows = YES;
@@ -772,7 +772,7 @@ static void removeKeRangerRansomware()
     [[self.fTotalTorrentsField cell] setBackgroundStyle:NSBackgroundStyleRaised];
 
     self.fActionButton.toolTip = NSLocalizedString(@"Shortcuts for changing global settings.", "Main window -> 1st bottom left button (action) tooltip");
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
+#if !TR_MACOS_SDK_BEFORE_10_11
     if (@available(macOS 26.0, *))
     {
         NSLayoutConstraint* constraint = [self.fActionButton.leadingAnchor constraintEqualToAnchor:self.fActionButton.superview.leadingAnchor
@@ -785,7 +785,7 @@ static void removeKeRangerRansomware()
     self.fSpeedLimitButton.toolTip = NSLocalizedString(
         @"Speed Limit overrides the total bandwidth limits with its own limits.",
         "Main window -> 2nd bottom left button (turtle) tooltip");
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self.fSpeedLimitButton unbind:NSValueBinding];
     NSImage* speedLimitImage = self.fSpeedLimitButton.image.copy;
     [speedLimitImage setTemplate:YES];
@@ -811,7 +811,7 @@ static void removeKeRangerRansomware()
 
     [self.fTableView registerForDraggedTypes:@[ kTorrentTableViewDataType ]];
     [self.fWindow registerForDraggedTypes:@[ TRPasteboardTypeFileURL, TRPasteboardTypeURL ]];
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(layoutMainWindowForLegacyAppKit)
                                                name:NSWindowDidResizeNotification
                                              object:self.fWindow];
@@ -969,7 +969,7 @@ static void removeKeRangerRansomware()
     [NSRunLoop.currentRunLoop addTimer:self.fTimer forMode:NSEventTrackingRunLoopMode];
 
     [self.fWindow makeKeyAndOrderFront:nil];
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self performSelector:@selector(layoutMainWindowForLegacyAppKit) withObject:nil afterDelay:0.1];
 #endif
 
@@ -1219,7 +1219,7 @@ static void removeKeRangerRansomware()
         }
     }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
     //remove all torrent downloads
     [self.fSession invalidateAndCancel];
 #else
@@ -1298,7 +1298,7 @@ static void removeKeRangerRansomware()
 
 #pragma mark - URL Downloads
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 
 - (void)forgetURLDownloadForKey:(NSString*)urlKey
 {
@@ -1386,7 +1386,7 @@ static void removeKeRangerRansomware()
     });
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
 
 #pragma mark - NSURLSessionDelegate
 
@@ -1890,7 +1890,7 @@ static void removeKeRangerRansomware()
             return;
         }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
         [self.fSession getAllTasksWithCompletionHandler:^(NSArray* tasks) {
             for (NSURLSessionTask* task in tasks)
             {
@@ -2268,7 +2268,7 @@ static void removeKeRangerRansomware()
         {
             if (!beganUpdate)
             {
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
                 [self.fTableView beginUpdates];
 #else
                 [NSAnimationContext beginGrouping]; //this has to be before we set the completion handler (#4874)
@@ -2305,7 +2305,7 @@ static void removeKeRangerRansomware()
         if (beganUpdate)
         {
             [self.fTableView endUpdates];
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
             finishRemoval();
 #else
             [NSAnimationContext endGrouping];
@@ -3112,7 +3112,7 @@ static void removeKeRangerRansomware()
 {
     //actually sort
     [self sortTorrentsCallUpdates:YES includeQueueOrder:includeQueueOrder];
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self.fTableView reloadData];
 #else
     self.fTableView.needsDisplay = YES;
@@ -3736,7 +3736,7 @@ static void removeKeRangerRansomware()
         [self.fTableView endUpdates];
     }
 
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
     if (groupRows)
     {
         for (TorrentGroup* group in self.fDisplayedTorrents)
@@ -3757,7 +3757,7 @@ static void removeKeRangerRansomware()
 
     [NSAnimationContext endGrouping];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
     //reloaddata, otherwise the tableview has a bunch of empty cells
     [self.fTableView reloadData];
 #endif
@@ -3783,7 +3783,7 @@ static void removeKeRangerRansomware()
 {
     if (self.fGlobalPopoverShown)
     {
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
         [self.fLegacyGlobalPopover close];
         self.fLegacyGlobalPopover = nil;
 #endif
@@ -3813,7 +3813,7 @@ static void removeKeRangerRansomware()
         [popover showRelativeToRect:senderView.bounds ofView:senderView preferredEdge:NSMaxYEdge];
     }
 
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
     self.fLegacyGlobalPopover = popover;
 #endif
 }
@@ -3828,7 +3828,7 @@ static void removeKeRangerRansomware()
 {
     [self.fPositioningView removeFromSuperview];
     self.fGlobalPopoverShown = NO;
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
     self.fLegacyGlobalPopover = nil;
 #endif
 }
@@ -3884,7 +3884,7 @@ static void removeKeRangerRansomware()
 {
     tr_sessionUseAltSpeed(self.fLib, [self.fDefaults boolForKey:@"SpeedLimit"]);
     [self.fStatusBar updateSpeedFieldsToolTips];
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self updateMountainLionSpeedLimitButton];
 #endif
 }
@@ -3895,7 +3895,7 @@ static void removeKeRangerRansomware()
 
     [self.fDefaults setBool:isLimited forKey:@"SpeedLimit"];
     [self.fStatusBar updateSpeedFieldsToolTips];
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self updateMountainLionSpeedLimitButton];
 #endif
 
@@ -3905,7 +3905,7 @@ static void removeKeRangerRansomware()
     }
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 && MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (void)updateMountainLionSpeedLimitButton
 {
     self.fSpeedLimitButton.state = [self.fDefaults boolForKey:@"SpeedLimit"] ? NSControlStateValueOn : NSControlStateValueOff;
@@ -4063,7 +4063,7 @@ static void removeKeRangerRansomware()
     return ![item isKindOfClass:[Torrent class]];
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (id)outlineView:(NSOutlineView*)outlineView objectValueForTableColumn:(NSTableColumn*)tableColumn byItem:(id)item
 {
     return item;
@@ -4420,7 +4420,7 @@ static void removeKeRangerRansomware()
 
 - (void)layoutMainWindowForLegacyAppKit
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     TRLayoutLegacyTitlebarAccessoryWindow(self.fWindow);
     NSView* contentView = self.fWindow.contentView;
     NSScrollView* scrollView = self.fTableView.enclosingScrollView;
@@ -4659,18 +4659,18 @@ static void removeKeRangerRansomware()
     ButtonToolbarItem* item = [[klass alloc] initWithItemIdentifier:ident];
 
     NSButton* button;
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     button = [[NSButton alloc] initWithFrame:NSMakeRect(0.0, 0.0, 32.0, 25.0)];
 #else
     button = [[NSButton alloc] init];
 #endif
     button.bezelStyle = NSBezelStyleTexturedRounded;
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     button.imagePosition = NSImageOnly;
 #endif
     button.stringValue = @"";
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     item.minSize = button.frame.size;
     item.maxSize = button.frame.size;
 #endif
@@ -4760,7 +4760,7 @@ static void removeKeRangerRansomware()
 
         NSSegmentedControl* segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
         segmentedControl.segmentStyle = NSSegmentStyleTexturedRounded;
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
         segmentedControl.trackingMode = NSSegmentSwitchTrackingMomentary;
 #endif
         segmentedControl.segmentCount = 2;
@@ -4772,7 +4772,7 @@ static void removeKeRangerRansomware()
         TRSetSegmentTag(segmentedControl, ToolbarGroupTagResume, ToolbarGroupTagResume);
         [segmentedControl setImage:TRImageForSystemSymbol(@"arrow.clockwise.circle.fill", nil) forSegment:ToolbarGroupTagResume];
         TRSetSegmentToolTip(segmentedControl, NSLocalizedString(@"Resume all transfers", "All toolbar item -> tooltip"), ToolbarGroupTagResume);
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         [segmentedControl setWidth:32 forSegment:ToolbarGroupTagPause];
         [segmentedControl setWidth:32 forSegment:ToolbarGroupTagResume];
 #else
@@ -4808,7 +4808,7 @@ static void removeKeRangerRansomware()
 
         NSSegmentedControl* segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
         segmentedControl.segmentStyle = NSSegmentStyleTexturedRounded;
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
         segmentedControl.trackingMode = NSSegmentSwitchTrackingMomentary;
 #endif
         segmentedControl.segmentCount = 2;
@@ -4820,7 +4820,7 @@ static void removeKeRangerRansomware()
         TRSetSegmentTag(segmentedControl, ToolbarGroupTagResume, ToolbarGroupTagResume);
         [segmentedControl setImage:TRImageForSystemSymbol(@"arrow.clockwise", nil) forSegment:ToolbarGroupTagResume];
         TRSetSegmentToolTip(segmentedControl, NSLocalizedString(@"Resume selected transfers", "Selected toolbar item -> tooltip"), ToolbarGroupTagResume);
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         [segmentedControl setWidth:32 forSegment:ToolbarGroupTagPause];
         [segmentedControl setWidth:32 forSegment:ToolbarGroupTagResume];
 #else
@@ -5056,7 +5056,7 @@ static void removeKeRangerRansomware()
     return YES;
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 110000
+#if !TR_MACOS_SDK_BEFORE_11_0
 - (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item
 {
     if ([(id)item isKindOfClass:NSToolbarItem.class])

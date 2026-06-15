@@ -19,7 +19,7 @@ typedef NS_ENUM(NSUInteger, PopupPriority) {
     PopupPriorityLow = 2,
 };
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 static void TRPrepareLegacySettingsLabel(NSTextField* label)
 {
     NSTextFieldCell* cell = (NSTextFieldCell*)label.cell;
@@ -185,7 +185,7 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
     });
 
     [self updateFiles];
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     self.window.delegate = (id<NSWindowDelegate>)self;
     [self layoutSettingsViewForLegacyAppKit];
 #endif
@@ -193,7 +193,7 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
 
 - (void)windowDidLoad
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self layoutSettingsViewForLegacyAppKit];
 #endif
 
@@ -206,7 +206,7 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
 
 - (void)windowDidResize:(NSNotification*)notification
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self layoutSettingsViewForLegacyAppKit];
 #endif
 }
@@ -237,7 +237,7 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
 
 - (void)layoutSettingsViewForLegacyAppKit
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     NSView* contentView = self.fPriorityPopUp.superview;
     if (contentView == nil)
     {

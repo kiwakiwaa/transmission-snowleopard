@@ -4,7 +4,9 @@
 
 #import <Foundation/Foundation.h>
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1080
+#include <libtransmission/macos-version.h>
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
 
 @implementation NSArray (TRObjectSubscripting)
 

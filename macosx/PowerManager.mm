@@ -4,6 +4,8 @@
 
 #import "PowerManager.h"
 
+#include <libtransmission/macos-version.h>
+
 #ifndef __has_include
 #define __has_include(x) 0
 #endif
@@ -28,7 +30,7 @@ typedef void* os_log_t;
 - (void)systemWillSleep:(NSNotification*)notification;
 - (void)systemDidWakeUp:(NSNotification*)notification;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 120000
+#if !TR_MACOS_SDK_BEFORE_12_0
 - (void)powerStateDidChange:(NSNotification*)notification NS_AVAILABLE_MAC(12_0);
 #else
 - (void)powerStateDidChange:(NSNotification*)notification;

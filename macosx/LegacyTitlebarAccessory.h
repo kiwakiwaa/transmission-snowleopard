@@ -4,7 +4,9 @@
 
 #import <AppKit/AppKit.h>
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101000
+#include <libtransmission/macos-version.h>
+
+#if TR_MACOS_SDK_BEFORE_10_10
 @interface NSTitlebarAccessoryViewController : NSViewController
 @property(nonatomic) NSLayoutAttribute layoutAttribute;
 @property(nonatomic, getter=isHidden) BOOL hidden;

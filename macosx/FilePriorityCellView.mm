@@ -3,13 +3,16 @@
 // License text can be found in the licenses/ folder.
 
 #import "FilePriorityCellView.h"
+
+#include <libtransmission/macos-version.h>
+
 #import "FileListNode.h"
 #import "NSImageAdditions.h"
 #import "Torrent.h"
 
 static CGFloat const kImageOverlap = 1.0;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 {
     NSImage* image = [NSImage imageNamed:imageName];
@@ -70,7 +73,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
     {
         // Create segmented control for hover state
         NSSegmentedControl* segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         segmentedControl.translatesAutoresizingMaskIntoConstraints = YES;
         [(NSSegmentedCell*)[segmentedControl cell] setTrackingMode:NSSegmentSwitchTrackingSelectAny];
         [(NSSegmentedCell*)[segmentedControl cell] setControlSize:NSMiniControlSize];
@@ -94,13 +97,13 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
         [segmentedControl setImage:[NSImage imageNamed:@"PriorityControlNormal"] forSegment:1];
         [segmentedControl setImage:[NSImage imageNamed:@"PriorityControlHigh"] forSegment:2];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         [segmentedControl setTarget:self];
 #else
         segmentedControl.target = self;
 #endif
         segmentedControl.action = @selector(segmentedControlClicked:);
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         [segmentedControl setHidden:YES];
 #else
         segmentedControl.hidden = YES;
@@ -111,7 +114,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 
         // Create container view for priority icons
         NSView* iconsContainerView = [[NSView alloc] initWithFrame:NSZeroRect];
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         iconsContainerView.translatesAutoresizingMaskIntoConstraints = YES;
 #else
         iconsContainerView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -119,7 +122,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
         [self addSubview:iconsContainerView];
         _iconsContainerView = iconsContainerView;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         [self setNeedsDisplay:YES];
 #else
         // Setup constraints
@@ -168,7 +171,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
     if (self.hovered && count > 0)
     {
         // Show segmented control
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         [self.segmentedControl setHidden:NO];
         [self.iconsContainerView setHidden:YES];
 #else
@@ -183,7 +186,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
     else
     {
         // Show static priority icons
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         [self.segmentedControl setHidden:YES];
         [self.iconsContainerView setHidden:NO];
 #else
@@ -200,7 +203,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 
 - (void)updatePriorityIcons:(NSSet*)priorities
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
     // Remove all existing image views
 #endif
     for (NSView* subview in self.iconsContainerView.subviews)
@@ -213,7 +216,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 
     if (count == 0)
     {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         NSImage* image = PriorityTemplateImage(@"PriorityNormalTemplate", [NSColor lightGrayColor]);
 #else
         NSImage* image = [[NSImage imageNamed:@"PriorityNormalTemplate"] imageWithColor:NSColor.lightGrayColor];
@@ -222,7 +225,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
     }
     else
     {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         NSColor* priorityColor = self.backgroundStyle == NSBackgroundStyleEmphasized ? [NSColor whiteColor] : [NSColor darkGrayColor];
 #else
         NSColor* priorityColor = self.backgroundStyle == NSBackgroundStyleEmphasized ? NSColor.whiteColor : NSColor.darkGrayColor;
@@ -230,7 +233,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 
         if ([priorities containsObject:@(TR_PRI_LOW)])
         {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
             [images addObject:PriorityTemplateImage(@"PriorityLowTemplate", priorityColor)];
 #else
             NSImage* image = [[NSImage imageNamed:@"PriorityLowTemplate"] imageWithColor:priorityColor];
@@ -239,7 +242,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
         }
         if ([priorities containsObject:@(TR_PRI_NORMAL)])
         {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
             [images addObject:PriorityTemplateImage(@"PriorityNormalTemplate", priorityColor)];
 #else
             NSImage* image = [[NSImage imageNamed:@"PriorityNormalTemplate"] imageWithColor:priorityColor];
@@ -248,7 +251,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
         }
         if ([priorities containsObject:@(TR_PRI_HIGH)])
         {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
             [images addObject:PriorityTemplateImage(@"PriorityHighTemplate", priorityColor)];
 #else
             NSImage* image = [[NSImage imageNamed:@"PriorityHighTemplate"] imageWithColor:priorityColor];
@@ -257,7 +260,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
         }
     }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     CGFloat totalWidth = 0.0;
     CGFloat maxHeight = 0.0;
     for (NSImage* image in images)
@@ -326,7 +329,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 #endif
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (void)layout
 {
     [super layout];
@@ -342,7 +345,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 
 - (void)segmentedControlClicked:(NSSegmentedControl*)sender
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     NSInteger segment = [sender selectedSegment];
 #else
     NSInteger segment = sender.selectedSegment;
@@ -374,7 +377,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
     [torrent setFilePriority:priority forIndexes:node.indexes];
 
     // Notify that we need to refresh
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [[NSNotificationCenter defaultCenter] postNotificationName:@"UpdateUI" object:nil];
 #else
     [NSNotificationCenter.defaultCenter postNotificationName:@"UpdateUI" object:nil];

@@ -4,9 +4,11 @@
 
 #import "LegacyColors.h"
 
+#include <libtransmission/macos-version.h>
+
 NSColor* TRLabelColor(void)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     return [NSColor labelColor];
 #else
     return [NSColor controlTextColor];
@@ -15,7 +17,7 @@ NSColor* TRLabelColor(void)
 
 NSColor* TRSecondaryLabelColor(void)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     return [NSColor secondaryLabelColor];
 #else
     return [NSColor disabledControlTextColor];
@@ -24,7 +26,7 @@ NSColor* TRSecondaryLabelColor(void)
 
 NSColor* TRSystemRedColor(void)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     return [NSColor systemRedColor];
 #else
     return [NSColor redColor];
@@ -33,7 +35,7 @@ NSColor* TRSystemRedColor(void)
 
 NSColor* TRSystemOrangeColor(void)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     return [NSColor systemOrangeColor];
 #else
     return [NSColor orangeColor];
@@ -42,7 +44,7 @@ NSColor* TRSystemOrangeColor(void)
 
 NSColor* TRSystemYellowColor(void)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     return [NSColor systemYellowColor];
 #else
     return [NSColor yellowColor];
@@ -51,7 +53,7 @@ NSColor* TRSystemYellowColor(void)
 
 NSColor* TRSystemGreenColor(void)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     return [NSColor systemGreenColor];
 #else
     return [NSColor greenColor];
@@ -60,7 +62,7 @@ NSColor* TRSystemGreenColor(void)
 
 NSColor* TRSystemBlueColor(void)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     return [NSColor systemBlueColor];
 #else
     return [NSColor blueColor];
@@ -69,7 +71,7 @@ NSColor* TRSystemBlueColor(void)
 
 NSColor* TRSystemPurpleColor(void)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     return [NSColor systemPurpleColor];
 #else
     return [NSColor purpleColor];
@@ -78,7 +80,7 @@ NSColor* TRSystemPurpleColor(void)
 
 NSColor* TRSystemGrayColor(void)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     return [NSColor systemGrayColor];
 #else
     return [NSColor grayColor];
@@ -87,7 +89,7 @@ NSColor* TRSystemGrayColor(void)
 
 NSColor* TRSystemTealColor(void)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     return [NSColor systemTealColor];
 #else
     return [NSColor cyanColor];

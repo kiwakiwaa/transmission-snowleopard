@@ -4,11 +4,13 @@
 
 #import <AppKit/AppKit.h>
 
+#include <libtransmission/macos-version.h>
+
 #import "ObjectiveCCompatibility.h"
 
 typedef void (^TRTimerBlock)(NSTimer* timer);
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 101200
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_12
 @interface NSTimer (TRLegacyBlockTimer)
 + (NSTimer*)tr_scheduledTimerWithTimeInterval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(TRTimerBlock)block;
 + (NSTimer*)tr_timerWithFireDate:(NSDate*)date interval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(TRTimerBlock)block;
@@ -17,7 +19,7 @@ typedef void (^TRTimerBlock)(NSTimer* timer);
 
 static inline NSTimer* TRScheduledTimerWithTimeInterval(NSTimeInterval interval, BOOL repeats, TRTimerBlock block)
 {
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 101200
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_12
     return [NSTimer tr_scheduledTimerWithTimeInterval:interval repeats:repeats block:block];
 #else
     return [NSTimer scheduledTimerWithTimeInterval:interval repeats:repeats block:block];
@@ -26,14 +28,14 @@ static inline NSTimer* TRScheduledTimerWithTimeInterval(NSTimeInterval interval,
 
 static inline NSTimer* TRTimerWithFireDate(NSDate* date, NSTimeInterval interval, BOOL repeats, TRTimerBlock block)
 {
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 101200
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_12
     return [NSTimer tr_timerWithFireDate:date interval:interval repeats:repeats block:block];
 #else
     return [[NSTimer alloc] initWithFireDate:date interval:interval repeats:repeats block:block];
 #endif
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+#if TR_MACOS_SDK_BEFORE_10_7
 typedef NSInteger NSLayoutAttribute;
 typedef NSInteger NSLayoutRelation;
 typedef NSUInteger NSLayoutFormatOptions;
@@ -185,8 +187,6 @@ static inline uint32_t arc4random_uniform(uint32_t upper_bound)
 @interface NSSharingContentScope : NSObject
 @end
 
-#import "LegacyPopover.h"
-
 typedef NSUInteger NSRegularExpressionOptions;
 typedef NSUInteger NSMatchingOptions;
 
@@ -223,7 +223,11 @@ typedef NSUInteger NSMatchingOptions;
 #endif
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1080
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
+#import "LegacyPopover.h"
+#endif
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
 @interface NSArray (TRObjectSubscripting)
 - (id)objectAtIndexedSubscript:(NSUInteger)idx;
 @end
@@ -249,20 +253,20 @@ typedef NSUInteger NSMatchingOptions;
 #import "LegacySymbols.h"
 #import "LegacyTitlebarAccessory.h"
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101000
+#if TR_MACOS_SDK_BEFORE_10_10
 #define NSBezelStyleTexturedRounded NSTexturedRoundedBezelStyle
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101000
+#if TR_MACOS_SDK_BEFORE_10_10
 #define NSBackgroundStyleEmphasized NSBackgroundStyleDark
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
+#if TR_MACOS_SDK_BEFORE_10_12
 #define NSEventModifierFlagOption NSAlternateKeyMask
 #define NSEventModifierFlagCommand NSCommandKeyMask
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101300
+#if TR_MACOS_SDK_BEFORE_10_13
 #define TRPasteboardTypeFileURL NSFilenamesPboardType
 #define TRPasteboardTypeURL NSURLPboardType
 #else
@@ -270,7 +274,7 @@ typedef NSUInteger NSMatchingOptions;
 #define TRPasteboardTypeURL NSPasteboardTypeURL
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101000
+#if TR_MACOS_SDK_BEFORE_10_10
 #define TRURLQuarantinePropertiesKey @"NSURLQuarantinePropertiesKey"
 #else
 #define TRURLQuarantinePropertiesKey NSURLQuarantinePropertiesKey
@@ -336,26 +340,26 @@ static inline NSEvent* NSAppCurrentEvent(void)
 #define NSMenuItemValidation NSUserInterfaceValidations
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @interface NSPredicate (TRSecureCodingEvaluation)
 - (void)allowEvaluation;
 @end
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101300
+#if TR_MACOS_SDK_BEFORE_10_13
 typedef NSInteger NSControlStateValue;
 static NSControlStateValue const NSControlStateValueMixed = NSMixedState;
 static NSControlStateValue const NSControlStateValueOff = NSOffState;
 static NSControlStateValue const NSControlStateValueOn = NSOnState;
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101000
+#if TR_MACOS_SDK_BEFORE_10_10
 #define NSAlertStyleWarning NSWarningAlertStyle
 #define NSAlertStyleCritical NSCriticalAlertStyle
 #define NSAlertStyleInformational NSInformationalAlertStyle
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
+#if TR_MACOS_SDK_BEFORE_10_12
 #define TRFullScreenWindowMask NSFullScreenWindowMask
 #define TRLeftMouseDownMask NSLeftMouseDownMask
 #else
@@ -367,7 +371,7 @@ static NSControlStateValue const NSControlStateValueOn = NSOnState;
 #define NSWindowCollectionBehaviorFullScreenNone 0
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
+#if TR_MACOS_SDK_BEFORE_10_12
 #define NSCompositingOperationSourceOver NSCompositeSourceOver
 #define NSCompositingOperationSourceAtop NSCompositeSourceAtop
 #define NSCompositingOperationSourceIn NSCompositeSourceIn
@@ -391,7 +395,7 @@ typedef NS_ENUM(NSInteger, NSColorWellStyle) {
 
 NS_ASSUME_NONNULL_END
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
+#if TR_MACOS_SDK_BEFORE_10_12
 #define NSTextAlignmentRight NSRightTextAlignment
 #define NSTextAlignmentCenter NSCenterTextAlignment
 #define NSTextAlignmentLeft NSLeftTextAlignment

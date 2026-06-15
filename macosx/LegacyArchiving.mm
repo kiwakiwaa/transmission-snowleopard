@@ -4,9 +4,11 @@
 
 #import "LegacyArchiving.h"
 
+#include <libtransmission/macos-version.h>
+
 NSData* TRArchivedDataForObject(id object)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_13 && !TR_MACOS_SDK_BEFORE_10_13
     return [NSKeyedArchiver archivedDataWithRootObject:object requiringSecureCoding:YES error:nil];
 #else
     return [NSKeyedArchiver archivedDataWithRootObject:object];
@@ -20,7 +22,7 @@ id TRUnarchiveObjectFromData(NSData* data, NSSet* allowedClasses)
         return nil;
     }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_13 && !TR_MACOS_SDK_BEFORE_10_13
     return [NSKeyedUnarchiver unarchivedObjectOfClasses:allowedClasses fromData:data error:nil];
 #else
     return [NSKeyedUnarchiver unarchiveObjectWithData:data];

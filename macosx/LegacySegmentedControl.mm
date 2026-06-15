@@ -4,9 +4,11 @@
 
 #import "LegacySegmentedControl.h"
 
+#include <libtransmission/macos-version.h>
+
 void TRSetSegmentTag(NSSegmentedControl* control, NSInteger tag, NSInteger segment)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_13 && !TR_MACOS_SDK_BEFORE_10_13
     [control setTag:tag forSegment:segment];
 #else
     (void)control;
@@ -17,7 +19,7 @@ void TRSetSegmentTag(NSSegmentedControl* control, NSInteger tag, NSInteger segme
 
 NSInteger TRSelectedSegmentTag(NSSegmentedControl* control)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_13 && !TR_MACOS_SDK_BEFORE_10_13
     return [control selectedTag];
 #else
     return [control selectedSegment];
@@ -26,7 +28,7 @@ NSInteger TRSelectedSegmentTag(NSSegmentedControl* control)
 
 void TRSetSegmentToolTip(NSSegmentedControl* control, NSString* toolTip, NSInteger segment)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101300
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_13 && !TR_MACOS_SDK_BEFORE_10_13
     [control setToolTip:toolTip forSegment:segment];
 #else
     (void)segment;

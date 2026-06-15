@@ -7,7 +7,7 @@
 
 #import "CocoaCompatibility.h"
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 #import "LegacyURLRequest.h"
 #endif
 
@@ -27,7 +27,7 @@ static CGFloat const kCountWidth = 60.0;
 // make the favicons accessible to all tracker cells
 static NSCache* fTrackerIconCache;
 static NSMutableSet* fTrackerIconLoading;
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 static NSMutableDictionary* fTrackerIconTasks;
 #endif
 
@@ -49,7 +49,7 @@ static NSMutableDictionary* fTrackerIconTasks;
 
     fTrackerIconCache = [[NSCache alloc] init];
     fTrackerIconLoading = [[NSMutableSet alloc] init];
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     fTrackerIconTasks = [[NSMutableDictionary alloc] init];
 #endif
 }
@@ -215,7 +215,7 @@ static NSMutableDictionary* fTrackerIconTasks;
     NSURLRequest* request = [NSURLRequest requestWithURL:[NSURL URLWithString:favIconUrl] cachePolicy:NSURLRequestUseProtocolCachePolicy
                                          timeoutInterval:30.0];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
     NSURLSessionDataTask* task = [NSURLSession.sharedSession
         dataTaskWithRequest:request completionHandler:^(NSData* iconData, NSURLResponse* response, NSError* error) {
             if (error)

@@ -51,7 +51,7 @@
         [super drawWithFrame:cellFrame inView:controlView];
         if (self.seed)
         {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
             NSBezierPath* check = [NSBezierPath bezierPath];
             check.lineWidth = 1.5;
             [check setLineCapStyle:NSRoundLineCapStyle];

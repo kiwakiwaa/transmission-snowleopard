@@ -392,7 +392,7 @@ static NSUInteger const kMaxQueueLength = 10000U;
     return YES;
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 110000
+#if !TR_MACOS_SDK_BEFORE_11_0
 - (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item
 {
     if ([(id)item isKindOfClass:NSMenuItem.class])

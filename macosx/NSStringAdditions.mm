@@ -2,6 +2,7 @@
 // It may be used under the MIT (SPDX: MIT) license.
 // License text can be found in the licenses/ folder.
 
+#include <libtransmission/macos-version.h>
 #include <libtransmission/transmission.h>
 #include <libtransmission/utils.h>
 
@@ -15,7 +16,7 @@
 
 @end
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1080
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8 || TR_MACOS_SDK_BEFORE_10_8
 static NSString* TRStringForFileSize(uint64_t size, BOOL includeUnit)
 {
     static char const* const units[] = { "bytes", "KB", "MB", "GB", "TB", "PB", "EB" };
@@ -71,7 +72,7 @@ static NSString* TRStringForFileSize(uint64_t size, BOOL includeUnit)
 // https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/APFS_Guide/VolumeFormatComparison/VolumeFormatComparison.html
 + (NSString*)stringForFileSize:(uint64_t)size
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_8 && !TR_MACOS_SDK_BEFORE_10_8
     return [NSByteCountFormatter stringFromByteCount:size countStyle:NSByteCountFormatterCountStyleFile];
 #else
     return TRStringForFileSize(size, YES);
@@ -82,7 +83,7 @@ static NSString* TRStringForFileSize(uint64_t size, BOOL includeUnit)
 // https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/APFS_Guide/VolumeFormatComparison/VolumeFormatComparison.html
 + (NSString*)stringForFilePartialSize:(uint64_t)partialSize fullSize:(uint64_t)fullSize
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_8 && !TR_MACOS_SDK_BEFORE_10_8
     NSByteCountFormatter* fileSizeFormatter = [[NSByteCountFormatter alloc] init];
 
     NSString* fullSizeString = [fileSizeFormatter stringFromByteCount:fullSize];
@@ -104,7 +105,7 @@ static NSString* TRStringForFileSize(uint64_t size, BOOL includeUnit)
         partialUnitsSame = magnitudePartial == magnitudeFull;
     }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_8 && !TR_MACOS_SDK_BEFORE_10_8
     fileSizeFormatter.includesUnit = !partialUnitsSame;
     NSString* partialSizeString = [fileSizeFormatter stringFromByteCount:partialSize];
 #else
@@ -214,7 +215,7 @@ static NSString* TRStringForFileSize(uint64_t size, BOOL includeUnit)
     }
     // autodetection of the encoding (#3434)
     NSData* data = [NSData dataWithBytes:(void const*)bytes length:sizeof(unsigned char) * strlen(bytes)];
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
     [NSString stringEncodingForData:data encodingOptions:nil convertedString:&fullPath usedLossyConversion:nil];
     if (fullPath)
     {

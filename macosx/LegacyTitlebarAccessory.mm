@@ -4,9 +4,11 @@
 
 #import "LegacyTitlebarAccessory.h"
 
+#include <libtransmission/macos-version.h>
+
 #import <objc/runtime.h>
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 101000
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
 static char TRLegacyTitlebarAccessoryControllersKey;
 
 static NSMutableArray* TRLegacyTitlebarAccessoryControllersForWindow(NSWindow* window, BOOL create)

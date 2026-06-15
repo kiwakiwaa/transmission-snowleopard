@@ -227,7 +227,7 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
     return (item ? ((FileListNode*)item).children : self.fFileList)[index];
 }
 
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
 - (id)outlineView:(NSOutlineView*)outlineView objectValueForTableColumn:(NSTableColumn*)tableColumn byItem:(id)item
 {
     FileListNode* node = (FileListNode*)item;
@@ -456,7 +456,7 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
 #pragma mark - NSMenuItemValidation
 
 #warning make real view controller (Leopard-only) so that Command-R will work
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 110000
+#if !TR_MACOS_SDK_BEFORE_11_0
 - (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item
 {
     if ([(id)item isKindOfClass:NSMenuItem.class])

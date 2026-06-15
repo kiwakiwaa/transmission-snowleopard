@@ -3,6 +3,9 @@
 // License text can be found in the licenses/ folder.
 
 #import "FileCheckCellView.h"
+
+#include <libtransmission/macos-version.h>
+
 #import "FileListNode.h"
 #import "Torrent.h"
 
@@ -18,7 +21,7 @@
     {
         // Create checkbox button
         NSButton* checkButton = [[NSButton alloc] initWithFrame:NSZeroRect];
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         checkButton.translatesAutoresizingMaskIntoConstraints = YES;
         checkButton.autoresizingMask = NSViewMinXMargin | NSViewMaxXMargin | NSViewMinYMargin | NSViewMaxYMargin;
         [checkButton setButtonType:NSSwitchButton];
@@ -33,7 +36,7 @@
         [self addSubview:checkButton];
         _checkButton = checkButton;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
         // Setup constraints
         [NSLayoutConstraint activateConstraints:@[
             [checkButton.centerXAnchor constraintEqualToAnchor:self.centerXAnchor],
@@ -44,7 +47,7 @@
     return self;
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (void)layout
 {
     [super layout];
@@ -112,7 +115,7 @@
     Torrent* torrent = node.torrent;
 
     NSIndexSet* indexSet;
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     if ([NSEvent modifierFlags] & NSAlternateKeyMask)
 #else
     if (NSEvent.modifierFlags & NSEventModifierFlagOption)

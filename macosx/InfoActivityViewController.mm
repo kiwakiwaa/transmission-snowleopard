@@ -2,6 +2,7 @@
 // It may be used under the MIT (SPDX: MIT) license.
 // License text can be found in the licenses/ folder.
 
+#include <libtransmission/macos-version.h>
 #include <libtransmission/transmission.h>
 #include <libtransmission/utils.h> //tr_getRatio()
 
@@ -21,7 +22,7 @@ static CGFloat const kStackViewInset = 12.0;
 static CGFloat const kStackViewHorizontalSpacing = 20.0;
 static CGFloat const kStackViewVerticalSpacing = 8.0;
 
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
 static CGFloat const kLegacyFlatTransferOriginX = 14.0;
 static CGFloat const kLegacyFlatTransferOriginY = 132.0;
 static CGFloat const kLegacyFlatTransferMinimumY = 132.0;
@@ -70,7 +71,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 @property(nonatomic) IBOutlet PiecesView* fPiecesView;
 @property(nonatomic) IBOutlet NSSegmentedControl* fPiecesControl;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @property(nonatomic) IBOutlet LegacyStackView* fActivityStackView;
 #else
 @property(nonatomic) IBOutlet NSStackView* fActivityStackView;
@@ -82,7 +83,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 @property(nonatomic, readonly) CGFloat fHorizLayoutWidth;
 @property(nonatomic, readonly) CGFloat fVertLayoutHeight;
 
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
 - (void)upgradeLegacyFlatActivityViewIfNeeded;
 - (void)resetLegacyFlatSectionFrames;
 #endif
@@ -104,11 +105,11 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 - (void)awakeFromNib
 {
     [super awakeFromNib];
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
     [self upgradeLegacyFlatActivityViewIfNeeded];
 #endif
     TRCheckExpectedStackViewClass(self.fActivityStackView, NSStringFromClass(self.class), @"fActivityStackView");
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     self.fActivityStackView.translatesAutoresizingMaskIntoConstraints = YES;
     self.fActivityStackView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     self.fActivityStackView.autoresizesSubviews = NO;
@@ -116,7 +117,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
     [self checkWindowSize];
 }
 
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
 - (void)upgradeLegacyFlatActivityViewIfNeeded
 {
     if (self.fActivityStackView != nil && self.fTransferView != nil && self.fDatesView != nil)
@@ -178,7 +179,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 }
 #endif
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (CGFloat)layoutWidth
 {
     return self.view.window ? NSWidth(self.view.window.frame) : NSWidth(self.view.frame);
@@ -206,7 +207,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
     return NSHeight(self.fTransferView.frame) + NSHeight(self.fDatesView.frame) + (2 * kStackViewInset) + kStackViewVerticalSpacing;
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (CGFloat)legacyContentHeightForWidth:(CGFloat)width
 {
     return width >= self.fHorizLayoutWidth + 1 ? self.fHorizLayoutHeight : self.fVertLayoutHeight;
@@ -214,7 +215,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 
 - (void)updateLegacyLayoutStateForWidth:(CGFloat)width
 {
-#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
     [self resetLegacyFlatSectionFrames];
 #endif
     if (width >= self.fHorizLayoutWidth + 1)
@@ -260,7 +261,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 - (NSRect)viewRect
 {
     NSRect viewRect = self.view.frame;
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     viewRect.origin = NSZeroPoint;
     viewRect.size.height = self.fCurrentHeight;
 #else
@@ -272,7 +273,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 
 - (void)checkLayout
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self updateLegacyLayoutStateForWidth:self.layoutWidth];
     [self layoutLegacyStackView];
 #else
@@ -295,7 +296,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 
 - (void)checkWindowSize
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     self.oldHeight = self.view.window ? NSHeight(self.view.frame) : self.fCurrentHeight;
 #else
     self.oldHeight = self.fCurrentHeight;
@@ -308,7 +309,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 {
     [self checkLayout];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     if (!self.view.window)
     {
         return;
@@ -316,7 +317,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 #endif
 
     CGFloat difference = self.fHeightChange;
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     if (self.oldHeight <= 0.0)
     {
         difference = -self.fCurrentHeight;
@@ -331,7 +332,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
     windowRect.origin.y += difference;
     windowRect.size.height -= difference;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
     self.view.window.minSize = NSMakeSize(self.view.window.minSize.width, NSHeight(windowRect));
     self.view.window.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
 #else
@@ -340,12 +341,12 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 #endif
 
     self.view.frame = [self viewRect];
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self layoutLegacyStackView];
 #endif
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
     [self.view.window setFrame:windowRect display:YES animate:NO];
-#elif MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#elif TR_MACOS_DEPLOYMENT_BEFORE_10_9
     BOOL const liveResize = [self.view inLiveResize];
     [self.view.window setFrame:windowRect display:!liveResize animate:!liveResize];
 #else

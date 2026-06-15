@@ -5,7 +5,7 @@
 #import "PortChecker.h"
 #import "CocoaCompatibility.h"
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 #import "LegacyURLRequest.h"
 #endif
 
@@ -16,7 +16,7 @@ static NSTimeInterval const kCheckFireInterval = 3.0;
 @property(nonatomic, TR_OBJC_WEAK) NSObject<PortCheckerDelegate>* fDelegate;
 @property(nonatomic) PortStatus fStatus;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @property(nonatomic) NSURLSession* fSession;
 @property(nonatomic) NSURLSessionDataTask* fTask;
 #else
@@ -33,7 +33,7 @@ static NSTimeInterval const kCheckFireInterval = 3.0;
 {
     if ((self = [super init]))
     {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
         _fSession = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.ephemeralSessionConfiguration delegate:nil
                                              delegateQueue:nil];
 #endif
@@ -72,7 +72,7 @@ static NSTimeInterval const kCheckFireInterval = 3.0;
 
     [self.fTask cancel];
     self.fTask = nil;
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self.fSession invalidateAndCancel];
     self.fSession = nil;
 #endif
@@ -89,7 +89,7 @@ static NSTimeInterval const kCheckFireInterval = 3.0;
                                                       cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData
                                                   timeoutInterval:15.0];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
     self.fTask = [self.fSession dataTaskWithRequest:portProbeRequest completionHandler:^(NSData* data, NSURLResponse*, NSError* error) {
 #else
     self.fTask = [TRURLRequestTask dataTaskWithRequest:portProbeRequest completionHandler:^(NSData* data, NSURLResponse*, NSError* error) {

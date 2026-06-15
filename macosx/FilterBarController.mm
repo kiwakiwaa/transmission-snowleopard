@@ -3,9 +3,12 @@
 // License text can be found in the licenses/ folder.
 
 #import "FilterBarController.h"
+
+#include <libtransmission/macos-version.h>
+
 #import "FilterButton.h"
 #import "GroupsController.h"
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 #import "LegacyStackView.h"
 #endif
 #import "NSStringAdditions.h"
@@ -27,7 +30,7 @@ typedef NS_ENUM(NSInteger, FilterTypeTag) {
     FilterTypeTagTracker = 402,
 };
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
+#if !TR_MACOS_SDK_BEFORE_10_11
 @interface FilterBarController ()<NSSearchFieldDelegate>
 #else
 @interface FilterBarController ()<NSTextFieldDelegate>
@@ -45,7 +48,7 @@ typedef NS_ENUM(NSInteger, FilterTypeTag) {
 
 @property(nonatomic) IBOutlet NSPopUpButton* fGroupsButton;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (void)layoutLegacyFilterButtons;
 #endif
 
@@ -77,7 +80,7 @@ typedef NS_ENUM(NSInteger, FilterTypeTag) {
     [[self.fPauseFilterButton cell] setBackgroundStyle:NSBackgroundStyleRaised];
     [[self.fErrorFilterButton cell] setBackgroundStyle:NSBackgroundStyleRaised];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self layoutLegacyFilterButtons];
 #endif
 
@@ -160,7 +163,7 @@ typedef NS_ENUM(NSInteger, FilterTypeTag) {
     self.fSearchField.delegate = self;
 }
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (void)layoutLegacyFilterButtons
 {
     NSView* buttonSuperview = self.fNoFilterButton.superview;
