@@ -1,13 +1,30 @@
 # Building Transmission for Mac OS X 10.6
 
-The repository provides a `macos-10.6` CMake preset for Snow Leopard compatibility:
+[Xcode 4.2](https://drive.proton.me/urls/0EK78E78EW#pj5sxK3lQ3eB) is recommended when building on Snow leopard.
+
+Install a modern compiler, CMake, Ninja, OpenSSL, and curl on the build host. With MacPorts, one suitable setup is:
+
+```bash
+sudo port install clang-16 cmake ninja openssl3 curl ld64-latest
+```
+
+The linker on Snow leopard is too old for this project. I removed it and created a symlink for `ld-latest`.
+```bash
+sudo ln -s /opt/local/bin/ld-latest /opt/local/bin/ld
+```
+
+The repository provides a `macos-10.6` CMake preset:
 
 ```bash
 cmake --preset macos-10.6
 cmake --build --preset macos-10.6
 ```
 
-The preset uses `cmake/MacOSLegacyToolchain.cmake` with a 10.6 deployment target and SDK.
+The application bundle is produced at:
+
+```bash
+build-10.6/macosx/Transmission.app
+```
 
 Set `TR_RAISE_FILE_DESCRIPTOR_LIMIT=ON` to raise the app's startup file descriptor soft limit to 1024.
 

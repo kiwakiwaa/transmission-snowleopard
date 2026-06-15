@@ -1,5 +1,7 @@
 # Building Transmission for OS X 10.8
 
+[Xcode 5.1.1](https://download.developer.apple.com/Developer_Tools/xcode_5.1.1/Xcode_5.1.1.dmg) is recommended when building on Mountain Lion.
+
 Install a modern compiler, CMake, Ninja, OpenSSL, and curl on the build host. With MacPorts, one suitable setup is:
 
 ```bash
@@ -12,8 +14,6 @@ The repository provides a `macos-10.8` CMake preset:
 cmake --preset macos-10.8
 cmake --build --preset macos-10.8
 ```
-
-The preset uses `cmake/MacOSLegacyToolchain.cmake` with a 10.8 deployment target and SDK.
 
 This branch is intended for extended legacy macOS support, with compatibility verification spanning 10.6 through 10.10 as build coverage grows.
 
@@ -30,8 +30,3 @@ The application bundle is produced at:
 ```bash
 build-10.8/macosx/Transmission.app
 ```
-
-## Notes
-
-- Xcode 5.1.1 or another source of the OS X 10.8 SDK must be available.
-- The QuickLook extension target is disabled for this deployment target.
