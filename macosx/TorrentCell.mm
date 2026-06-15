@@ -93,7 +93,7 @@
 
 - (void)drawRect:(NSRect)dirtyRect
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
     [self layoutTorrentCellForLegacyAppKit];
 #endif
 

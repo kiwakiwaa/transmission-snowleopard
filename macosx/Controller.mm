@@ -2198,6 +2198,11 @@ static void removeKeRangerRansomware()
 
     //set up helpers to remove from the table
     __block BOOL beganUpdate = NO;
+    void (^finishRemoval)(void) = ^{
+        [self removeTorrentsImpl:torrents deleteData:deleteData];
+
+        [self fullUpdateUI];
+    };
 
     void (^doTableRemoval)(NSMutableArray*, id) = ^(NSMutableArray* displayedTorrents, id parent) {
         NSIndexSet* indexes = [displayedTorrents indexesOfObjectsWithOptions:NSEnumerationConcurrent
@@ -2209,16 +2214,16 @@ static void removeKeRangerRansomware()
         {
             if (!beganUpdate)
             {
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+                [self.fTableView beginUpdates];
+#else
                 [NSAnimationContext beginGrouping]; //this has to be before we set the completion handler (#4874)
 
                 //we can't closeRemoveTorrent: until it's no longer in the GUI at all
-                NSAnimationContext.currentContext.completionHandler = ^{
-                    [self removeTorrentsImpl:torrents deleteData:deleteData];
-
-                    [self fullUpdateUI];
-                };
+                NSAnimationContext.currentContext.completionHandler = finishRemoval;
 
                 [self.fTableView beginUpdates];
+#endif
                 beganUpdate = YES;
             }
 
@@ -2246,7 +2251,11 @@ static void removeKeRangerRansomware()
         if (beganUpdate)
         {
             [self.fTableView endUpdates];
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+            finishRemoval();
+#else
             [NSAnimationContext endGrouping];
+#endif
         }
     }
 
@@ -3672,6 +3681,26 @@ static void removeKeRangerRansomware()
     {
         [self.fTableView endUpdates];
     }
+
+#if defined(TR_MACOS_SNOW_LEOPARD_COMPAT) && TR_MACOS_SNOW_LEOPARD_COMPAT
+    if (groupRows)
+    {
+        for (TorrentGroup* group in self.fDisplayedTorrents)
+        {
+            if ([self.fTableView isGroupCollapsed:group.groupIndex])
+            {
+                [self.fTableView collapseItem:group];
+            }
+            else
+            {
+                [self.fTableView expandItem:group];
+            }
+        }
+    }
+    [self.fTableView setNeedsDisplay:YES];
+    [self.fTableView displayIfNeeded];
+#endif
+
     [NSAnimationContext endGrouping];
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
