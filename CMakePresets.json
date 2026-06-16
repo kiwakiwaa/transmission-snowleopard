@@ -45,6 +45,17 @@
                 "TR_MACOS_DEPLOYMENT_TARGET": "10.8",
                 "TR_MACOS_SDK_VERSION": "10.8"
             }
+        },
+        {
+            "name": "macos-10.9",
+            "displayName": "OS X 10.9 compatibility",
+            "inherits": "macos-legacy-base",
+            "binaryDir": "${sourceDir}/build-10.9",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/MacOSLegacyToolchain.cmake",
+                "TR_MACOS_DEPLOYMENT_TARGET": "10.9",
+                "TR_MACOS_SDK_VERSION": "10.9"
+            }
         }
     ],
     "buildPresets": [
@@ -62,6 +73,11 @@
             "name": "macos-10.8",
             "inherits": "macos-legacy-base",
             "configurePreset": "macos-10.8"
+        },
+        {
+            "name": "macos-10.9",
+            "inherits": "macos-legacy-base",
+            "configurePreset": "macos-10.9"
         }
     ]
 }
