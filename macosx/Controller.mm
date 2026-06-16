@@ -4688,7 +4688,11 @@ static void removeKeRangerRansomware()
         item.label = NSLocalizedString(@"Create", "Create toolbar item -> label");
         item.paletteLabel = NSLocalizedString(@"Create Torrent File", "Create toolbar item -> palette label");
         item.toolTip = NSLocalizedString(@"Create torrent file", "Create toolbar item -> tooltip");
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+        item.image = [NSImage imageNamed:@"ToolbarCreateTemplate"];
+#else
         item.image = TRImageForSystemSymbol(@"doc.badge.plus", nil);
+#endif
         item.target = self;
         item.action = @selector(createFile:);
         item.autovalidates = NO;
@@ -4702,7 +4706,11 @@ static void removeKeRangerRansomware()
         item.label = NSLocalizedString(@"Open", "Open toolbar item -> label");
         item.paletteLabel = NSLocalizedString(@"Open Torrent Files", "Open toolbar item -> palette label");
         item.toolTip = NSLocalizedString(@"Open torrent files", "Open toolbar item -> tooltip");
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+        item.image = [NSImage imageNamed:@"ToolbarOpenTemplate"];
+#else
         item.image = TRImageForSystemSymbol(@"folder", nil);
+#endif
         item.target = self;
         item.action = @selector(openShowSheet:);
         item.autovalidates = NO;
@@ -4716,7 +4724,11 @@ static void removeKeRangerRansomware()
         item.label = NSLocalizedString(@"Open Address", "Open address toolbar item -> label");
         item.paletteLabel = NSLocalizedString(@"Open Torrent Address", "Open address toolbar item -> palette label");
         item.toolTip = NSLocalizedString(@"Open torrent web address", "Open address toolbar item -> tooltip");
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+        item.image = [NSImage imageNamed:@"Globe"];
+#else
         item.image = TRImageForSystemSymbol(@"globe", nil);
+#endif
         item.target = self;
         item.action = @selector(openURLShowSheet:);
         item.autovalidates = NO;
@@ -4730,7 +4742,11 @@ static void removeKeRangerRansomware()
         item.label = NSLocalizedString(@"Remove", "Remove toolbar item -> label");
         item.paletteLabel = NSLocalizedString(@"Remove Selected", "Remove toolbar item -> palette label");
         item.toolTip = NSLocalizedString(@"Remove selected transfers", "Remove toolbar item -> tooltip");
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+        item.image = [NSImage imageNamed:@"ToolbarRemoveTemplate"];
+#else
         item.image = TRImageForSystemSymbol(@"nosign", nil);
+#endif
         item.target = self;
         item.action = @selector(removeNoDelete:);
         item.visibilityPriority = NSToolbarItemVisibilityPriorityHigh;
@@ -4745,7 +4761,11 @@ static void removeKeRangerRansomware()
         item.label = NSLocalizedString(@"Inspector", "Inspector toolbar item -> label");
         item.paletteLabel = NSLocalizedString(@"Toggle Inspector", "Inspector toolbar item -> palette label");
         item.toolTip = NSLocalizedString(@"Toggle the torrent inspector", "Inspector toolbar item -> tooltip");
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+        item.image = [NSImage imageNamed:@"ToolbarInfoTemplate"];
+#else
         item.image = TRImageForSystemSymbol(@"info.circle", nil);
+#endif
         item.target = self;
         item.action = @selector(showInfo:);
 

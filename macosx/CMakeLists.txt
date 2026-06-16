@@ -436,10 +436,27 @@ set(APPICON_NAME AppIcon)
 
 set(IMAGE_ASSETS_DIR Images/Images.xcassets)
 set(APPICONSET_DIR "${IMAGE_ASSETS_DIR}/${APPICON_NAME}.appiconset")
+set(LEGACY_ICON_ASSETS_DIR Images/LegacyIconAssets)
+set(LEGACY_ICON_IMAGESETS
+    Bandwidth
+    Groups
+    InfoActivity
+    InfoFiles
+    InfoGeneral
+    InfoOptions
+    InfoPeers
+    InfoTracker
+    Remote
+    ToolbarCreateTemplate
+    ToolbarInfoTemplate
+    ToolbarOpenTemplate
+    ToolbarRemoveTemplate
+    Transfers)
 
 set(IMAGE_ASSETS
     ${IMAGE_ASSETS_DIR}/Contents.json
     ${APPICONSET_DIR}/Contents.json)
+set(LEGACY_ICON_ASSETS)
 
 foreach(IMG IN LISTS IMAGESETS)
     set(IMG_DIR "${IMAGE_ASSETS_DIR}/${IMG}.imageset")
@@ -448,6 +465,16 @@ foreach(IMG IN LISTS IMAGESETS)
         ${IMG_DIR}/${IMG}@2x.png
         ${IMG_DIR}/Contents.json)
 endforeach()
+
+if(TR_MACOS_DEPLOYMENT_BEFORE_10_10)
+    foreach(IMG IN LISTS LEGACY_ICON_IMAGESETS)
+        set(IMG_DIR "${LEGACY_ICON_ASSETS_DIR}/${IMG}.imageset")
+        list(APPEND LEGACY_ICON_ASSETS
+            ${IMG_DIR}/${IMG}.png
+            ${IMG_DIR}/${IMG}@2x.png
+            ${IMG_DIR}/Contents.json)
+    endforeach()
+endif()
 
 foreach(SIZE IN ITEMS 16 32 128 256 512)
     list(APPEND IMAGE_ASSETS
@@ -472,6 +499,20 @@ if(TR_MACOS_TARGET_BEFORE_11_0)
                 "${CMAKE_CURRENT_SOURCE_DIR}/${IMAGE_ASSETS_DIR}/${IMG}.imageset/${IMG}@2x.png"
                 "${CMAKE_CURRENT_BINARY_DIR}/${IMG}@2x.png")
     endforeach()
+    if(TR_MACOS_DEPLOYMENT_BEFORE_10_10)
+        foreach(IMG IN LISTS LEGACY_ICON_IMAGESETS)
+            list(APPEND COMPILED_IMAGE_ASSETS
+                "${CMAKE_CURRENT_BINARY_DIR}/${IMG}.png"
+                "${CMAKE_CURRENT_BINARY_DIR}/${IMG}@2x.png")
+            list(APPEND TR_LEGACY_IMAGE_ASSET_COMMANDS
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${CMAKE_CURRENT_SOURCE_DIR}/${LEGACY_ICON_ASSETS_DIR}/${IMG}.imageset/${IMG}.png"
+                    "${CMAKE_CURRENT_BINARY_DIR}/${IMG}.png"
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${CMAKE_CURRENT_SOURCE_DIR}/${LEGACY_ICON_ASSETS_DIR}/${IMG}.imageset/${IMG}@2x.png"
+                    "${CMAKE_CURRENT_BINARY_DIR}/${IMG}@2x.png")
+        endforeach()
+    endif()
 else()
     list(APPEND COMPILED_IMAGE_ASSETS
         "${CMAKE_CURRENT_BINARY_DIR}/Assets.car")
@@ -486,7 +527,7 @@ if(TR_MACOS_USE_SOURCE_IMAGE_ASSETS)
             "${CMAKE_CURRENT_SOURCE_DIR}/${APPICONSET_DIR}/icon_512x512.png"
             --out "${CMAKE_CURRENT_BINARY_DIR}/${APPICON_NAME}.icns"
         ${TR_LEGACY_IMAGE_ASSET_COMMANDS}
-        DEPENDS ${IMAGE_ASSETS}
+        DEPENDS ${IMAGE_ASSETS} ${LEGACY_ICON_ASSETS}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         VERBATIM)
     source_group("Generated Files"
@@ -505,7 +546,7 @@ else()
             --output-partial-info-plist "${CMAKE_CURRENT_BINARY_DIR}/${APPICON_NAME}.Info.plist"
             ${IMAGE_ASSETS_DIR}
         ${TR_LEGACY_IMAGE_ASSET_COMMANDS}
-        DEPENDS ${IMAGE_ASSETS}
+        DEPENDS ${IMAGE_ASSETS} ${LEGACY_ICON_ASSETS}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     source_group("Generated Files"
         FILES

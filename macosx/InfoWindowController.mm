@@ -165,6 +165,14 @@ typedef NS_ENUM(NSUInteger, TabTag) {
         [self.fTabs setImage:image forSegment:segment];
         TRSetSegmentToolTip(self.fTabs, toolTip, segment);
     };
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+    setImageAndToolTipForSegment([NSImage imageNamed:@"InfoGeneral"], NSLocalizedString(@"General Info", "Inspector -> tab"), TabTagGeneral);
+    setImageAndToolTipForSegment([NSImage imageNamed:@"InfoActivity"], NSLocalizedString(@"Activity", "Inspector -> tab"), TabTagActivity);
+    setImageAndToolTipForSegment([NSImage imageNamed:@"InfoTracker"], NSLocalizedString(@"Trackers", "Inspector -> tab"), TabTagTrackers);
+    setImageAndToolTipForSegment([NSImage imageNamed:@"InfoPeers"], NSLocalizedString(@"Peers", "Inspector -> tab"), TabTagPeers);
+    setImageAndToolTipForSegment([NSImage imageNamed:@"InfoFiles"], NSLocalizedString(@"Files", "Inspector -> tab"), TabTagFile);
+    setImageAndToolTipForSegment([NSImage imageNamed:@"InfoOptions"], NSLocalizedString(@"Options", "Inspector -> tab"), TabTagOptions);
+#else
     setImageAndToolTipForSegment(TRImageForSystemSymbol(@"info.circle", nil), NSLocalizedString(@"General Info", "Inspector -> tab"), TabTagGeneral);
     setImageAndToolTipForSegment(TRImageForSystemSymbol(@"square.grid.3x3.fill.square", nil), NSLocalizedString(@"Activity", "Inspector -> tab"), TabTagActivity);
     setImageAndToolTipForSegment(
@@ -174,6 +182,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     setImageAndToolTipForSegment(TRImageForSystemSymbol(@"person.2", nil), NSLocalizedString(@"Peers", "Inspector -> tab"), TabTagPeers);
     setImageAndToolTipForSegment(TRImageForSystemSymbol(@"doc.on.doc", nil), NSLocalizedString(@"Files", "Inspector -> tab"), TabTagFile);
     setImageAndToolTipForSegment(TRImageForSystemSymbol(@"gearshape", nil), NSLocalizedString(@"Options", "Inspector -> tab"), TabTagOptions);
+#endif
 
     //set selected tab
     self.fCurrentTabTag = kInvalidTag;
