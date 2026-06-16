@@ -112,13 +112,16 @@ endif()
 
 set(TR_MACOS_XIB_COMPAT_10_6 OFF)
 set(TR_MACOS_XIB_COMPAT_10_8 OFF)
+set(TR_MACOS_XIB_COMPAT_10_9 OFF)
 set(TR_MACOS_USES_COMPAT_STACK_XIBS OFF)
 if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
     set(TR_MACOS_XIB_COMPAT_10_6 ON)
 elseif(TR_MACOS_DEPLOYMENT_BEFORE_10_9)
     set(TR_MACOS_XIB_COMPAT_10_8 ON)
+elseif(TR_MACOS_DEPLOYMENT_BEFORE_10_10)
+    set(TR_MACOS_XIB_COMPAT_10_9 ON)
 endif()
-if(TR_MACOS_XIB_COMPAT_10_6 OR TR_MACOS_XIB_COMPAT_10_8)
+if(TR_MACOS_XIB_COMPAT_10_6 OR TR_MACOS_XIB_COMPAT_10_8 OR TR_MACOS_XIB_COMPAT_10_9)
     set(TR_MACOS_USES_COMPAT_STACK_XIBS ON)
 endif()
 
@@ -333,6 +336,13 @@ if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
             LegacyPopover.mm
             PLWeakCompatibilityStubs.h
             PLWeakCompatibilityStubs.mm)
+endif()
+
+if(TR_MACOS_XIB_COMPAT_10_9)
+    target_sources(${TR_NAME}-mac
+        PRIVATE
+            MavericksStackView.h
+            MavericksStackView.mm)
 endif()
 
 target_compile_definitions(${TR_NAME}-mac
@@ -635,6 +645,32 @@ else()
     tr_target_xib_files(${TR_NAME}-mac
         ${XIB_FILES}
         ${BASE_XIB_SOURCE_FILES})
+endif()
+
+if(TR_MACOS_XIB_COMPAT_10_9)
+    # Xcode 6.2's ibtool cannot compile the modern stack-view XIBs, but
+    # Mavericks has NSStackView. Use XIB copies that decode as MavericksStackView
+    # and then rebuild native NSStackView state at runtime.
+    tr_wrap_xib(${TR_NAME}-mac
+        MavericksXibs/FilterBar.xib
+        "${CMAKE_CURRENT_BINARY_DIR}/FilterBar.nib"
+        "")
+    tr_wrap_xib(${TR_NAME}-mac
+        MavericksXibs/StatsWindow.xib
+        "${CMAKE_CURRENT_BINARY_DIR}/StatsWindow.nib"
+        "")
+    tr_wrap_xib(${TR_NAME}-mac
+        MavericksXibs/Base.lproj/InfoActivityView.xib
+        "${CMAKE_CURRENT_BINARY_DIR}/Base.lproj/InfoActivityView.nib"
+        Base.lproj)
+    tr_wrap_xib(${TR_NAME}-mac
+        MavericksXibs/Base.lproj/InfoOptionsView.xib
+        "${CMAKE_CURRENT_BINARY_DIR}/Base.lproj/InfoOptionsView.nib"
+        Base.lproj)
+    tr_wrap_xib(${TR_NAME}-mac
+        MavericksXibs/Base.lproj/MainMenu.xib
+        "${CMAKE_CURRENT_BINARY_DIR}/Base.lproj/MainMenu.nib"
+        Base.lproj)
 endif()
 
 if(TR_MACOS_XIB_COMPAT_10_8)
