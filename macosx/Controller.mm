@@ -112,18 +112,18 @@ typedef NS_ENUM(NSUInteger, ToolbarGroupTag) { //
     ToolbarGroupTagResume = 1
 };
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_9
-// Mountain Lion uses the old NSButtonCell drawing path for selected template-image tinting.
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
+// Older AppKit uses the NSButtonCell drawing path for selected template-image tinting.
 // Apple documents NSButton.bezelStyle as ignored when the button is not bordered:
 // https://developer.apple.com/documentation/appkit/nsbutton/bezelstyle-swift.property
-// Setting bordered=NO hides the bottom-bar frame, but also bypasses the 10.8 selected-content tint.
+// Setting bordered=NO hides the bottom-bar frame, but also bypasses selected-content tint.
 // Keep the button bordered and suppress only the bezel hook that Apple documents as border drawing:
 // https://developer.apple.com/documentation/appkit/nsbuttoncell/drawbezel(withframe:in:)
 // TODO: check if needed for 10.7
-@interface MountainLionSpeedLimitButtonCell : NSButtonCell
+@interface LegacySpeedLimitButtonCell : NSButtonCell
 @end
 
-@implementation MountainLionSpeedLimitButtonCell
+@implementation LegacySpeedLimitButtonCell
 
 - (void)drawBezelWithFrame:(NSRect)frame inView:(NSView*)controlView
 {
@@ -516,8 +516,8 @@ static void removeKeRangerRansomware()
 @property(nonatomic) NSMutableArray* fAutoImportedNames;
 @property(nonatomic) NSTimer* fAutoImportTimer;
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_9
-- (void)updateMountainLionSpeedLimitButton;
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
+- (void)updateLegacySpeedLimitButton;
 #endif
 
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
@@ -739,7 +739,8 @@ static void removeKeRangerRansomware()
     toolbar.autosavesConfiguration = YES;
     toolbar.displayMode = NSToolbarDisplayModeIconOnly;
     self.fWindow.toolbar = toolbar;
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+    // Older AppKit can leave the toolbar hidden after decoding this window.
     self.fWindow.toolbar.visible = YES;
 #endif
 
@@ -785,13 +786,13 @@ static void removeKeRangerRansomware()
     self.fSpeedLimitButton.toolTip = NSLocalizedString(
         @"Speed Limit overrides the total bandwidth limits with its own limits.",
         "Main window -> 2nd bottom left button (turtle) tooltip");
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
     [self.fSpeedLimitButton unbind:NSValueBinding];
     NSImage* speedLimitImage = self.fSpeedLimitButton.image.copy;
     [speedLimitImage setTemplate:YES];
 
-    // Mountain Lion's decoded XIB cell does not keep the selected template-image tint.
-    MountainLionSpeedLimitButtonCell* speedLimitCell = [[MountainLionSpeedLimitButtonCell alloc] initImageCell:speedLimitImage];
+    // Older AppKit's decoded XIB cell does not keep the selected template-image tint.
+    LegacySpeedLimitButtonCell* speedLimitCell = [[LegacySpeedLimitButtonCell alloc] initImageCell:speedLimitImage];
     [speedLimitCell setButtonType:NSPushOnPushOffButton];
     speedLimitCell.bezelStyle = NSTexturedSquareBezelStyle;
     speedLimitCell.imagePosition = NSImageOnly;
@@ -802,7 +803,7 @@ static void removeKeRangerRansomware()
     self.fSpeedLimitButton.bordered = YES;
     self.fSpeedLimitButton.target = self;
     self.fSpeedLimitButton.action = @selector(toggleSpeedLimit:);
-    [self updateMountainLionSpeedLimitButton];
+    [self updateLegacySpeedLimitButton];
 #endif
 
     self.fClearCompletedButton.toolTip = NSLocalizedString(
@@ -811,7 +812,8 @@ static void removeKeRangerRansomware()
 
     [self.fTableView registerForDraggedTypes:@[ kTorrentTableViewDataType ]];
     [self.fWindow registerForDraggedTypes:@[ TRPasteboardTypeFileURL, TRPasteboardTypeURL ]];
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+    // Keep legacy titlebar and bottom-bar geometry in sync during live resize.
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(layoutMainWindowForLegacyAppKit)
                                                name:NSWindowDidResizeNotification
                                              object:self.fWindow];
@@ -969,7 +971,7 @@ static void removeKeRangerRansomware()
     [NSRunLoop.currentRunLoop addTimer:self.fTimer forMode:NSEventTrackingRunLoopMode];
 
     [self.fWindow makeKeyAndOrderFront:nil];
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
     [self performSelector:@selector(layoutMainWindowForLegacyAppKit) withObject:nil afterDelay:0.1];
 #endif
 
@@ -3901,8 +3903,8 @@ static void removeKeRangerRansomware()
 {
     tr_sessionUseAltSpeed(self.fLib, [self.fDefaults boolForKey:@"SpeedLimit"]);
     [self.fStatusBar updateSpeedFieldsToolTips];
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_9
-    [self updateMountainLionSpeedLimitButton];
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
+    [self updateLegacySpeedLimitButton];
 #endif
 }
 
@@ -3912,8 +3914,8 @@ static void removeKeRangerRansomware()
 
     [self.fDefaults setBool:isLimited forKey:@"SpeedLimit"];
     [self.fStatusBar updateSpeedFieldsToolTips];
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_9
-    [self updateMountainLionSpeedLimitButton];
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
+    [self updateLegacySpeedLimitButton];
 #endif
 
     if (![dict[@"ByUser"] boolValue])
@@ -3922,8 +3924,8 @@ static void removeKeRangerRansomware()
     }
 }
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_9
-- (void)updateMountainLionSpeedLimitButton
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
+- (void)updateLegacySpeedLimitButton
 {
     self.fSpeedLimitButton.state = [self.fDefaults boolForKey:@"SpeedLimit"] ? NSControlStateValueOn : NSControlStateValueOff;
     [self.fSpeedLimitButton setNeedsDisplay:YES];
@@ -4437,7 +4439,7 @@ static void removeKeRangerRansomware()
 
 - (void)layoutMainWindowForLegacyAppKit
 {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
     TRLayoutLegacyTitlebarAccessoryWindow(self.fWindow);
     NSView* contentView = self.fWindow.contentView;
     NSScrollView* scrollView = self.fTableView.enclosingScrollView;
@@ -4676,18 +4678,19 @@ static void removeKeRangerRansomware()
     ButtonToolbarItem* item = [[klass alloc] initWithItemIdentifier:ident];
 
     NSButton* button;
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+    // Older toolbar layout needs a concrete button frame to avoid clipped icons.
     button = [[NSButton alloc] initWithFrame:NSMakeRect(0.0, 0.0, 32.0, 25.0)];
 #else
     button = [[NSButton alloc] init];
 #endif
     button.bezelStyle = NSBezelStyleTexturedRounded;
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
     button.imagePosition = NSImageOnly;
 #endif
     button.stringValue = @"";
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
     item.minSize = button.frame.size;
     item.maxSize = button.frame.size;
 #endif
@@ -4811,7 +4814,7 @@ static void removeKeRangerRansomware()
         TRSetSegmentTag(segmentedControl, ToolbarGroupTagResume, ToolbarGroupTagResume);
         [segmentedControl setImage:TRImageForSystemSymbol(@"arrow.clockwise.circle.fill", nil) forSegment:ToolbarGroupTagResume];
         TRSetSegmentToolTip(segmentedControl, NSLocalizedString(@"Resume all transfers", "All toolbar item -> tooltip"), ToolbarGroupTagResume);
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
         [segmentedControl setWidth:32 forSegment:ToolbarGroupTagPause];
         [segmentedControl setWidth:32 forSegment:ToolbarGroupTagResume];
 #else
@@ -4861,7 +4864,7 @@ static void removeKeRangerRansomware()
         TRSetSegmentTag(segmentedControl, ToolbarGroupTagResume, ToolbarGroupTagResume);
         [segmentedControl setImage:TRImageForSystemSymbol(@"arrow.clockwise", nil) forSegment:ToolbarGroupTagResume];
         TRSetSegmentToolTip(segmentedControl, NSLocalizedString(@"Resume selected transfers", "Selected toolbar item -> tooltip"), ToolbarGroupTagResume);
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
         [segmentedControl setWidth:32 forSegment:ToolbarGroupTagPause];
         [segmentedControl setWidth:32 forSegment:ToolbarGroupTagResume];
 #else

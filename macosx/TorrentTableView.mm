@@ -21,6 +21,11 @@
 #import "TorrentCellControlButton.h"
 #import "TorrentCellRevealButton.h"
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+// Older AppKit does not route group-row disclosure clicks to our view cell.
+static CGFloat const kGroupDisclosureWidth = 18.0;
+#endif
+
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 #import "ProgressBarView.h"
 
@@ -31,7 +36,6 @@
 
 @implementation LegacyTorrentTableCell
 
-static CGFloat const kLegacyGroupDisclosureWidth = 18.0;
 static CGFloat const kLegacyGroupStatusWidth = 170.0;
 
 - (instancetype)init
@@ -145,7 +149,7 @@ static CGFloat const kLegacyGroupStatusWidth = 170.0;
         NSColor* groupColor = groupIndex != -1 ? [GroupsController.groups colorForIndex:groupIndex] :
                                                  [NSColor colorWithCalibratedWhite:1.0 alpha:0.0];
         [[NSImage discIconWithColor:groupColor insetFactor:0]
-                drawInRect:NSMakeRect(NSMinX(cellFrame) + kLegacyGroupDisclosureWidth + 3.0, NSMinY(cellFrame) + 3.0, 12.0, 12.0)
+                drawInRect:NSMakeRect(NSMinX(cellFrame) + kGroupDisclosureWidth + 3.0, NSMinY(cellFrame) + 3.0, 12.0, 12.0)
                   fromRect:NSZeroRect
                  operation:NSCompositingOperationSourceOver
                   fraction:1.0
@@ -160,7 +164,7 @@ static CGFloat const kLegacyGroupStatusWidth = 170.0;
             NSForegroundColorAttributeName : selected ? NSColor.whiteColor : NSColor.disabledControlTextColor,
         };
         [title drawInRect:NSMakeRect(
-                              NSMinX(cellFrame) + kLegacyGroupDisclosureWidth + 20.0,
+                              NSMinX(cellFrame) + kGroupDisclosureWidth + 20.0,
                               NSMinY(cellFrame) + 2.0,
                               MAX(80.0, NSWidth(cellFrame) - kLegacyGroupStatusWidth - 45.0),
                               14.0)
@@ -745,19 +749,21 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
     NSInteger const row = [self rowAtPoint:point];
     id item = row >= 0 ? [self itemAtRow:row] : nil;
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
     if (event.clickCount == 1 && [item isKindOfClass:[TorrentGroup class]])
     {
-        if ([self pointInLegacyGroupDisclosureRect:point])
+        if ([self pointInGroupDisclosureRect:point])
         {
             [self isItemExpanded:item] ? [self collapseItem:item] : [self expandItem:item];
             return;
         }
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         if ([self pointInGroupStatusRect:point])
         {
             [self toggleGroupRowRatio];
             return;
         }
+#endif
     }
 #endif
 
@@ -1201,8 +1207,8 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 
 #pragma mark - Private
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
-- (BOOL)pointInLegacyGroupDisclosureRect:(NSPoint)point
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+- (BOOL)pointInGroupDisclosureRect:(NSPoint)point
 {
     NSInteger row = [self rowAtPoint:point];
     if (row < 0 || ![[self itemAtRow:row] isKindOfClass:[TorrentGroup class]])
@@ -1211,7 +1217,7 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
     }
 
     NSRect rowRect = [self rectOfRow:row];
-    return point.x >= NSMinX(rowRect) && point.x <= NSMinX(rowRect) + kLegacyGroupDisclosureWidth;
+    return point.x >= NSMinX(rowRect) && point.x <= NSMinX(rowRect) + kGroupDisclosureWidth;
 }
 #endif
 

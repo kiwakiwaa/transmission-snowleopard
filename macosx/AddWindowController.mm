@@ -19,7 +19,9 @@ typedef NS_ENUM(NSUInteger, PopupPriority) {
     PopupPriorityLow = 2,
 };
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+// Pre-Yosemite AppKit does not keep the compact settings row aligned while the
+// add window resizes, so lay it out explicitly for those systems.
 static void TRPrepareLegacySettingsLabel(NSTextField* label)
 {
     NSTextFieldCell* cell = (NSTextFieldCell*)label.cell;
@@ -185,7 +187,7 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
     });
 
     [self updateFiles];
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
     self.window.delegate = (id<NSWindowDelegate>)self;
     [self layoutSettingsViewForLegacyAppKit];
 #endif
@@ -193,7 +195,7 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
 
 - (void)windowDidLoad
 {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
     [self layoutSettingsViewForLegacyAppKit];
 #endif
 
@@ -206,7 +208,7 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
 
 - (void)windowDidResize:(NSNotification*)notification
 {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
     [self layoutSettingsViewForLegacyAppKit];
 #endif
 }
@@ -237,7 +239,7 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
 
 - (void)layoutSettingsViewForLegacyAppKit
 {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
     NSView* contentView = self.fPriorityPopUp.superview;
     if (contentView == nil)
     {

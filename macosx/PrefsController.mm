@@ -1629,6 +1629,22 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     windowRect.origin.y -= difference;
     windowRect.size.height += difference;
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
+    // Mavericks relays out the toolbar while animating a content-view swap, which
+    // makes preference toolbar items jump. Animate with a neutral content view,
+    // then install the selected pane after the frame settles.
+    NSView* animationView = [[NSView alloc] initWithFrame:[window.contentView frame]];
+    animationView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    window.contentView = animationView;
+
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext* context) {
+        context.allowsImplicitAnimation = YES;
+        [window setFrame:windowRect display:YES];
+    } completionHandler:^{
+        window.contentView = view;
+        view.hidden = NO;
+    }];
+#else
     view.hidden = YES;
     window.contentView = view;
 
@@ -1638,6 +1654,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     } completionHandler:^{
         view.hidden = NO;
     }];
+#endif
 
     //set title label
     if (sender)
