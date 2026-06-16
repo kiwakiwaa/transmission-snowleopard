@@ -78,12 +78,14 @@ typedef void* os_log_t;
         [NSWorkspace.sharedWorkspace.notificationCenter addObserver:self selector:@selector(systemDidWakeUp:)
                                                                name:NSWorkspaceDidWakeNotification
                                                              object:nil];
+#if !TR_MACOS_SDK_BEFORE_12_0
         if (@available(macOS 12.0, *))
         {
             [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(powerStateDidChange:)
                                                        name:NSProcessInfoPowerStateDidChangeNotification
                                                      object:nil];
         }
+#endif
         self.listening = YES;
     }
 
@@ -103,10 +105,12 @@ typedef void* os_log_t;
         os_log_debug(self.log, "Unregistering sleep/wake/low power mode notifications");
         [NSWorkspace.sharedWorkspace.notificationCenter removeObserver:self name:NSWorkspaceWillSleepNotification object:nil];
         [NSWorkspace.sharedWorkspace.notificationCenter removeObserver:self name:NSWorkspaceDidWakeNotification object:nil];
+#if !TR_MACOS_SDK_BEFORE_12_0
         if (@available(macOS 12.0, *))
         {
             [NSNotificationCenter.defaultCenter removeObserver:self name:NSProcessInfoPowerStateDidChangeNotification object:nil];
         }
+#endif
         self.listening = NO;
     }
 
@@ -140,15 +144,18 @@ typedef void* os_log_t;
 - (void)powerStateDidChange:(NSNotification*)notification
 {
     os_log_info(self.log, "Power state did change notification received");
+#if !TR_MACOS_SDK_BEFORE_12_0
     if (NSProcessInfo.processInfo.lowPowerModeEnabled)
     {
         os_log_info(self.log, "Low power mode enabled, disabling sleep prevention");
         self.shouldPreventSleep = NO;
     }
+#endif
 }
 
 - (void)setShouldPreventSleep:(BOOL)shouldPreventSleep
 {
+#if !TR_MACOS_SDK_BEFORE_12_0
     if (@available(macOS 12.0, *))
     {
         if (shouldPreventSleep && NSProcessInfo.processInfo.lowPowerModeEnabled)
@@ -156,6 +163,7 @@ typedef void* os_log_t;
             return;
         }
     }
+#endif
 
     if (shouldPreventSleep)
     {

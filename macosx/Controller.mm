@@ -1890,9 +1890,26 @@ static void removeKeRangerRansomware()
             return;
         }
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10
         [self.fSession getAllTasksWithCompletionHandler:^(NSArray* tasks) {
             for (NSURLSessionTask* task in tasks)
+            {
+                if ([task.originalRequest.URL isEqual:url])
+                {
+                    NSLog(@"Already downloading %@", url);
+                    return;
+                }
+            }
+
+            NSURLSessionDataTask* download = [self.fSession dataTaskWithURL:url];
+            [download resume];
+        }];
+#elif !TR_MACOS_DEPLOYMENT_BEFORE_10_9
+        [self.fSession getTasksWithCompletionHandler:^(NSArray* dataTasks, NSArray* uploadTasks, NSArray* downloadTasks) {
+            (void)uploadTasks;
+            (void)downloadTasks;
+
+            for (NSURLSessionTask* task in dataTasks)
             {
                 if ([task.originalRequest.URL isEqual:url])
                 {
@@ -4780,7 +4797,9 @@ static void removeKeRangerRansomware()
 
         NSSegmentedControl* segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
         segmentedControl.segmentStyle = NSSegmentStyleTexturedRounded;
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+        [(NSSegmentedCell*)segmentedControl.cell setTrackingMode:NSSegmentSwitchTrackingMomentary];
+#else
         segmentedControl.trackingMode = NSSegmentSwitchTrackingMomentary;
 #endif
         segmentedControl.segmentCount = 2;
@@ -4828,7 +4847,9 @@ static void removeKeRangerRansomware()
 
         NSSegmentedControl* segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
         segmentedControl.segmentStyle = NSSegmentStyleTexturedRounded;
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+        [(NSSegmentedCell*)segmentedControl.cell setTrackingMode:NSSegmentSwitchTrackingMomentary];
+#else
         segmentedControl.trackingMode = NSSegmentSwitchTrackingMomentary;
 #endif
         segmentedControl.segmentCount = 2;

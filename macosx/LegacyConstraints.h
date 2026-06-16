@@ -4,4 +4,13 @@
 
 #import <AppKit/AppKit.h>
 
+NSLayoutConstraint* TRMakeLayoutConstraint(
+    id view1,
+    NSLayoutAttribute attr1,
+    NSLayoutRelation relation,
+    id view2,
+    NSLayoutAttribute attr2,
+    CGFloat constant);
+void TRActivateConstraints(NSView* owner, NSArray* constraints);
+void TRDeactivateConstraints(NSView* owner, NSArray* constraints);
 void TRSetConstraintActive(NSLayoutConstraint* constraint, BOOL active);

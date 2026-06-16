@@ -7,12 +7,13 @@
 #include <libtransmission/macos-version.h>
 
 #import "FileListNode.h"
+#import "LegacyConstraints.h"
 #import "NSImageAdditions.h"
 #import "Torrent.h"
 
 static CGFloat const kImageOverlap = 1.0;
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
 static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 {
     NSImage* image = [NSImage imageNamed:imageName];
@@ -63,6 +64,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 @property(nonatomic, TR_OBJC_WEAK) NSSegmentedControl* segmentedControl;
 @property(nonatomic, TR_OBJC_WEAK) NSView* iconsContainerView;
 @property(nonatomic, strong) NSTrackingArea* trackingArea;
+@property(nonatomic, strong) NSArray* priorityIconConstraints;
 @end
 
 @implementation FilePriorityCellView
@@ -75,13 +77,16 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
         NSSegmentedControl* segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         segmentedControl.translatesAutoresizingMaskIntoConstraints = YES;
+#else
+        segmentedControl.translatesAutoresizingMaskIntoConstraints = NO;
+#endif
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
         [(NSSegmentedCell*)[segmentedControl cell] setTrackingMode:NSSegmentSwitchTrackingSelectAny];
         [(NSSegmentedCell*)[segmentedControl cell] setControlSize:NSMiniControlSize];
         [segmentedControl setSegmentCount:3];
 
         for (NSInteger i = 0; i < [segmentedControl segmentCount]; i++)
 #else
-        segmentedControl.translatesAutoresizingMaskIntoConstraints = NO;
         segmentedControl.trackingMode = NSSegmentSwitchTrackingSelectAny;
         segmentedControl.controlSize = NSControlSizeMini;
         segmentedControl.segmentCount = 3;
@@ -97,13 +102,13 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
         [segmentedControl setImage:[NSImage imageNamed:@"PriorityControlNormal"] forSegment:1];
         [segmentedControl setImage:[NSImage imageNamed:@"PriorityControlHigh"] forSegment:2];
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
         [segmentedControl setTarget:self];
 #else
         segmentedControl.target = self;
 #endif
         segmentedControl.action = @selector(segmentedControlClicked:);
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
         [segmentedControl setHidden:YES];
 #else
         segmentedControl.hidden = YES;
@@ -126,15 +131,16 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
         [self setNeedsDisplay:YES];
 #else
         // Setup constraints
-        [NSLayoutConstraint activateConstraints:@[
-            [segmentedControl.centerXAnchor constraintEqualToAnchor:self.centerXAnchor],
-            [segmentedControl.centerYAnchor constraintEqualToAnchor:self.centerYAnchor],
+        TRActivateConstraints(self,
+            @[
+                TRMakeLayoutConstraint(segmentedControl, NSLayoutAttributeCenterX, NSLayoutRelationEqual, self, NSLayoutAttributeCenterX, 0.0),
+                TRMakeLayoutConstraint(segmentedControl, NSLayoutAttributeCenterY, NSLayoutRelationEqual, self, NSLayoutAttributeCenterY, 0.0),
 
-            [iconsContainerView.centerXAnchor constraintEqualToAnchor:self.centerXAnchor],
-            [iconsContainerView.centerYAnchor constraintEqualToAnchor:self.centerYAnchor],
-            [iconsContainerView.widthAnchor constraintLessThanOrEqualToAnchor:self.widthAnchor],
-            [iconsContainerView.heightAnchor constraintLessThanOrEqualToAnchor:self.heightAnchor],
-        ]];
+                TRMakeLayoutConstraint(iconsContainerView, NSLayoutAttributeCenterX, NSLayoutRelationEqual, self, NSLayoutAttributeCenterX, 0.0),
+                TRMakeLayoutConstraint(iconsContainerView, NSLayoutAttributeCenterY, NSLayoutRelationEqual, self, NSLayoutAttributeCenterY, 0.0),
+                TRMakeLayoutConstraint(iconsContainerView, NSLayoutAttributeWidth, NSLayoutRelationLessThanOrEqual, self, NSLayoutAttributeWidth, 0.0),
+                TRMakeLayoutConstraint(iconsContainerView, NSLayoutAttributeHeight, NSLayoutRelationLessThanOrEqual, self, NSLayoutAttributeHeight, 0.0),
+            ]);
 #endif
 
         _hovered = NO;
@@ -171,7 +177,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
     if (self.hovered && count > 0)
     {
         // Show segmented control
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
         [self.segmentedControl setHidden:NO];
         [self.iconsContainerView setHidden:YES];
 #else
@@ -186,7 +192,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
     else
     {
         // Show static priority icons
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
         [self.segmentedControl setHidden:YES];
         [self.iconsContainerView setHidden:NO];
 #else
@@ -205,6 +211,8 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 {
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
     // Remove all existing image views
+    TRDeactivateConstraints(self.iconsContainerView, self.priorityIconConstraints);
+    self.priorityIconConstraints = @[];
 #endif
     for (NSView* subview in self.iconsContainerView.subviews)
     {
@@ -216,7 +224,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 
     if (count == 0)
     {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
         NSImage* image = PriorityTemplateImage(@"PriorityNormalTemplate", [NSColor lightGrayColor]);
 #else
         NSImage* image = [[NSImage imageNamed:@"PriorityNormalTemplate"] imageWithColor:NSColor.lightGrayColor];
@@ -225,7 +233,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
     }
     else
     {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
         NSColor* priorityColor = self.backgroundStyle == NSBackgroundStyleEmphasized ? [NSColor whiteColor] : [NSColor darkGrayColor];
 #else
         NSColor* priorityColor = self.backgroundStyle == NSBackgroundStyleEmphasized ? NSColor.whiteColor : NSColor.darkGrayColor;
@@ -233,7 +241,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 
         if ([priorities containsObject:@(TR_PRI_LOW)])
         {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
             [images addObject:PriorityTemplateImage(@"PriorityLowTemplate", priorityColor)];
 #else
             NSImage* image = [[NSImage imageNamed:@"PriorityLowTemplate"] imageWithColor:priorityColor];
@@ -242,7 +250,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
         }
         if ([priorities containsObject:@(TR_PRI_NORMAL)])
         {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
             [images addObject:PriorityTemplateImage(@"PriorityNormalTemplate", priorityColor)];
 #else
             NSImage* image = [[NSImage imageNamed:@"PriorityNormalTemplate"] imageWithColor:priorityColor];
@@ -251,7 +259,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
         }
         if ([priorities containsObject:@(TR_PRI_HIGH)])
         {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
             [images addObject:PriorityTemplateImage(@"PriorityHighTemplate", priorityColor)];
 #else
             NSImage* image = [[NSImage imageNamed:@"PriorityHighTemplate"] imageWithColor:priorityColor];
@@ -294,6 +302,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
     }
 #else
     NSView* previousView = nil;
+    NSMutableArray* constraints = [NSMutableArray array];
 
     for (NSImage* image in images)
     {
@@ -304,19 +313,31 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 
         NSSize const imageSize = image.size;
 
-        [NSLayoutConstraint activateConstraints:@[
-            [imageView.widthAnchor constraintEqualToConstant:imageSize.width],
-            [imageView.heightAnchor constraintEqualToConstant:imageSize.height],
-            [imageView.centerYAnchor constraintEqualToAnchor:self.iconsContainerView.centerYAnchor],
+        [constraints addObjectsFromArray:@[
+            TRMakeLayoutConstraint(imageView, NSLayoutAttributeWidth, NSLayoutRelationEqual, nil, NSLayoutAttributeNotAnAttribute, imageSize.width),
+            TRMakeLayoutConstraint(imageView, NSLayoutAttributeHeight, NSLayoutRelationEqual, nil, NSLayoutAttributeNotAnAttribute, imageSize.height),
+            TRMakeLayoutConstraint(imageView, NSLayoutAttributeCenterY, NSLayoutRelationEqual, self.iconsContainerView, NSLayoutAttributeCenterY, 0.0),
         ]];
 
         if (previousView == nil)
         {
-            [imageView.leadingAnchor constraintEqualToAnchor:self.iconsContainerView.leadingAnchor].active = YES;
+            [constraints addObject:TRMakeLayoutConstraint(
+                                       imageView,
+                                       NSLayoutAttributeLeading,
+                                       NSLayoutRelationEqual,
+                                       self.iconsContainerView,
+                                       NSLayoutAttributeLeading,
+                                       0.0)];
         }
         else
         {
-            [imageView.leadingAnchor constraintEqualToAnchor:previousView.trailingAnchor constant:-kImageOverlap].active = YES;
+            [constraints addObject:TRMakeLayoutConstraint(
+                                       imageView,
+                                       NSLayoutAttributeLeading,
+                                       NSLayoutRelationEqual,
+                                       previousView,
+                                       NSLayoutAttributeTrailing,
+                                       -kImageOverlap)];
         }
 
         previousView = imageView;
@@ -324,8 +345,17 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 
     if (previousView)
     {
-        [previousView.trailingAnchor constraintEqualToAnchor:self.iconsContainerView.trailingAnchor].active = YES;
+        [constraints addObject:TRMakeLayoutConstraint(
+                                   previousView,
+                                   NSLayoutAttributeTrailing,
+                                   NSLayoutRelationEqual,
+                                   self.iconsContainerView,
+                                   NSLayoutAttributeTrailing,
+                                   0.0)];
     }
+
+    self.priorityIconConstraints = constraints;
+    TRActivateConstraints(self.iconsContainerView, self.priorityIconConstraints);
 #endif
 }
 
@@ -345,7 +375,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 
 - (void)segmentedControlClicked:(NSSegmentedControl*)sender
 {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
     NSInteger segment = [sender selectedSegment];
 #else
     NSInteger segment = sender.selectedSegment;
@@ -377,7 +407,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
     [torrent setFilePriority:priority forIndexes:node.indexes];
 
     // Notify that we need to refresh
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
     [[NSNotificationCenter defaultCenter] postNotificationName:@"UpdateUI" object:nil];
 #else
     [NSNotificationCenter.defaultCenter postNotificationName:@"UpdateUI" object:nil];

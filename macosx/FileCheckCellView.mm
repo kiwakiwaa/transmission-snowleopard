@@ -7,6 +7,7 @@
 #include <libtransmission/macos-version.h>
 
 #import "FileListNode.h"
+#import "LegacyConstraints.h"
 #import "Torrent.h"
 
 @interface FileCheckCellView ()
@@ -24,9 +25,12 @@
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
         checkButton.translatesAutoresizingMaskIntoConstraints = YES;
         checkButton.autoresizingMask = NSViewMinXMargin | NSViewMaxXMargin | NSViewMinYMargin | NSViewMaxYMargin;
-        [checkButton setButtonType:NSSwitchButton];
 #else
         checkButton.translatesAutoresizingMaskIntoConstraints = NO;
+#endif
+#if TR_MACOS_SDK_BEFORE_10_12
+        [checkButton setButtonType:NSSwitchButton];
+#else
         [checkButton setButtonType:NSButtonTypeSwitch];
 #endif
         checkButton.title = @"";
@@ -38,10 +42,11 @@
 
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
         // Setup constraints
-        [NSLayoutConstraint activateConstraints:@[
-            [checkButton.centerXAnchor constraintEqualToAnchor:self.centerXAnchor],
-            [checkButton.centerYAnchor constraintEqualToAnchor:self.centerYAnchor],
-        ]];
+        TRActivateConstraints(self,
+            @[
+                TRMakeLayoutConstraint(checkButton, NSLayoutAttributeCenterX, NSLayoutRelationEqual, self, NSLayoutAttributeCenterX, 0.0),
+                TRMakeLayoutConstraint(checkButton, NSLayoutAttributeCenterY, NSLayoutRelationEqual, self, NSLayoutAttributeCenterY, 0.0),
+            ]);
 #endif
     }
     return self;
@@ -115,7 +120,7 @@
     Torrent* torrent = node.torrent;
 
     NSIndexSet* indexSet;
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_SDK_BEFORE_10_12
     if ([NSEvent modifierFlags] & NSAlternateKeyMask)
 #else
     if (NSEvent.modifierFlags & NSEventModifierFlagOption)
