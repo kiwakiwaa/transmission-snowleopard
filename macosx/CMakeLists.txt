@@ -226,6 +226,8 @@ target_sources(${TR_NAME}-mac
         InfoTrackersViewController.h
         InfoTrackersViewController.mm
         InfoViewController.h
+        InfoWindow.h
+        InfoWindow.mm
         InfoWindowController.h
         InfoWindowController.mm
         LegacyArchiving.h

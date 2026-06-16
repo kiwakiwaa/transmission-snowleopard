@@ -74,6 +74,7 @@
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072D0486CEB800E47090 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.mm */; settings = {ATTRIBUTES = (); }; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		C0DE202606150000000003 /* InfoWindow.mm in Sources */ = {isa = PBXBuildFile; fileRef = C0DE202606150000000002 /* InfoWindow.mm */; };
 		A200B9200A22798F007BBB1E /* InfoWindowController.mm in Sources */ = {isa = PBXBuildFile; fileRef = A200B83A0A2263BA007BBB1E /* InfoWindowController.mm */; };
 		A201527E0D1C270F0081714F /* torrent-ctor.cc in Sources */ = {isa = PBXBuildFile; fileRef = A20152790D1C26EB0081714F /* torrent-ctor.cc */; };
 		A20162C913DE48BF00E15488 /* receivedata.c in Sources */ = {isa = PBXBuildFile; fileRef = A20162C713DE48BF00E15488 /* receivedata.c */; };
@@ -849,6 +850,8 @@
 		888A256631B3DE536FEB8B01 /* tr-strbuf.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; path = "tr-strbuf.h"; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Transmission.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Transmission.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C0DE202606150000000001 /* InfoWindow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = InfoWindow.h; sourceTree = "<group>"; };
+		C0DE202606150000000002 /* InfoWindow.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = InfoWindow.mm; sourceTree = "<group>"; };
 		A200B8390A2263BA007BBB1E /* InfoWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = InfoWindowController.h; sourceTree = "<group>"; };
 		A200B83A0A2263BA007BBB1E /* InfoWindowController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = InfoWindowController.mm; sourceTree = "<group>"; };
 		A20152790D1C26EB0081714F /* torrent-ctor.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "torrent-ctor.cc"; sourceTree = "<group>"; };
@@ -2463,6 +2466,8 @@
 				A209EAFF1142D3A5002B02D1 /* InfoTrackersViewController.h */,
 				A209EB001142D3A5002B02D1 /* InfoTrackersViewController.mm */,
 				A247A442114C701800547DFC /* InfoViewController.h */,
+				C0DE202606150000000001 /* InfoWindow.h */,
+				C0DE202606150000000002 /* InfoWindow.mm */,
 				A200B8390A2263BA007BBB1E /* InfoWindowController.h */,
 				A200B83A0A2263BA007BBB1E /* InfoWindowController.mm */,
 				A2A1CB770BF29D5500AE959F /* PeerProgressIndicatorCell.h */,
@@ -3500,6 +3505,7 @@
 				4DE5CC9D0980656F00BE280E /* NSStringAdditions.mm in Sources */,
 				4DE5CCA70980735700BE280E /* Badger.mm in Sources */,
 				4DFBC2DF09C0970D00D5C571 /* Torrent.mm in Sources */,
+				C0DE202606150000000003 /* InfoWindow.mm in Sources */,
 				A200B9200A22798F007BBB1E /* InfoWindowController.mm in Sources */,
 				A2AF1C390A3D0F6200F1575D /* FileOutlineView.mm in Sources */,
 				A2710E770A86796000CE4F7D /* PrefsWindow.mm in Sources */,

@@ -11,6 +11,7 @@
 #import "InfoPeersViewController.h"
 #import "InfoFileViewController.h"
 #import "InfoOptionsViewController.h"
+#import "InfoWindow.h"
 #import "NSImageAdditions.h"
 #import "NSStringAdditions.h"
 #import "Torrent.h"
@@ -27,6 +28,8 @@ static TabIdentifier const TabIdentifierOptions = @"Options";
 static CGFloat const kTabMinHeight = 250;
 
 static NSInteger const kInvalidTag = -99;
+
+#define TR_INSPECTOR_ANCHORED_LIVE_RESIZE (!TR_MACOS_DEPLOYMENT_BEFORE_10_8 && TR_MACOS_DEPLOYMENT_BEFORE_10_10)
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 static void TRPrepareLegacyInspectorContentView(NSView* view, NSRect* viewRect, BOOL resizesVertically)
@@ -80,6 +83,12 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 @property(nonatomic, copy) NSArray* fTorrents;
 
 @property(nonatomic) CGFloat fMinWindowWidth;
+#if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
+// 10.8/10.9 can re-anchor programmatic height changes during edge drags.
+// Keep the mouse-down top edge so auto-height panes grow from the bottom.
+@property(nonatomic) CGFloat fLiveResizeTopEdge;
+@property(nonatomic) BOOL fRestoringLiveResizeTopEdge;
+#endif
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @property(nonatomic) BOOL fUpdatingWindowLayout;
 @property(nonatomic) CGFloat fLegacyCurrentContentHeight;
@@ -106,6 +115,11 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 @property(nonatomic) IBOutlet NSTextField* fBasicInfoField;
 @property(nonatomic) IBOutlet NSTextField* fNoneSelectedField;
 
+#if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
+- (BOOL)isAutoHeightLayoutPane;
+- (void)restoreLiveResizeTopEdgeDisplaying:(BOOL)display;
+- (void)preserveLiveResizeTopEdgeIfNeeded;
+#endif
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (CGFloat)legacyFixedContentHeightForWindowWidth:(CGFloat)width;
 - (BOOL)isLegacyFixedHeightPane;
@@ -134,7 +148,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     self.fNoneSelectedField.stringValue = NSLocalizedString(@"No Torrents Selected", "Inspector -> selected torrents");
 
     //window location and size
-    NSPanel* window = (NSPanel*)self.window;
+    InfoWindow* window = (InfoWindow*)self.window;
 
     window.floatingPanel = NO;
 
@@ -244,6 +258,12 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 
 - (void)windowWasResized:(NSNotification*)notification
 {
+#if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
+    if (self.fRestoringLiveResizeTopEdge)
+    {
+        return;
+    }
+#endif
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     if (self.fUpdatingWindowLayout)
     {
@@ -264,6 +284,10 @@ typedef NS_ENUM(NSUInteger, TabTag) {
             [self syncLegacyInspectorContentViewFrameWithWindow];
         }
 
+#if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
+        [self preserveLiveResizeTopEdgeIfNeeded];
+#endif
+
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_7
         if (self.fViewController == self.fOptionsViewController)
         {
@@ -282,14 +306,60 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 #else
     if (self.fViewController == self.fOptionsViewController)
     {
+#if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
+        // windowWillResize: has already proposed the live height. keep this
+        // layout sync from scheduling a second AppKit frame adjustment
+        [self.fOptionsViewController checkWindowSizeAnimated:NO];
+        [self preserveLiveResizeTopEdgeIfNeeded];
+#else
         [self.fOptionsViewController checkWindowSize];
+#endif
     }
     else if (self.fViewController == self.fActivityViewController)
     {
+#if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
+        // windowWillResize: has already proposed the live height; keep this
+        // layout sync from scheduling a second AppKit frame adjustment.
+        [self.fActivityViewController checkWindowSizeAnimated:NO];
+        [self preserveLiveResizeTopEdgeIfNeeded];
+#else
         [self.fActivityViewController checkWindowSize];
+#endif
     }
 #endif
 }
+
+#if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
+- (BOOL)isAutoHeightLayoutPane
+{
+    return self.fViewController == self.fActivityViewController || self.fViewController == self.fOptionsViewController;
+}
+
+- (void)preserveLiveResizeTopEdgeIfNeeded
+{
+    if (self.fLiveResizeTopEdge <= 0.0 || ![self isAutoHeightLayoutPane] || ![self.fViewController.view inLiveResize])
+    {
+        return;
+    }
+
+    [self restoreLiveResizeTopEdgeDisplaying:NO];
+}
+
+- (void)restoreLiveResizeTopEdgeDisplaying:(BOOL)display
+{
+    NSRect windowRect = self.window.frame;
+    CGFloat const anchoredOriginY = self.fLiveResizeTopEdge - NSHeight(windowRect);
+    if (ABS(NSMinY(windowRect) - anchoredOriginY) <= 0.5)
+    {
+        return;
+    }
+
+    windowRect.origin.y = anchoredOriginY;
+    self.fRestoringLiveResizeTopEdge = YES;
+    [self.window setFrame:windowRect display:display animate:NO];
+    self.fRestoringLiveResizeTopEdge = NO;
+}
+#endif
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (CGFloat)legacyFixedContentHeightForWindowWidth:(CGFloat)width
@@ -351,7 +421,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     }
 
     CGFloat contentHeight = preferredContentHeight;
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
     if (self.fLegacyLiveResizeContentHeight > 0.0 && [self.fViewController.view inLiveResize])
     {
         contentHeight = self.fLegacyLiveResizeContentHeight;
@@ -378,6 +448,11 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 {
     if (notification.object == self.window && [self isLegacyFixedHeightPane])
     {
+#if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
+        self.fLiveResizeTopEdge = NSMaxY(self.window.frame);
+        ((InfoWindow*)self.window).anchorsLiveResizeTopEdge = YES;
+        ((InfoWindow*)self.window).liveResizeTopEdge = self.fLiveResizeTopEdge;
+#endif
         self.fLegacyLiveResizeContentHeight = NSHeight(self.fViewController.view.frame);
     }
 }
@@ -408,6 +483,12 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     {
         self.fLegacyLiveResizeContentHeight = 0.0;
         [self resizeLegacyFixedHeightPaneAfterLiveResize];
+#if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
+        [self restoreLiveResizeTopEdgeDisplaying:YES];
+        self.fLiveResizeTopEdge = 0.0;
+        ((InfoWindow*)self.window).anchorsLiveResizeTopEdge = NO;
+        ((InfoWindow*)self.window).liveResizeTopEdge = 0.0;
+#endif
     }
 }
 #endif
@@ -445,7 +526,11 @@ typedef NS_ENUM(NSUInteger, TabTag) {
         CGFloat const fixedContentHeight = [self legacyFixedContentHeightForWindowWidth:frameSize.width];
         if (fixedContentHeight > 0.0)
         {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
             contentHeight = self.fLegacyLiveResizeContentHeight > 0.0 ? self.fLegacyLiveResizeContentHeight : fixedContentHeight;
+#else
+            contentHeight = fixedContentHeight;
+#endif
         }
 #endif
         CGFloat const windowHeight = contentHeight + self.fLegacyInspectorChromeHeight;
@@ -460,6 +545,57 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     }
 
     return frameSize;
+}
+#endif
+
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9 && TR_INSPECTOR_ANCHORED_LIVE_RESIZE
+- (NSSize)windowWillResize:(NSWindow*)sender toSize:(NSSize)frameSize
+{
+    if (sender == self.window && [self isAutoHeightLayoutPane])
+    {
+        // Mavericks centers delegate-proposed height changes during side-edge
+        // live resize; InfoWindow clamps AppKit's setFrame: before it is drawn.
+        CGFloat contentHeight = 0.0;
+        if (self.fViewController == self.fActivityViewController)
+        {
+            contentHeight = [self.fActivityViewController contentHeightForWindowWidth:frameSize.width];
+        }
+        else if (self.fViewController == self.fOptionsViewController)
+        {
+            contentHeight = [self.fOptionsViewController contentHeightForWindowWidth:frameSize.width];
+        }
+
+        CGFloat const chromeHeight = NSHeight(sender.frame) - NSHeight(self.fViewController.view.frame);
+        if (contentHeight > 0.0 && chromeHeight > 0.0)
+        {
+            frameSize.height = contentHeight + chromeHeight;
+            sender.minSize = NSMakeSize(sender.minSize.width, frameSize.height);
+            sender.maxSize = NSMakeSize(FLT_MAX, frameSize.height);
+        }
+    }
+
+    return frameSize;
+}
+
+- (void)windowWillStartLiveResize:(NSNotification*)notification
+{
+    if (notification.object == self.window && [self isAutoHeightLayoutPane])
+    {
+        self.fLiveResizeTopEdge = NSMaxY(self.window.frame);
+        ((InfoWindow*)self.window).anchorsLiveResizeTopEdge = YES;
+        ((InfoWindow*)self.window).liveResizeTopEdge = self.fLiveResizeTopEdge;
+    }
+}
+
+- (void)windowDidEndLiveResize:(NSNotification*)notification
+{
+    if (notification.object == self.window && [self isAutoHeightLayoutPane])
+    {
+        [self restoreLiveResizeTopEdgeDisplaying:YES];
+        self.fLiveResizeTopEdge = 0.0;
+        ((InfoWindow*)self.window).anchorsLiveResizeTopEdge = NO;
+        ((InfoWindow*)self.window).liveResizeTopEdge = 0.0;
+    }
 }
 #endif
 

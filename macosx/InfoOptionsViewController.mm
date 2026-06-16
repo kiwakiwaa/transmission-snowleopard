@@ -207,10 +207,15 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
     return NSHeight(self.fPriorityView.frame) + NSHeight(self.fSeedingView.frame) + (2 * kStackViewInset) + kStackViewSpacing;
 }
 
+- (CGFloat)contentHeightForWindowWidth:(CGFloat)width
+{
+    return width >= self.fHorizLayoutWidth + 1 ? self.fHorizLayoutHeight : self.fVertLayoutHeight;
+}
+
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (CGFloat)legacyContentHeightForWidth:(CGFloat)width
 {
-    return width >= self.fHorizLayoutWidth + 1 ? self.fHorizLayoutHeight : self.fVertLayoutHeight;
+    return [self contentHeightForWindowWidth:width];
 }
 
 - (void)updateLegacyLayoutStateForWidth:(CGFloat)width
@@ -294,16 +299,26 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 
 - (void)checkWindowSize
 {
+    [self checkWindowSizeAnimated:YES];
+}
+
+- (void)checkWindowSizeAnimated:(BOOL)animate
+{
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     self.oldHeight = self.view.window ? NSHeight(self.view.frame) : self.fCurrentHeight;
 #else
     self.oldHeight = self.fCurrentHeight;
 #endif
 
-    [self updateWindowLayout];
+    [self updateWindowLayoutAnimated:animate];
 }
 
 - (void)updateWindowLayout
+{
+    [self updateWindowLayoutAnimated:YES];
+}
+
+- (void)updateWindowLayoutAnimated:(BOOL)animate
 {
     // we check for existence of self.view.window
     // as when view is shown from TorrentTableView.mm popover we don't want to customize the view height
@@ -327,12 +342,21 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
         windowRect.origin.y += difference;
         windowRect.size.height -= difference;
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
+        BOOL const liveResize = [self.view inLiveResize];
+        if (!liveResize)
+        {
+            self.view.window.minSize = NSMakeSize(self.view.window.minSize.width, NSHeight(windowRect));
+            self.view.window.maxSize = NSMakeSize(FLT_MAX, NSHeight(windowRect));
+        }
+#else
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_7
         self.view.window.minSize = NSMakeSize(self.view.window.minSize.width, NSHeight(windowRect));
         self.view.window.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
 #else
         self.view.window.minSize = NSMakeSize(self.view.window.minSize.width, NSHeight(windowRect));
         self.view.window.maxSize = NSMakeSize(FLT_MAX, NSHeight(windowRect));
+#endif
 #endif
 
         self.view.frame = [self viewRect];
@@ -342,8 +366,13 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_7
         [self.view.window setFrame:windowRect display:YES animate:NO];
 #elif TR_MACOS_DEPLOYMENT_BEFORE_10_9
-        BOOL const liveResize = [self.view inLiveResize];
-        [self.view.window setFrame:windowRect display:!liveResize animate:!liveResize];
+        BOOL const animateLayout = animate && ![self.view inLiveResize];
+        [self.view.window setFrame:windowRect display:animateLayout animate:animateLayout];
+#elif TR_MACOS_DEPLOYMENT_BEFORE_10_10
+        if (!liveResize)
+        {
+            [self.view.window setFrame:windowRect display:animate animate:animate];
+        }
 #else
         [self.view.window setFrame:windowRect display:YES animate:YES];
 #endif
