@@ -399,7 +399,7 @@
 "pgY-W3-HdI.title" = "Ustaw domyślną aplikację";
 
 /* Class = "NSButtonCell"; title = "Verify data when download completes"; ObjectID = "wM8-cD-WAB"; */
-/* "wM8-cD-WAB.title" = ""; */
+"wM8-cD-WAB.title" = "Sprawdź dane po zakończeniu pobierania";
 
 /* Class = "NSTextFieldCell"; title = "Announce as:"; ObjectID = "aci-label-cell"; */
 "aci-label-cell.title" = "Ogłaszaj jako:";

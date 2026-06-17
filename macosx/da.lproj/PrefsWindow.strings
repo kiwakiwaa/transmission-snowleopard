@@ -399,7 +399,7 @@
 "pgY-W3-HdI.title" = "Indstil som standardprogram";
 
 /* Class = "NSButtonCell"; title = "Verify data when download completes"; ObjectID = "wM8-cD-WAB"; */
-/* "wM8-cD-WAB.title" = ""; */
+"wM8-cD-WAB.title" = "Bekræft data når overførsel er færdig";
 
 /* Class = "NSTextFieldCell"; title = "Announce as:"; ObjectID = "aci-label-cell"; */
 "aci-label-cell.title" = "Annoncer som:";

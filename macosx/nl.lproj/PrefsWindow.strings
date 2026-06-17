@@ -399,7 +399,7 @@
 "pgY-W3-HdI.title" = "Stel in als standaard";
 
 /* Class = "NSButtonCell"; title = "Verify data when download completes"; ObjectID = "wM8-cD-WAB"; */
-/* "wM8-cD-WAB.title" = ""; */
+"wM8-cD-WAB.title" = "Verifieer data wanneer download klaar is";
 
 /* Class = "NSTextFieldCell"; title = "Announce as:"; ObjectID = "aci-label-cell"; */
 "aci-label-cell.title" = "Aankondigen als:";

@@ -399,7 +399,7 @@
 "pgY-W3-HdI.title" = "הגדרה כיישום ברירת המחדל";
 
 /* Class = "NSButtonCell"; title = "Verify data when download completes"; ObjectID = "wM8-cD-WAB"; */
-/* "wM8-cD-WAB.title" = ""; */
+"wM8-cD-WAB.title" = "אימות הנתונים עם השלמת ההורדה";
 
 /* Class = "NSTextFieldCell"; title = "Announce as:"; ObjectID = "aci-label-cell"; */
 "aci-label-cell.title" = "הכרז בתור:";

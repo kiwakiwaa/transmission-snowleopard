@@ -399,7 +399,7 @@
 "pgY-W3-HdI.title" = "Alapértelmezett alkalmazás beállítása";
 
 /* Class = "NSButtonCell"; title = "Verify data when download completes"; ObjectID = "wM8-cD-WAB"; */
-/* "wM8-cD-WAB.title" = ""; */
+"wM8-cD-WAB.title" = "Adatok ellenőrzése a letöltés befejezésekor";
 
 /* Class = "NSTextFieldCell"; title = "Announce as:"; ObjectID = "aci-label-cell"; */
 "aci-label-cell.title" = "Bejelentés mint:";
