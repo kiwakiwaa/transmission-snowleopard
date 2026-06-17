@@ -125,14 +125,6 @@ static inline uint32_t arc4random_uniform(uint32_t upper_bound)
 - (NSInteger)rowForView:(NSView*)view;
 @end
 
-@interface NSBundle (TRLegacyNibLoading)
-- (BOOL)loadNibNamed:(NSString*)nibName owner:(id)owner topLevelObjects:(NSArray**)topLevelObjects;
-@end
-
-@interface NSFileManager (TRLegacyTrash)
-- (BOOL)trashItemAtURL:(NSURL*)url resultingItemURL:(NSURL**)outResultingURL error:(NSError**)error;
-@end
-
 @interface NSOutlineView (TRLegacyTableAnimations)
 - (void)beginUpdates;
 - (void)endUpdates;
@@ -147,10 +139,6 @@ static inline uint32_t arc4random_uniform(uint32_t upper_bound)
 + (void)runAnimationGroup:(void (^)(NSAnimationContext* context))changes completionHandler:(void (^)(void))completionHandler;
 @end
 
-@interface NSImage (TRLegacyImageDrawing)
-+ (NSImage*)imageWithSize:(NSSize)size flipped:(BOOL)drawingHandlerShouldBeCalledWithFlippedContext drawingHandler:(BOOL (^)(NSRect dstRect))drawingHandler;
-@end
-
 @protocol NSWindowRestoration
 @end
 
@@ -158,6 +146,71 @@ static inline uint32_t arc4random_uniform(uint32_t upper_bound)
 @property(nonatomic) BOOL restorable;
 @property(nonatomic, assign) Class restorationClass;
 - (NSRect)convertRectToScreen:(NSRect)rect;
+@end
+
+typedef NSUInteger NSRegularExpressionOptions;
+typedef NSUInteger NSMatchingOptions;
+
+@interface NSRegularExpression : NSObject
+{
+@protected
+    BOOL fMatchesLinks;
+}
++ (instancetype)regularExpressionWithPattern:(NSString*)pattern options:(NSRegularExpressionOptions)options error:(NSError**)error;
+- (NSArray*)matchesInString:(NSString*)string options:(NSMatchingOptions)options range:(NSRange)range;
+- (NSTextCheckingResult*)firstMatchInString:(NSString*)string options:(NSMatchingOptions)options range:(NSRange)range;
+@end
+
+@interface NSDataDetector : NSRegularExpression
++ (instancetype)dataDetectorWithTypes:(uint64_t)checkingTypes error:(NSError**)error;
+@end
+
+#ifndef NSImageNameShareTemplate
+#define NSImageNameShareTemplate @"NSShareTemplate"
+#endif
+
+#ifndef NSFullScreenWindowMask
+#define NSFullScreenWindowMask 0
+#endif
+
+#ifndef DISPATCH_QUEUE_SERIAL
+#define DISPATCH_QUEUE_SERIAL NULL
+#endif
+#endif
+
+#if TR_MACOS_SDK_BEFORE_10_8
+#undef NSAssert
+#define NSAssert(condition, desc, ...) \
+    do \
+    { \
+        if (!(condition)) \
+        { \
+            [NSException raise:NSInternalInconsistencyException format:(desc), ##__VA_ARGS__]; \
+        } \
+    } while (0)
+
+#ifndef NSImageNameShareTemplate
+#define NSImageNameShareTemplate @"NSShareTemplate"
+#endif
+#endif
+
+#if TR_MACOS_SDK_BEFORE_10_8
+@interface NSImage (TRLegacyImageDrawing)
++ (NSImage*)imageWithSize:(NSSize)size flipped:(BOOL)drawingHandlerShouldBeCalledWithFlippedContext drawingHandler:(BOOL (^)(NSRect dstRect))drawingHandler;
+@end
+
+@protocol NSURLConnectionDataDelegate
+@end
+
+@protocol NSURLConnectionDownloadDelegate
+@end
+
+@interface NSBundle (TRLegacyNibLoading)
+- (BOOL)loadNibNamed:(NSString*)nibName owner:(id)owner topLevelObjects:(NSArray**)topLevelObjects;
+@end
+
+@interface NSFileManager (TRLegacyTrash)
+- (BOOL)trashItemAtURL:(NSURL*)url resultingItemURL:(NSURL**)outResultingURL error:(NSError**)error;
 @end
 
 @class NSSharingService;
@@ -186,41 +239,12 @@ static inline uint32_t arc4random_uniform(uint32_t upper_bound)
 
 @interface NSSharingContentScope : NSObject
 @end
-
-typedef NSUInteger NSRegularExpressionOptions;
-typedef NSUInteger NSMatchingOptions;
-
-@interface NSRegularExpression : NSObject
-{
-@protected
-    BOOL fMatchesLinks;
-}
-+ (instancetype)regularExpressionWithPattern:(NSString*)pattern options:(NSRegularExpressionOptions)options error:(NSError**)error;
-- (NSArray*)matchesInString:(NSString*)string options:(NSMatchingOptions)options range:(NSRange)range;
-- (NSTextCheckingResult*)firstMatchInString:(NSString*)string options:(NSMatchingOptions)options range:(NSRange)range;
-@end
-
-@interface NSDataDetector : NSRegularExpression
-+ (instancetype)dataDetectorWithTypes:(uint64_t)checkingTypes error:(NSError**)error;
-@end
-
-@protocol NSURLConnectionDataDelegate
-@end
-
-@protocol NSURLConnectionDownloadDelegate
-@end
-
-#ifndef NSImageNameShareTemplate
-#define NSImageNameShareTemplate @"NSShareTemplate"
 #endif
 
-#ifndef NSFullScreenWindowMask
-#define NSFullScreenWindowMask 0
-#endif
-
-#ifndef DISPATCH_QUEUE_SERIAL
-#define DISPATCH_QUEUE_SERIAL NULL
-#endif
+#if TR_MACOS_SDK_BEFORE_10_8 && !TR_MACOS_SDK_BEFORE_10_7
+@interface NSAnimationContext (TRLegacyImplicitAnimation)
+@property(nonatomic) BOOL allowsImplicitAnimation;
+@end
 #endif
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_7

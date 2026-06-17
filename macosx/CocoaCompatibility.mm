@@ -259,45 +259,6 @@ static void TRLegacyReloadTableWhenReady(NSTableView* tableView)
 
 @end
 
-@implementation NSBundle (TRLegacyNibLoading)
-
-- (BOOL)loadNibNamed:(NSString*)nibName owner:(id)owner topLevelObjects:(NSArray**)topLevelObjects
-{
-    if (topLevelObjects != NULL)
-    {
-        *topLevelObjects = nil;
-    }
-
-    return [NSBundle loadNibNamed:nibName owner:owner];
-}
-
-@end
-
-@implementation NSFileManager (TRLegacyTrash)
-
-- (BOOL)trashItemAtURL:(NSURL*)url resultingItemURL:(NSURL**)outResultingURL error:(NSError**)error
-{
-    if (outResultingURL != NULL)
-    {
-        *outResultingURL = nil;
-    }
-
-    if (![url isFileURL])
-    {
-        return NO;
-    }
-
-    NSString* path = url.path;
-    NSInteger tag = 0;
-    return [[NSWorkspace sharedWorkspace] performFileOperation:NSWorkspaceRecycleOperation
-                                                        source:path.stringByDeletingLastPathComponent
-                                                   destination:@""
-                                                         files:@[path.lastPathComponent]
-                                                           tag:&tag];
-}
-
-@end
-
 @implementation NSOutlineView (TRLegacyTableAnimations)
 
 - (void)beginUpdates
@@ -360,57 +321,6 @@ static void TRLegacyReloadTableWhenReady(NSTableView* tableView)
     }
 }
 
-@end
-
-@implementation NSImage (TRLegacyImageDrawing)
-
-+ (NSImage*)imageWithSize:(NSSize)size flipped:(BOOL)drawingHandlerShouldBeCalledWithFlippedContext drawingHandler:(BOOL (^)(NSRect dstRect))drawingHandler
-{
-    NSImage* image = [[self alloc] initWithSize:size];
-    [image lockFocusFlipped:drawingHandlerShouldBeCalledWithFlippedContext];
-    if (drawingHandler != nil)
-    {
-        drawingHandler(NSMakeRect(0, 0, size.width, size.height));
-    }
-    [image unlockFocus];
-    return image;
-}
-
-@end
-
-@implementation NSSharingService
-
-@synthesize title;
-@synthesize image;
-@synthesize delegate;
-
-+ (NSArray*)sharingServicesForItems:(NSArray*)items
-{
-    return @[];
-}
-
-- (void)performWithItems:(NSArray*)items
-{
-}
-
-@end
-
-@implementation NSSharingServicePicker
-
-@synthesize delegate;
-
-- (instancetype)initWithItems:(NSArray*)items
-{
-    return [super init];
-}
-
-- (void)showRelativeToRect:(NSRect)positioningRect ofView:(NSView*)positioningView preferredEdge:(NSRectEdge)preferredEdge
-{
-}
-
-@end
-
-@implementation NSSharingContentScope
 @end
 
 @implementation NSRegularExpression
@@ -499,6 +409,121 @@ static void TRLegacyReloadTableWhenReady(NSTableView* tableView)
     return rect;
 }
 
+@end
+
+#endif
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
+
+@implementation NSFileManager (TRLegacyTrash)
+
+- (BOOL)trashItemAtURL:(NSURL*)url resultingItemURL:(NSURL**)outResultingURL error:(NSError**)error
+{
+    if (outResultingURL != NULL)
+    {
+        *outResultingURL = nil;
+    }
+
+    if (![url isFileURL])
+    {
+        return NO;
+    }
+
+    NSString* path = url.path;
+    NSInteger tag = 0;
+    return [[NSWorkspace sharedWorkspace] performFileOperation:NSWorkspaceRecycleOperation
+                                                        source:path.stringByDeletingLastPathComponent
+                                                   destination:@""
+                                                         files:@[path.lastPathComponent]
+                                                           tag:&tag];
+}
+
+@end
+
+#endif
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8 && !TR_MACOS_DEPLOYMENT_BEFORE_10_7
+
+@implementation NSAnimationContext (TRLegacyImplicitAnimation)
+
+- (BOOL)allowsImplicitAnimation
+{
+    return NO;
+}
+
+- (void)setAllowsImplicitAnimation:(BOOL)allowsImplicitAnimation
+{
+}
+
+@end
+
+#endif
+
+#if TR_MACOS_SDK_BEFORE_10_8
+
+@implementation NSImage (TRLegacyImageDrawing)
+
++ (NSImage*)imageWithSize:(NSSize)size flipped:(BOOL)drawingHandlerShouldBeCalledWithFlippedContext drawingHandler:(BOOL (^)(NSRect dstRect))drawingHandler
+{
+    NSImage* image = [[self alloc] initWithSize:size];
+    [image lockFocusFlipped:drawingHandlerShouldBeCalledWithFlippedContext];
+    if (drawingHandler != nil)
+    {
+        drawingHandler(NSMakeRect(0, 0, size.width, size.height));
+    }
+    [image unlockFocus];
+    return image;
+}
+
+@end
+
+@implementation NSBundle (TRLegacyNibLoading)
+
+- (BOOL)loadNibNamed:(NSString*)nibName owner:(id)owner topLevelObjects:(NSArray**)topLevelObjects
+{
+    if (topLevelObjects != NULL)
+    {
+        *topLevelObjects = nil;
+    }
+
+    return [NSBundle loadNibNamed:nibName owner:owner];
+}
+
+@end
+
+@implementation NSSharingService
+
+@synthesize title;
+@synthesize image;
+@synthesize delegate;
+
++ (NSArray*)sharingServicesForItems:(NSArray*)items
+{
+    return @[];
+}
+
+- (void)performWithItems:(NSArray*)items
+{
+}
+
+@end
+
+@implementation NSSharingServicePicker
+
+@synthesize delegate;
+
+- (instancetype)initWithItems:(NSArray*)items
+{
+    return [super init];
+}
+
+- (void)showRelativeToRect:(NSRect)positioningRect ofView:(NSView*)positioningView preferredEdge:(NSRectEdge)preferredEdge
+{
+}
+
+@end
+
+@implementation NSSharingContentScope
 @end
 
 #endif
