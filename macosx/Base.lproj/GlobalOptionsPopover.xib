@@ -78,8 +78,11 @@
                         <outlet property="delegate" destination="-2" id="53"/>
                     </connections>
                 </textField>
-                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" allowsCharacterPickerTouchBarItem="YES" preferredMaxLayoutWidth="0.0" translatesAutoresizingMaskIntoConstraints="NO" id="18" customClass="ColorTextField">
-                    <rect key="frame" x="175" y="78" width="28" height="14"/>
+                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="750" allowsCharacterPickerTouchBarItem="YES" preferredMaxLayoutWidth="0.0" translatesAutoresizingMaskIntoConstraints="NO" id="18" customClass="ColorTextField">
+                    <rect key="frame" x="175" y="78" width="60" height="14"/>
+                    <constraints>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="60" id="PgT-bh-xjA"/>
+                    </constraints>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="KB/s" id="26">
                         <font key="font" metaFont="smallSystem"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -89,8 +92,11 @@
                         <binding destination="119" name="enabled" keyPath="values.CheckUpload" id="149"/>
                     </connections>
                 </textField>
-                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" allowsCharacterPickerTouchBarItem="YES" preferredMaxLayoutWidth="0.0" translatesAutoresizingMaskIntoConstraints="NO" id="179" customClass="ColorTextField">
-                    <rect key="frame" x="175" y="100" width="28" height="14"/>
+                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="750" allowsCharacterPickerTouchBarItem="YES" preferredMaxLayoutWidth="0.0" translatesAutoresizingMaskIntoConstraints="NO" id="179" customClass="ColorTextField">
+                    <rect key="frame" x="175" y="100" width="60" height="14"/>
+                    <constraints>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="60" id="tkF-pD-QmO"/>
+                    </constraints>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="KB/s" id="180">
                         <font key="font" metaFont="smallSystem"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
