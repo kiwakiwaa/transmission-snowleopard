@@ -227,7 +227,7 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
     return (item ? ((FileListNode*)item).children : self.fFileList)[index];
 }
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
 - (id)outlineView:(NSOutlineView*)outlineView objectValueForTableColumn:(NSTableColumn*)tableColumn byItem:(id)item
 {
     FileListNode* node = (FileListNode*)item;

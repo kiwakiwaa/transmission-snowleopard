@@ -2287,7 +2287,7 @@ static void removeKeRangerRansomware()
         {
             if (!beganUpdate)
             {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
                 [self.fTableView beginUpdates];
 #else
                 [NSAnimationContext beginGrouping]; //this has to be before we set the completion handler (#4874)
@@ -2324,7 +2324,7 @@ static void removeKeRangerRansomware()
         if (beganUpdate)
         {
             [self.fTableView endUpdates];
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
             finishRemoval();
 #else
             [NSAnimationContext endGrouping];
@@ -3755,7 +3755,7 @@ static void removeKeRangerRansomware()
         [self.fTableView endUpdates];
     }
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
     if (groupRows)
     {
         for (TorrentGroup* group in self.fDisplayedTorrents)
