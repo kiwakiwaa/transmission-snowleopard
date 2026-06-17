@@ -352,6 +352,11 @@ if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
             LegacyPopover.mm
             PLWeakCompatibilityStubs.h
             PLWeakCompatibilityStubs.mm)
+elseif(TR_MACOS_DEPLOYMENT_BEFORE_10_8)
+    target_sources(${TR_NAME}-mac
+        PRIVATE
+            LegacyWeakReference.h
+            LegacyWeakReference.mm)
 endif()
 
 if(TR_MACOS_XIB_COMPAT_10_9)

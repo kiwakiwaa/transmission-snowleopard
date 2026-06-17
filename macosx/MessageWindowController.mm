@@ -10,6 +10,9 @@
 #import "MessageWindowController.h"
 #import "Controller.h"
 #import "CocoaCompatibility.h"
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+#import "LegacyWeakReference.h"
+#endif
 #import "NSImageAdditions.h"
 #import "NSMutableArrayAdditions.h"
 #import "NSStringAdditions.h"
@@ -160,10 +163,20 @@ static NSUInteger const kMaxQueueLength = 10000U;
 {
     if (!self.fTimer)
     {
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+        // Lion's native weak runtime rejects NSWindowController subclasses, so
+        // use the Snow Leopard compatibility weak store for this timer capture.
+        LegacyWeakReference* weakSelf = [[LegacyWeakReference alloc] initWithObject:self];
+        self.fTimer = TRScheduledTimerWithTimeInterval(kUpdateSeconds, YES, ^(NSTimer* _Nonnull) {
+            MessageWindowController* strongSelf = weakSelf.object;
+            [strongSelf updateLog];
+        });
+#else
         __weak __auto_type weakSelf = self;
         self.fTimer = TRScheduledTimerWithTimeInterval(kUpdateSeconds, YES, ^(NSTimer* _Nonnull) {
             [weakSelf updateLog];
         });
+#endif
         [self updateLog];
     }
 }
@@ -187,10 +200,20 @@ static NSUInteger const kMaxQueueLength = 10000U;
 - (void)window:(NSWindow*)window didDecodeRestorableState:(NSCoder*)coder
 {
     [self.fTimer invalidate];
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+    // Lion's native weak runtime rejects NSWindowController subclasses, so use
+    // the Snow Leopard compatibility weak store for this timer capture.
+    LegacyWeakReference* weakSelf = [[LegacyWeakReference alloc] initWithObject:self];
+    self.fTimer = TRScheduledTimerWithTimeInterval(kUpdateSeconds, YES, ^(NSTimer* _Nonnull) {
+        MessageWindowController* strongSelf = weakSelf.object;
+        [strongSelf updateLog];
+    });
+#else
     __weak __auto_type weakSelf = self;
     self.fTimer = TRScheduledTimerWithTimeInterval(kUpdateSeconds, YES, ^(NSTimer* _Nonnull) {
         [weakSelf updateLog];
     });
+#endif
     [self updateLog];
 }
 

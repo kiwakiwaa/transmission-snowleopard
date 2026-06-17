@@ -4,6 +4,9 @@
 
 #import "TorrentCellControlButton.h"
 #import "CocoaCompatibility.h"
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+#import "LegacyWeakReference.h"
+#endif
 #import "TorrentTableView.h"
 #import "Torrent.h"
 #import "TorrentCell.h"
@@ -11,11 +14,23 @@
 @interface TorrentCellControlButton ()
 @property(nonatomic) NSTrackingArea* fTrackingArea;
 @property(nonatomic, copy) NSString* controlImageSuffix;
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+@property(nonatomic) IBOutlet TorrentCell* torrentCell;
+#else
 @property(nonatomic, TR_OBJC_WEAK) IBOutlet TorrentCell* torrentCell;
+#endif
 @property(nonatomic, readonly) TorrentTableView* torrentTableView;
 @end
 
 @implementation TorrentCellControlButton
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+{
+    LegacyWeakReference* _torrentCellWeakReference;
+}
+
+// Lion cannot form native weak references to NSTableCellView subclasses.
+TR_LEGACY_WEAK_REFERENCE_ACCESSORS(TorrentCell, torrentCell, setTorrentCell, _torrentCellWeakReference)
+#endif
 
 - (TorrentTableView*)torrentTableView
 {

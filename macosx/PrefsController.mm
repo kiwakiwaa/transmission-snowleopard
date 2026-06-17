@@ -20,6 +20,9 @@
 #import "Controller.h"
 #import "CocoaCompatibility.h"
 #import "DefaultAppHelper.h"
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+#import "LegacyWeakReference.h"
+#endif
 #import "PortChecker.h"
 #import "BonjourController.h"
 #import "NSImageAdditions.h"
@@ -263,10 +266,20 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
 
     [self updatePortStatus];
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+    // Lion's native weak runtime rejects NSWindowController subclasses, so use
+    // the Snow Leopard compatibility weak store for this zeroing timer capture.
+    LegacyWeakReference* weakSelf = [[LegacyWeakReference alloc] initWithObject:self];
+    self.fPortStatusTimer = TRScheduledTimerWithTimeInterval(5.0, YES, ^(NSTimer* _Nonnull) {
+        PrefsController* strongSelf = weakSelf.object;
+        [strongSelf updatePortStatus];
+    });
+#else
     __weak __auto_type weakSelf = self;
     self.fPortStatusTimer = TRScheduledTimerWithTimeInterval(5.0, YES, ^(NSTimer* _Nonnull) {
         [weakSelf updatePortStatus];
     });
+#endif
 
     //set peer connections
     self.fPeersGlobalField.integerValue = [self.fDefaults integerForKey:@"PeersTotal"];
@@ -902,18 +915,38 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
 
 - (IBAction)setDefaultForMagnets:(id)sender
 {
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+    // Lion cannot form native weak references to NSWindowController subclasses;
+    // keep the callback zeroing without changing ARC ownership globally.
+    LegacyWeakReference* weakSelf = [[LegacyWeakReference alloc] initWithObject:self];
+    [self.fDefaultAppHelper setDefaultForMagnetURLs:^{
+        PrefsController* strongSelf = weakSelf.object;
+        [strongSelf updateDefaultsStates];
+    }];
+#else
     PrefsController* TR_OBJC_WEAK_REF weakSelf = self;
     [self.fDefaultAppHelper setDefaultForMagnetURLs:^{
         [weakSelf updateDefaultsStates];
     }];
+#endif
 }
 
 - (IBAction)setDefaultForTorrentFiles:(id)sender
 {
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+    // Lion cannot form native weak references to NSWindowController subclasses;
+    // keep the callback zeroing without changing ARC ownership globally.
+    LegacyWeakReference* weakSelf = [[LegacyWeakReference alloc] initWithObject:self];
+    [self.fDefaultAppHelper setDefaultForTorrentFiles:^{
+        PrefsController* strongSelf = weakSelf.object;
+        [strongSelf updateDefaultsStates];
+    }];
+#else
     PrefsController* TR_OBJC_WEAK_REF weakSelf = self;
     [self.fDefaultAppHelper setDefaultForTorrentFiles:^{
         [weakSelf updateDefaultsStates];
     }];
+#endif
 }
 
 - (void)updateDefaultsStates

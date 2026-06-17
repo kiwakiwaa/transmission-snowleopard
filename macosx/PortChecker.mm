@@ -5,6 +5,10 @@
 #import "PortChecker.h"
 #import "CocoaCompatibility.h"
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+#import "LegacyWeakReference.h"
+#endif
+
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 #import "LegacyURLRequest.h"
 #endif
@@ -13,7 +17,11 @@ static NSTimeInterval const kCheckFireInterval = 3.0;
 
 @interface PortChecker ()
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+@property(nonatomic) NSObject<PortCheckerDelegate>* fDelegate;
+#else
 @property(nonatomic, TR_OBJC_WEAK) NSObject<PortCheckerDelegate>* fDelegate;
+#endif
 @property(nonatomic) PortStatus fStatus;
 
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
@@ -28,6 +36,14 @@ static NSTimeInterval const kCheckFireInterval = 3.0;
 @end
 
 @implementation PortChecker
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+{
+    LegacyWeakReference* _delegateWeakReference;
+}
+
+// Lion rejects native weak references to the KVO subclass of PrefsController.
+TR_LEGACY_WEAK_REFERENCE_ACCESSORS(NSObject<PortCheckerDelegate>, fDelegate, setFDelegate, _delegateWeakReference)
+#endif
 
 - (instancetype)initForPort:(NSInteger)portNumber delay:(BOOL)delay withDelegate:(NSObject<PortCheckerDelegate>*)delegate
 {
@@ -37,7 +53,11 @@ static NSTimeInterval const kCheckFireInterval = 3.0;
         _fSession = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.ephemeralSessionConfiguration delegate:nil
                                              delegateQueue:nil];
 #endif
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+        self.fDelegate = delegate;
+#else
         _fDelegate = delegate;
+#endif
 
         _fStatus = PortStatusChecking;
 

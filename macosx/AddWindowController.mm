@@ -8,6 +8,9 @@
 #import "ExpandedPathToIconTransformer.h"
 #import "FileOutlineController.h"
 #import "GroupsController.h"
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+#import "LegacyWeakReference.h"
+#endif
 #import "NSStringAdditions.h"
 #import "Torrent.h"
 
@@ -181,10 +184,20 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
         self.fLocationImageView.image = nil;
     }
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+    // Lion's native weak runtime rejects NSWindowController subclasses, so use
+    // the Snow Leopard compatibility weak store for this zeroing timer capture.
+    LegacyWeakReference* weakSelf = [[LegacyWeakReference alloc] initWithObject:self];
+    self.fTimer = TRScheduledTimerWithTimeInterval(kUpdateSeconds, YES, ^(NSTimer* _Nonnull) {
+        AddWindowController* strongSelf = weakSelf.object;
+        [strongSelf updateFiles];
+    });
+#else
     __weak __auto_type weakSelf = self;
     self.fTimer = TRScheduledTimerWithTimeInterval(kUpdateSeconds, YES, ^(NSTimer* _Nonnull) {
         [weakSelf updateFiles];
     });
+#endif
 
     [self updateFiles];
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_10

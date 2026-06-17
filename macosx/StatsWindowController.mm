@@ -6,6 +6,9 @@
 #import "CocoaCompatibility.h"
 #import "Controller.h"
 #import "LegacyFormatters.h"
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+#import "LegacyWeakReference.h"
+#endif
 #import "NSStringAdditions.h"
 
 static NSTimeInterval const kUpdateSeconds = 1.0;
@@ -58,10 +61,20 @@ static tr_session* fLib = NULL;
     [super awakeFromNib];
     [self updateStats];
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+    // Lion's native weak runtime rejects NSWindowController subclasses, so use
+    // the Snow Leopard compatibility weak store for this zeroing timer capture.
+    LegacyWeakReference* weakSelf = [[LegacyWeakReference alloc] initWithObject:self];
+    self.fTimer = TRScheduledTimerWithTimeInterval(kUpdateSeconds, YES, ^(NSTimer* _Nonnull) {
+        StatsWindowController* strongSelf = weakSelf.object;
+        [strongSelf updateStats];
+    });
+#else
     __weak __auto_type weakSelf = self;
     self.fTimer = TRScheduledTimerWithTimeInterval(kUpdateSeconds, YES, ^(NSTimer* _Nonnull) {
         [weakSelf updateStats];
     });
+#endif
     [NSRunLoop.currentRunLoop addTimer:self.fTimer forMode:NSModalPanelRunLoopMode];
     [NSRunLoop.currentRunLoop addTimer:self.fTimer forMode:NSEventTrackingRunLoopMode];
 

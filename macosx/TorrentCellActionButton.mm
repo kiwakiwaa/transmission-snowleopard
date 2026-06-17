@@ -3,6 +3,9 @@
 // License text can be found in the licenses/ folder.
 
 #import "TorrentCellActionButton.h"
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+#import "LegacyWeakReference.h"
+#endif
 #import "TorrentTableView.h"
 #import "Torrent.h"
 #import "TorrentCell.h"
@@ -11,12 +14,24 @@
 @property(nonatomic) NSTrackingArea* fTrackingArea;
 @property(nonatomic) NSImage* fImage;
 @property(nonatomic) NSImage* fAlternativeImage;
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+@property(nonatomic) IBOutlet TorrentCell* torrentCell;
+#else
 @property(nonatomic, TR_OBJC_WEAK) IBOutlet TorrentCell* torrentCell;
+#endif
 @property(nonatomic, readonly) TorrentTableView* torrentTableView;
 @property(nonatomic) NSUserDefaults* fDefaults;
 @end
 
 @implementation TorrentCellActionButton
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+{
+    LegacyWeakReference* _torrentCellWeakReference;
+}
+
+// Lion cannot form native weak references to NSTableCellView subclasses.
+TR_LEGACY_WEAK_REFERENCE_ACCESSORS(TorrentCell, torrentCell, setTorrentCell, _torrentCellWeakReference)
+#endif
 
 - (TorrentTableView*)torrentTableView
 {

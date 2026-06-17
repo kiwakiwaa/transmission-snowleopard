@@ -18,6 +18,9 @@
 #import "CreatorWindowController.h"
 #import "CocoaCompatibility.h"
 #import "Controller.h"
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+#import "LegacyWeakReference.h"
+#endif
 #import "NSStringAdditions.h"
 
 typedef NS_ENUM(NSUInteger, TrackerSegmentTag) {
@@ -624,10 +627,20 @@ static NSMutableSet* creatorWindowControllerSet;
 
     self.fFuture = self.fBuilder->make_checksums();
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
+    // Lion's native weak runtime rejects NSWindowController subclasses, so use
+    // the Snow Leopard compatibility weak store for this zeroing timer capture.
+    LegacyWeakReference* weakSelf = [[LegacyWeakReference alloc] initWithObject:self];
+    self.fTimer = TRScheduledTimerWithTimeInterval(0.1, YES, ^(NSTimer* _Nonnull) {
+        CreatorWindowController* strongSelf = weakSelf.object;
+        [strongSelf checkProgress];
+    });
+#else
     __weak __auto_type weakSelf = self;
     self.fTimer = TRScheduledTimerWithTimeInterval(0.1, YES, ^(NSTimer* _Nonnull) {
         [weakSelf checkProgress];
     });
+#endif
 }
 
 - (void)checkProgress
