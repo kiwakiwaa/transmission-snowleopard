@@ -147,6 +147,21 @@
 									</object>
 									<array class="NSMutableArray" key="NSMenuItems">
 										<reference ref="699800489"/>
+										<object class="NSMenuItem" id="910100001">
+											<reference key="NSMenu" ref="283506606"/>
+											<string key="NSTitle">Warn</string>
+											<string key="NSKeyEquiv"/>
+											<int key="NSKeyEquivModMask">1048576</int>
+											<int key="NSMnemonicLoc">2147483647</int>
+											<object class="NSCustomResource" key="NSImage">
+												<string key="NSClassName">NSImage</string>
+												<string key="NSResourceName">YellowDot</string>
+											</object>
+											<reference key="NSOnImage" ref="136344754"/>
+											<reference key="NSMixedImage" ref="682227150"/>
+											<string key="NSAction">_popUpItemAction:</string>
+											<reference key="NSTarget" ref="462670475"/>
+										</object>
 										<object class="NSMenuItem" id="900098436">
 											<reference key="NSMenu" ref="283506606"/>
 											<string key="NSTitle">Info</string>
@@ -937,6 +952,7 @@ UAAAAFRAAAIzMwACMzMAAjMzAAAAAAAAAABzZjMyAAAAAAABDHIAAAX4///zHQAAB7oAAP1y///7nf//
 						<array class="NSMutableArray" key="children">
 							<reference ref="69970023"/>
 							<reference ref="900098436"/>
+							<reference ref="910100001"/>
 							<reference ref="699800489"/>
 						</array>
 						<reference key="parent" ref="462670475"/>
@@ -954,6 +970,11 @@ UAAAAFRAAAIzMwACMzMAAjMzAAAAAAAAAABzZjMyAAAAAAABDHIAAAX4///zHQAAB7oAAP1y///7nf//
 					<object class="IBObjectRecord">
 						<int key="objectID">17</int>
 						<reference key="object" ref="699800489"/>
+						<reference key="parent" ref="283506606"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">76</int>
+						<reference key="object" ref="910100001"/>
 						<reference key="parent" ref="283506606"/>
 					</object>
 					<object class="IBObjectRecord">
@@ -1039,12 +1060,13 @@ UAAAAFRAAAIzMwACMzMAAjMzAAAAAAAAAABzZjMyAAAAAAABDHIAAAX4///zHQAAB7oAAP1y///7nf//
 				<string key="69.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="72.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="73.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
+				<string key="76.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 			</dictionary>
 			<dictionary class="NSMutableDictionary" key="unlocalizedProperties"/>
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">75</int>
+			<int key="maxID">76</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">

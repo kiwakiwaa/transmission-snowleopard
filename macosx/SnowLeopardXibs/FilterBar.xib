@@ -44,7 +44,7 @@
 					<object class="NSSearchField" id="172001730">
 						<reference key="NSNextResponder" ref="950339199"/>
 						<int key="NSvFlags">257</int>
-						<string key="NSFrame">{{357, 2}, {95, 19}}</string>
+						<string key="NSFrame">{{400, 2}, {95, 19}}</string>
 						<reference key="NSSuperview" ref="950339199"/>
 						<bool key="NSEnabled">YES</bool>
 						<object class="NSSearchFieldCell" key="NSCell" id="488937601">
@@ -183,7 +183,7 @@
 						<int key="NSvFlags">268</int>
 						<string key="NSFrame">{{273, 2}, {55, 17}}</string>
 						<reference key="NSSuperview" ref="950339199"/>
-						<reference key="NSNextKeyView" ref="172001730"/>
+						<reference key="NSNextKeyView" ref="910200001"/>
 						<bool key="NSEnabled">YES</bool>
 						<object class="NSButtonCell" key="NSCell" id="817984786">
 							<int key="NSCellFlags">67239488</int>
@@ -192,6 +192,27 @@
 							<reference key="NSSupport" ref="298531197"/>
 							<reference key="NSControlView" ref="876855053"/>
 							<int key="NSButtonFlags">-1229700865</int>
+							<int key="NSButtonFlags2">173</int>
+							<string key="NSAlternateContents"/>
+							<string key="NSKeyEquivalent"/>
+							<int key="NSPeriodicDelay">400</int>
+							<int key="NSPeriodicInterval">75</int>
+						</object>
+					</object>
+					<object class="NSButton" id="910200001">
+						<reference key="NSNextResponder" ref="950339199"/>
+						<int key="NSvFlags">268</int>
+						<string key="NSFrame">{{329, 2}, {45, 17}}</string>
+						<reference key="NSSuperview" ref="950339199"/>
+						<reference key="NSNextKeyView" ref="172001730"/>
+						<bool key="NSEnabled">YES</bool>
+						<object class="NSButtonCell" key="NSCell" id="910200002">
+							<int key="NSCellFlags">67239488</int>
+							<int key="NSCellFlags2">134481920</int>
+							<string key="NSContents">Error</string>
+							<reference key="NSSupport" ref="298531197"/>
+							<reference key="NSControlView" ref="910200001"/>
+							<int key="NSButtonFlags">-1232846593</int>
 							<int key="NSButtonFlags2">173</int>
 							<string key="NSAlternateContents"/>
 							<string key="NSKeyEquivalent"/>
@@ -328,7 +349,7 @@
 						</object>
 					</object>
 				</array>
-				<string key="NSFrameSize">{457, 23}</string>
+				<string key="NSFrameSize">{500, 23}</string>
 				<reference key="NSNextKeyView" ref="81736544"/>
 				<string key="NSClassName">NSView</string>
 				<string key="NSExtension">NSView</string>
@@ -412,6 +433,14 @@
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
+						<string key="label">fErrorFilterButton</string>
+						<reference key="source" ref="1001"/>
+						<reference key="destination" ref="910200001"/>
+					</object>
+					<int key="connectionID">63</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
 						<string key="label">view</string>
 						<reference key="source" ref="1001"/>
 						<reference key="destination" ref="950339199"/>
@@ -457,6 +486,14 @@
 						<reference key="destination" ref="876855053"/>
 					</object>
 					<int key="connectionID">44</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">setFilter:</string>
+						<reference key="source" ref="1001"/>
+						<reference key="destination" ref="910200001"/>
+					</object>
+					<int key="connectionID">64</int>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBActionConnection" key="connection">
@@ -549,6 +586,7 @@
 							<reference ref="81736544"/>
 							<reference ref="486449662"/>
 							<reference ref="876855053"/>
+							<reference ref="910200001"/>
 							<reference ref="376962241"/>
 							<reference ref="123845967"/>
 							<reference ref="172001730"/>
@@ -583,6 +621,14 @@
 						<reference key="object" ref="876855053"/>
 						<array class="NSMutableArray" key="children">
 							<reference ref="817984786"/>
+						</array>
+						<reference key="parent" ref="950339199"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">61</int>
+						<reference key="object" ref="910200001"/>
+						<array class="NSMutableArray" key="children">
+							<reference ref="910200002"/>
 						</array>
 						<reference key="parent" ref="950339199"/>
 					</object>
@@ -629,6 +675,11 @@
 						<int key="objectID">15</int>
 						<reference key="object" ref="817984786"/>
 						<reference key="parent" ref="876855053"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">62</int>
+						<reference key="object" ref="910200002"/>
+						<reference key="parent" ref="910200001"/>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">16</int>
@@ -729,6 +780,9 @@
 				<string key="59.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="6.CustomClassName">FilterButton</string>
 				<string key="6.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
+				<string key="61.CustomClassName">FilterButton</string>
+				<string key="61.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
+				<string key="62.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="7.CustomClassName">FilterButton</string>
 				<string key="7.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="8.CustomClassName">FilterButton</string>
@@ -740,7 +794,7 @@
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">60</int>
+			<int key="maxID">64</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -750,6 +804,7 @@
 					<dictionary class="NSMutableDictionary" key="outlets">
 						<string key="fActiveFilterButton">FilterButton</string>
 						<string key="fDownloadFilterButton">FilterButton</string>
+						<string key="fErrorFilterButton">FilterButton</string>
 						<string key="fGroupsButton">NSPopUpButton</string>
 						<string key="fNoFilterButton">FilterButton</string>
 						<string key="fPauseFilterButton">FilterButton</string>
@@ -763,6 +818,10 @@
 						</object>
 						<object class="IBToOneOutletInfo" key="fDownloadFilterButton">
 							<string key="name">fDownloadFilterButton</string>
+							<string key="candidateClassName">FilterButton</string>
+						</object>
+						<object class="IBToOneOutletInfo" key="fErrorFilterButton">
+							<string key="name">fErrorFilterButton</string>
 							<string key="candidateClassName">FilterButton</string>
 						</object>
 						<object class="IBToOneOutletInfo" key="fGroupsButton">
