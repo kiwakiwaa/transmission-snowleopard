@@ -339,6 +339,13 @@ target_sources(${TR_NAME}-mac
         WebSeedTableView.h
         WebSeedTableView.mm)
 
+if(TR_MACOS_DEPLOYMENT_BEFORE_10_8)
+    target_sources(${TR_NAME}-mac
+        PRIVATE
+            PLWeakCompatibilityCore.h
+            PLWeakCompatibilityCore.mm)
+endif()
+
 if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
     target_sources(${TR_NAME}-mac
         PRIVATE
