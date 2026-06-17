@@ -22,7 +22,7 @@ static CGFloat const kStackViewInset = 12.0;
 static CGFloat const kStackViewHorizontalSpacing = 20.0;
 static CGFloat const kStackViewVerticalSpacing = 8.0;
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
 static CGFloat const kLegacyFlatTransferOriginX = 14.0;
 static CGFloat const kLegacyFlatTransferOriginY = 132.0;
 static CGFloat const kLegacyFlatTransferMinimumY = 132.0;
@@ -83,7 +83,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 @property(nonatomic, readonly) CGFloat fHorizLayoutWidth;
 @property(nonatomic, readonly) CGFloat fVertLayoutHeight;
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
 - (void)upgradeLegacyFlatActivityViewIfNeeded;
 - (void)resetLegacyFlatSectionFrames;
 #endif
@@ -105,7 +105,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 - (void)awakeFromNib
 {
     [super awakeFromNib];
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
     [self upgradeLegacyFlatActivityViewIfNeeded];
 #endif
     TRCheckExpectedStackViewClass(self.fActivityStackView, NSStringFromClass(self.class), @"fActivityStackView");
@@ -117,7 +117,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
     [self checkWindowSize];
 }
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
 - (void)upgradeLegacyFlatActivityViewIfNeeded
 {
     if (self.fActivityStackView != nil && self.fTransferView != nil && self.fDatesView != nil)
@@ -140,9 +140,11 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 
     NSView* transferView = [[NSView alloc] initWithFrame:NSMakeRect(0.0, 0.0, kLegacyFlatTransferWidth, kLegacyFlatTransferHeight)];
     transferView.autoresizingMask = NSViewMaxXMargin | NSViewMinYMargin;
+    transferView.autoresizesSubviews = NO;
 
     NSView* datesView = [[NSView alloc] initWithFrame:NSMakeRect(0.0, 0.0, kLegacyFlatDatesWidth, kLegacyFlatDatesHeight)];
     datesView.autoresizingMask = NSViewMaxXMargin | NSViewMaxYMargin;
+    datesView.autoresizesSubviews = NO;
 
     for (NSView* subview in flatSubviews)
     {
@@ -220,7 +222,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 
 - (void)updateLegacyLayoutStateForWidth:(CGFloat)width
 {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
     [self resetLegacyFlatSectionFrames];
 #endif
     if (width >= self.fHorizLayoutWidth + 1)
@@ -355,22 +357,15 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
         self.view.window.maxSize = NSMakeSize(FLT_MAX, NSHeight(windowRect));
     }
 #else
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
-    self.view.window.minSize = NSMakeSize(self.view.window.minSize.width, NSHeight(windowRect));
-    self.view.window.maxSize = NSMakeSize(FLT_MAX, FLT_MAX);
-#else
     self.view.window.minSize = NSMakeSize(self.view.window.minSize.width, NSHeight(windowRect));
     self.view.window.maxSize = NSMakeSize(FLT_MAX, NSHeight(windowRect));
-#endif
 #endif
 
     self.view.frame = [self viewRect];
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self layoutLegacyStackView];
 #endif
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
-    [self.view.window setFrame:windowRect display:YES animate:NO];
-#elif TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     BOOL const animateLayout = animate && ![self.view inLiveResize];
     [self.view.window setFrame:windowRect display:animateLayout animate:animateLayout];
 #elif TR_MACOS_DEPLOYMENT_BEFORE_10_10

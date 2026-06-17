@@ -29,7 +29,7 @@ static CGFloat const kTabMinHeight = 250;
 
 static NSInteger const kInvalidTag = -99;
 
-#define TR_INSPECTOR_ANCHORED_LIVE_RESIZE (!TR_MACOS_DEPLOYMENT_BEFORE_10_8 && TR_MACOS_DEPLOYMENT_BEFORE_10_10)
+#define TR_INSPECTOR_ANCHORED_LIVE_RESIZE (TR_MACOS_DEPLOYMENT_BEFORE_10_10)
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 static void TRPrepareLegacyInspectorContentView(NSView* view, NSRect* viewRect, BOOL resizesVertically)
@@ -93,9 +93,6 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 @property(nonatomic) BOOL fUpdatingWindowLayout;
 @property(nonatomic) CGFloat fLegacyCurrentContentHeight;
 @property(nonatomic) CGFloat fLegacyInspectorChromeHeight;
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7
-@property(nonatomic) CGFloat fLegacyLiveResizeContentHeight;
-#endif
 @property(nonatomic) NSMutableDictionary* fLegacyMinimumWidths;
 #endif
 
@@ -125,11 +122,10 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 - (BOOL)isLegacyFixedHeightPane;
 - (CGFloat)legacyMinimumWidthForView:(NSView*)view;
 - (void)reflowLegacyStackViewIfNeeded;
+- (void)syncLegacyFixedContentViewWithWindowWidth:(CGFloat)width height:(CGFloat)contentHeight;
 - (void)syncLegacyFixedContentViewWithWindowWidth:(CGFloat)width;
-- (void)syncLegacyInspectorContentViewFrameWithWindow;
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7
 - (void)resizeLegacyFixedHeightPaneAfterLiveResize;
-#endif
+- (void)syncLegacyInspectorContentViewFrameWithWindow;
 #endif
 
 @end
@@ -273,13 +269,11 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     self.fUpdatingWindowLayout = YES;
     @try
     {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7
         if ([self isLegacyFixedHeightPane])
         {
             [self syncLegacyFixedContentViewWithWindowWidth:NSWidth(self.window.frame)];
         }
         else
-#endif
         {
             [self syncLegacyInspectorContentViewFrameWithWindow];
         }
@@ -288,16 +282,6 @@ typedef NS_ENUM(NSUInteger, TabTag) {
         [self preserveLiveResizeTopEdgeIfNeeded];
 #endif
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
-        if (self.fViewController == self.fOptionsViewController)
-        {
-            [self.fOptionsViewController checkWindowSize];
-        }
-        else if (self.fViewController == self.fActivityViewController)
-        {
-            [self.fActivityViewController checkWindowSize];
-        }
-#endif
     }
     @finally
     {
@@ -420,13 +404,15 @@ typedef NS_ENUM(NSUInteger, TabTag) {
         return;
     }
 
-    CGFloat contentHeight = preferredContentHeight;
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
-    if (self.fLegacyLiveResizeContentHeight > 0.0 && [self.fViewController.view inLiveResize])
+    [self syncLegacyFixedContentViewWithWindowWidth:width height:preferredContentHeight];
+}
+
+- (void)syncLegacyFixedContentViewWithWindowWidth:(CGFloat)width height:(CGFloat)contentHeight
+{
+    if (contentHeight <= 0.0)
     {
-        contentHeight = self.fLegacyLiveResizeContentHeight;
+        return;
     }
-#endif
 
     if (self.fViewController == self.fActivityViewController)
     {
@@ -443,7 +429,6 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     self.fLegacyCurrentContentHeight = contentHeight;
 }
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7
 - (void)windowWillStartLiveResize:(NSNotification*)notification
 {
     if (notification.object == self.window && [self isLegacyFixedHeightPane])
@@ -453,7 +438,6 @@ typedef NS_ENUM(NSUInteger, TabTag) {
         ((InfoWindow*)self.window).anchorsLiveResizeTopEdge = YES;
         ((InfoWindow*)self.window).liveResizeTopEdge = self.fLiveResizeTopEdge;
 #endif
-        self.fLegacyLiveResizeContentHeight = NSHeight(self.fViewController.view.frame);
     }
 }
 
@@ -481,7 +465,6 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 {
     if (notification.object == self.window && [self isLegacyFixedHeightPane])
     {
-        self.fLegacyLiveResizeContentHeight = 0.0;
         [self resizeLegacyFixedHeightPaneAfterLiveResize];
 #if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
         [self restoreLiveResizeTopEdgeDisplaying:YES];
@@ -491,7 +474,6 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 #endif
     }
 }
-#endif
 
 - (void)syncLegacyInspectorContentViewFrameWithWindow
 {
@@ -522,26 +504,19 @@ typedef NS_ENUM(NSUInteger, TabTag) {
         ![self.fViewController respondsToSelector:@selector(saveViewSize)])
     {
         CGFloat contentHeight = self.fLegacyCurrentContentHeight;
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7
         CGFloat const fixedContentHeight = [self legacyFixedContentHeightForWindowWidth:frameSize.width];
         if (fixedContentHeight > 0.0)
         {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
-            contentHeight = self.fLegacyLiveResizeContentHeight > 0.0 ? self.fLegacyLiveResizeContentHeight : fixedContentHeight;
-#else
             contentHeight = fixedContentHeight;
-#endif
+            [self syncLegacyFixedContentViewWithWindowWidth:frameSize.width height:contentHeight];
         }
-#endif
         CGFloat const windowHeight = contentHeight + self.fLegacyInspectorChromeHeight;
         frameSize.height = windowHeight > 0.0 ? windowHeight : NSHeight(sender.frame);
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7
         if (fixedContentHeight > 0.0)
         {
             sender.minSize = NSMakeSize(sender.minSize.width, frameSize.height);
             sender.maxSize = NSMakeSize(FLT_MAX, frameSize.height);
         }
-#endif
     }
 
     return frameSize;

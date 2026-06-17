@@ -8,7 +8,7 @@
 
 @interface InfoWindow : NSPanel
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_8 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
 @property(nonatomic) BOOL anchorsLiveResizeTopEdge;
 @property(nonatomic) CGFloat liveResizeTopEdge;
 #endif
