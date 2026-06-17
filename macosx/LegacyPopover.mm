@@ -19,11 +19,13 @@
 @interface TRLegacyPopoverFrameView : NSView
 {
     NSView* fContentView;
+    __unsafe_unretained TRLegacyPopover* fPopover;
     NSUInteger fAnchorEdge;
     NSPoint fAnchorPoint;
 }
 
 @property(nonatomic, retain) NSView* contentView;
+@property(nonatomic, assign) TRLegacyPopover* popover;
 @property(nonatomic) NSUInteger anchorEdge;
 @property(nonatomic) NSPoint anchorPoint;
 
@@ -51,6 +53,12 @@
     BOOL fShown;
     BOOL fClosing;
     BOOL fAutomaticCloseRegistered;
+    BOOL fGeometryChangeRegistered;
+    BOOL fPositioningViewPostsFrameChangedNotifications;
+    BOOL fPositioningViewPostsBoundsChangedNotifications;
+    BOOL fPositioningViewGeometryNotificationsEnabled;
+    BOOL fDeferredGeometryUpdateScheduled;
+    BOOL fOrderFrontScheduled;
 }
 
 - (void)closeAskingDelegate:(BOOL)asksDelegate;
@@ -64,7 +72,15 @@
 - (CGFloat)visibleAreaForPanelFrame:(NSRect)panelFrame visibleFrame:(NSRect)visibleFrame;
 - (NSUInteger)anchorEdgeForPositioningRect:(NSRect)positioningRect panelSize:(NSSize)panelSize visibleFrame:(NSRect)visibleFrame panelFrame:(NSRect*)outPanelFrame;
 - (NSPoint)anchorPointForPanelFrame:(NSRect)panelFrame positioningRectInScreen:(NSRect)positioningRect;
+- (BOOL)anchorPointCanBeDrawn:(NSPoint)anchorPoint inPanelFrame:(NSRect)panelFrame;
 - (void)postNotificationNamed:(NSString*)name selector:(SEL)selector;
+- (void)registerPositioningViewGeometryChangeHandling;
+- (void)unregisterPositioningViewGeometryChangeHandling;
+- (void)schedulePositioningViewGeometryUpdate;
+- (void)positioningViewGeometryDidChange:(NSNotification*)notification;
+- (void)scheduleOrderFront;
+- (void)orderPanelFrontIfNeeded;
+- (void)cancelScheduledOrderFront;
 - (void)registerAutomaticCloseHandlingIfNeeded;
 - (void)unregisterAutomaticCloseHandling;
 - (NSEvent*)handleLocalEvent:(NSEvent*)event;
@@ -75,6 +91,7 @@ static NSString* const TRLegacyPopoverWillShowNotification = @"NSPopoverWillShow
 static NSString* const TRLegacyPopoverDidShowNotification = @"NSPopoverDidShowNotification";
 static NSString* const TRLegacyPopoverWillCloseNotification = @"NSPopoverWillCloseNotification";
 static NSString* const TRLegacyPopoverDidCloseNotification = @"NSPopoverDidCloseNotification";
+static NSString* const TRLegacyViewGeometryInWindowDidChangeNotification = @"NSViewGeometryInWindowDidChangeNotification";
 
 static CGFloat const TRLegacyPopoverAnchorWidth = 22.0;
 static CGFloat const TRLegacyPopoverAnchorHeight = 11.0;
@@ -82,6 +99,12 @@ static CGFloat const TRLegacyPopoverContentInset = 2.0;
 static CGFloat const TRLegacyPopoverFrameOutset = TRLegacyPopoverAnchorHeight + TRLegacyPopoverContentInset;
 static CGFloat const TRLegacyPopoverCornerRadius = 5.0;
 static NSUInteger const TRLegacyPopoverNoAnchorEdge = (NSUInteger)-1;
+
+static void TRLegacyPopoverPerformNoArgumentSelector(id object, SEL selector)
+{
+    void (*implementation)(id, SEL) = (void (*)(id, SEL))[object methodForSelector:selector];
+    implementation(object, selector);
+}
 
 static NSMutableSet* TRLegacyActivePopovers()
 {
@@ -166,6 +189,7 @@ static NSUInteger TRLegacyPopoverAnchorEdgeForRectEdge(NSRectEdge edge, NSView* 
 @implementation TRLegacyPopoverFrameView
 
 @synthesize contentView = fContentView;
+@synthesize popover = fPopover;
 @synthesize anchorEdge = fAnchorEdge;
 @synthesize anchorPoint = fAnchorPoint;
 
@@ -246,6 +270,8 @@ static NSUInteger TRLegacyPopoverAnchorEdgeForRectEdge(NSRectEdge edge, NSView* 
 - (void)drawRect:(NSRect)dirtyRect
 {
     (void)dirtyRect;
+
+    [fPopover repositionPanel];
 
     [[NSColor clearColor] set];
     NSRectFillUsingOperation(self.bounds, NSCompositeCopy);
@@ -389,6 +415,8 @@ static NSUInteger TRLegacyPopoverAnchorEdgeForRectEdge(NSRectEdge edge, NSView* 
 
 - (void)dealloc
 {
+    [self cancelScheduledOrderFront];
+    [self unregisterPositioningViewGeometryChangeHandling];
     [self unregisterAutomaticCloseHandling];
     fPanel.delegate = nil;
     fPanel.popover = nil;
@@ -484,6 +512,8 @@ static NSUInteger TRLegacyPopoverAnchorEdgeForRectEdge(NSRectEdge edge, NSView* 
     if (wasShown)
     {
         [self unregisterAutomaticCloseHandling];
+        [self unregisterPositioningViewGeometryChangeHandling];
+        [self cancelScheduledOrderFront];
     }
 
     fPositioningView = positioningView;
@@ -503,6 +533,7 @@ static NSUInteger TRLegacyPopoverAnchorEdgeForRectEdge(NSRectEdge edge, NSView* 
             [fPositioningWindow addChildWindow:fPanel ordered:NSWindowAbove];
         }
 
+        [self registerPositioningViewGeometryChangeHandling];
         [self registerAutomaticCloseHandlingIfNeeded];
         return;
     }
@@ -512,8 +543,8 @@ static NSUInteger TRLegacyPopoverAnchorEdgeForRectEdge(NSRectEdge edge, NSView* 
     fShown = YES;
     [TRLegacyActivePopovers() addObject:self];
 
-    [fPositioningWindow addChildWindow:fPanel ordered:NSWindowAbove];
-    [fPanel orderFront:nil];
+    [self registerPositioningViewGeometryChangeHandling];
+    [self scheduleOrderFront];
 
     [self postNotificationNamed:TRLegacyPopoverDidShowNotification selector:@selector(popoverDidShow:)];
     [self registerAutomaticCloseHandlingIfNeeded];
@@ -546,6 +577,8 @@ static NSUInteger TRLegacyPopoverAnchorEdgeForRectEdge(NSRectEdge edge, NSView* 
     fClosing = YES;
 
     [self unregisterAutomaticCloseHandling];
+    [self unregisterPositioningViewGeometryChangeHandling];
+    [self cancelScheduledOrderFront];
     [self postNotificationNamed:TRLegacyPopoverWillCloseNotification selector:@selector(popoverWillClose:)];
 
     if (fPositioningWindow != nil && fPanel != nil)
@@ -605,6 +638,7 @@ static NSUInteger TRLegacyPopoverAnchorEdgeForRectEdge(NSRectEdge edge, NSView* 
 
         fFrameView = [[TRLegacyPopoverFrameView alloc] initWithFrame:frameRect];
         fFrameView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        fFrameView.popover = self;
         fPanel.contentView = fFrameView;
     }
 
@@ -623,22 +657,38 @@ static NSUInteger TRLegacyPopoverAnchorEdgeForRectEdge(NSRectEdge edge, NSView* 
     }
 
     NSRect positioningRect = [self positioningRectInScreen];
-    if (NSIsEmptyRect(positioningRect))
-    {
-        return;
-    }
-
     NSSize panelSize = fPanel.frame.size;
     NSScreen* screen = fPositioningWindow.screen ?: NSScreen.mainScreen;
     NSRect visibleFrame = screen.visibleFrame;
     NSRect panelFrame = NSZeroRect;
-    NSUInteger const anchorEdge = [self anchorEdgeForPositioningRect:positioningRect
-                                                          panelSize:panelSize
-                                                       visibleFrame:visibleFrame
-                                                         panelFrame:&panelFrame];
+
+    NSUInteger anchorEdge = TRLegacyPopoverNoAnchorEdge;
+    if (NSIsEmptyRect(positioningRect))
+    {
+        panelFrame = fPanel.frame;
+        CGFloat const maxX = MAX(NSMinX(visibleFrame), NSMaxX(visibleFrame) - panelSize.width);
+        CGFloat const maxY = MAX(NSMinY(visibleFrame), NSMaxY(visibleFrame) - panelSize.height);
+        panelFrame.origin.x = TRLegacyPopoverClamp(NSMinX(panelFrame), NSMinX(visibleFrame), maxX);
+        panelFrame.origin.y = TRLegacyPopoverClamp(NSMinY(panelFrame), NSMinY(visibleFrame), maxY);
+    }
+    else
+    {
+        anchorEdge = [self anchorEdgeForPositioningRect:positioningRect
+                                             panelSize:panelSize
+                                          visibleFrame:visibleFrame
+                                            panelFrame:&panelFrame];
+    }
+
     fAnchorEdge = anchorEdge;
+    NSPoint anchorPoint = [self anchorPointForPanelFrame:panelFrame positioningRectInScreen:positioningRect];
+    if (fAnchorEdge != TRLegacyPopoverNoAnchorEdge && ![self anchorPointCanBeDrawn:anchorPoint inPanelFrame:panelFrame])
+    {
+        fAnchorEdge = TRLegacyPopoverNoAnchorEdge;
+        anchorPoint = NSMakePoint(DBL_MAX, DBL_MAX);
+    }
+
     fFrameView.anchorEdge = fAnchorEdge;
-    fFrameView.anchorPoint = [self anchorPointForPanelFrame:panelFrame positioningRectInScreen:positioningRect];
+    fFrameView.anchorPoint = anchorPoint;
 
     [fPanel setFrameOrigin:panelFrame.origin];
     [fPanel invalidateShadow];
@@ -781,6 +831,17 @@ static NSUInteger TRLegacyPopoverAnchorEdgeForRectEdge(NSRectEdge edge, NSView* 
 
     CGFloat const maxX = MAX(NSMinX(visibleFrame), NSMaxX(visibleFrame) - NSWidth(selectedFrame));
     CGFloat const maxY = MAX(NSMinY(visibleFrame), NSMaxY(visibleFrame) - NSHeight(selectedFrame));
+
+    if (bestArea <= 0.0 || ![self panelFrame:selectedFrame fitsInVisibleFrame:visibleFrame])
+    {
+        selectedFrame.origin.x = NSMinX(visibleFrame) + floor((NSWidth(visibleFrame) - NSWidth(selectedFrame)) * 0.5);
+        selectedFrame.origin.y = NSMinY(visibleFrame) + floor((NSHeight(visibleFrame) - NSHeight(selectedFrame)) * 0.75);
+        selectedFrame.origin.x = TRLegacyPopoverClamp(NSMinX(selectedFrame), NSMinX(visibleFrame), maxX);
+        selectedFrame.origin.y = TRLegacyPopoverClamp(NSMinY(selectedFrame), NSMinY(visibleFrame), maxY);
+        *outPanelFrame = selectedFrame;
+        return TRLegacyPopoverNoAnchorEdge;
+    }
+
     selectedFrame.origin.x = TRLegacyPopoverClamp(NSMinX(selectedFrame), NSMinX(visibleFrame), maxX);
     selectedFrame.origin.y = TRLegacyPopoverClamp(NSMinY(selectedFrame), NSMinY(visibleFrame), maxY);
     *outPanelFrame = selectedFrame;
@@ -825,6 +886,160 @@ static NSUInteger TRLegacyPopoverAnchorEdgeForRectEdge(NSRectEdge edge, NSView* 
     }
 
     return anchorPoint;
+}
+
+- (BOOL)anchorPointCanBeDrawn:(NSPoint)anchorPoint inPanelFrame:(NSRect)panelFrame
+{
+    if (anchorPoint.x > DBL_MAX / 2.0 || anchorPoint.y > DBL_MAX / 2.0)
+    {
+        return NO;
+    }
+
+    NSRect bodyRect = NSMakeRect(TRLegacyPopoverAnchorHeight + 0.5,
+        TRLegacyPopoverAnchorHeight + 0.5,
+        NSWidth(panelFrame) - TRLegacyPopoverAnchorHeight * 2.0 - 1.0,
+        NSHeight(panelFrame) - TRLegacyPopoverAnchorHeight * 2.0 - 1.0);
+    CGFloat const halfAnchorWidth = TRLegacyPopoverAnchorWidth / 2.0;
+
+    if ((fAnchorEdge & ~2U) == 1)
+    {
+        CGFloat const minimum = NSMinX(bodyRect) + TRLegacyPopoverCornerRadius + halfAnchorWidth;
+        CGFloat const maximum = NSMaxX(bodyRect) - TRLegacyPopoverCornerRadius - halfAnchorWidth;
+        return anchorPoint.x >= minimum && anchorPoint.x <= maximum;
+    }
+
+    CGFloat const minimum = NSMinY(bodyRect) + TRLegacyPopoverCornerRadius + halfAnchorWidth;
+    CGFloat const maximum = NSMaxY(bodyRect) - TRLegacyPopoverCornerRadius - halfAnchorWidth;
+    return anchorPoint.y >= minimum && anchorPoint.y <= maximum;
+}
+
+- (void)registerPositioningViewGeometryChangeHandling
+{
+    if (fGeometryChangeRegistered || fPositioningView == nil || !fShown)
+    {
+        return;
+    }
+
+    fPositioningViewPostsFrameChangedNotifications = fPositioningView.postsFrameChangedNotifications;
+    fPositioningViewPostsBoundsChangedNotifications = fPositioningView.postsBoundsChangedNotifications;
+    fPositioningView.postsFrameChangedNotifications = YES;
+    fPositioningView.postsBoundsChangedNotifications = YES;
+
+    SEL const enableGeometrySelector = NSSelectorFromString(@"enableGeometryInWindowDidChangeNotification");
+    if ([fPositioningView respondsToSelector:enableGeometrySelector])
+    {
+        TRLegacyPopoverPerformNoArgumentSelector(fPositioningView, enableGeometrySelector);
+        fPositioningViewGeometryNotificationsEnabled = YES;
+    }
+
+    NSNotificationCenter* notificationCenter = NSNotificationCenter.defaultCenter;
+    [notificationCenter addObserver:self
+                           selector:@selector(positioningViewGeometryDidChange:)
+                               name:NSViewFrameDidChangeNotification
+                             object:fPositioningView];
+    [notificationCenter addObserver:self
+                           selector:@selector(positioningViewGeometryDidChange:)
+                               name:NSViewBoundsDidChangeNotification
+                             object:fPositioningView];
+    [notificationCenter addObserver:self
+                           selector:@selector(positioningViewGeometryDidChange:)
+                               name:TRLegacyViewGeometryInWindowDidChangeNotification
+                             object:fPositioningView];
+
+    fGeometryChangeRegistered = YES;
+    [self schedulePositioningViewGeometryUpdate];
+}
+
+- (void)unregisterPositioningViewGeometryChangeHandling
+{
+    if (!fGeometryChangeRegistered)
+    {
+        return;
+    }
+
+    NSNotificationCenter* notificationCenter = NSNotificationCenter.defaultCenter;
+    [notificationCenter removeObserver:self name:NSViewFrameDidChangeNotification object:fPositioningView];
+    [notificationCenter removeObserver:self name:NSViewBoundsDidChangeNotification object:fPositioningView];
+    [notificationCenter removeObserver:self name:TRLegacyViewGeometryInWindowDidChangeNotification object:fPositioningView];
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(positioningViewGeometryDidChange:) object:nil];
+    fDeferredGeometryUpdateScheduled = NO;
+
+    if (fPositioningViewGeometryNotificationsEnabled)
+    {
+        SEL const disableGeometrySelector = NSSelectorFromString(@"disableGeometryInWindowDidChangeNotification");
+        if ([fPositioningView respondsToSelector:disableGeometrySelector])
+        {
+            TRLegacyPopoverPerformNoArgumentSelector(fPositioningView, disableGeometrySelector);
+        }
+
+        fPositioningViewGeometryNotificationsEnabled = NO;
+    }
+
+    fPositioningView.postsFrameChangedNotifications = fPositioningViewPostsFrameChangedNotifications;
+    fPositioningView.postsBoundsChangedNotifications = fPositioningViewPostsBoundsChangedNotifications;
+    fGeometryChangeRegistered = NO;
+}
+
+- (void)schedulePositioningViewGeometryUpdate
+{
+    if (fDeferredGeometryUpdateScheduled)
+    {
+        return;
+    }
+
+    fDeferredGeometryUpdateScheduled = YES;
+    [self performSelector:@selector(positioningViewGeometryDidChange:) withObject:nil afterDelay:0.0];
+}
+
+- (void)positioningViewGeometryDidChange:(NSNotification*)notification
+{
+    (void)notification;
+    fDeferredGeometryUpdateScheduled = NO;
+
+    if (fShown)
+    {
+        [self repositionPanel];
+    }
+}
+
+- (void)scheduleOrderFront
+{
+    if (fOrderFrontScheduled)
+    {
+        return;
+    }
+
+    fOrderFrontScheduled = YES;
+    [self performSelector:@selector(orderPanelFrontIfNeeded) withObject:nil afterDelay:0.0];
+}
+
+- (void)orderPanelFrontIfNeeded
+{
+    fOrderFrontScheduled = NO;
+
+    if (!fShown || fClosing || fPanel == nil)
+    {
+        return;
+    }
+
+    [self repositionPanel];
+    if (![[fPositioningWindow childWindows] containsObject:fPanel])
+    {
+        [fPositioningWindow addChildWindow:fPanel ordered:NSWindowAbove];
+    }
+
+    [fPanel orderFront:nil];
+}
+
+- (void)cancelScheduledOrderFront
+{
+    if (!fOrderFrontScheduled)
+    {
+        return;
+    }
+
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(orderPanelFrontIfNeeded) object:nil];
+    fOrderFrontScheduled = NO;
 }
 
 - (void)postNotificationNamed:(NSString*)name selector:(SEL)selector
