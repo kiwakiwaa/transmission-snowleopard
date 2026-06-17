@@ -395,11 +395,23 @@
 /* Class = "NSTextFieldCell"; title = "Open torrent files:"; ObjectID = "A9E-F4-a3c"; */
 "A9E-F4-a3c.title" = "Открыть торрент-файлы:";
 
+/* Class = "NSTextFieldCell"; title = "Open torrent files:"; ObjectID = "3002"; */
+"3002.title" = "Открыть торрент-файлы:";
+
 /* Class = "NSButtonCell"; title = "Set Default Application"; ObjectID = "pgY-W3-HdI"; */
 "pgY-W3-HdI.title" = "Сделать программой по умолчанию";
+
+/* Class = "NSButtonCell"; title = "Set Default Application"; ObjectID = "3004"; */
+"3004.title" = "Сделать программой по умолчанию";
 
 /* Class = "NSButtonCell"; title = "Verify data when download completes"; ObjectID = "wM8-cD-WAB"; */
 "wM8-cD-WAB.title" = "Проверять данные после завершения загрузки";
 
+/* Class = "NSButtonCell"; title = "Verify data when download completes"; ObjectID = "3006"; */
+"3006.title" = "Проверять данные после завершения загрузки";
+
 /* Class = "NSTextFieldCell"; title = "Announce as:"; ObjectID = "aci-label-cell"; */
 "aci-label-cell.title" = "Анонсировать как:";
+
+/* Class = "NSTextFieldCell"; title = "Announce as:"; ObjectID = "3008"; */
+"3008.title" = "Анонсировать как:";
