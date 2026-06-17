@@ -4798,7 +4798,13 @@ static void removeKeRangerRansomware()
         NSToolbarItem* itemPause = [self standardToolbarButtonWithIdentifier:ToolbarItemIdentifierPauseAll];
         NSToolbarItem* itemResume = [self standardToolbarButtonWithIdentifier:ToolbarItemIdentifierResumeAll];
 
-        NSSegmentedControl* segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
+        NSSegmentedControl* segmentedControl;
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+        // Older AppKit applies segment widths but does not infer the control height, so give toolbar groups an explicit frame.
+        segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSMakeRect(0.0, 0.0, 72.0, 25.0)];
+#else
+        segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
+#endif
         segmentedControl.segmentStyle = NSSegmentStyleTexturedRounded;
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_10
         [(NSSegmentedCell*)segmentedControl.cell setTrackingMode:NSSegmentSwitchTrackingMomentary];
@@ -4817,6 +4823,8 @@ static void removeKeRangerRansomware()
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_10
         [segmentedControl setWidth:32 forSegment:ToolbarGroupTagPause];
         [segmentedControl setWidth:32 forSegment:ToolbarGroupTagResume];
+        groupItem.minSize = segmentedControl.frame.size;
+        groupItem.maxSize = segmentedControl.frame.size;
 #else
         if ([toolbar isKindOfClass:Toolbar.class] && ((Toolbar*)toolbar).isRunningCustomizationPalette)
         {
@@ -4848,7 +4856,13 @@ static void removeKeRangerRansomware()
         NSToolbarItem* itemPause = [self standardToolbarButtonWithIdentifier:ToolbarItemIdentifierPauseSelected];
         NSToolbarItem* itemResume = [self standardToolbarButtonWithIdentifier:ToolbarItemIdentifierResumeSelected];
 
-        NSSegmentedControl* segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
+        NSSegmentedControl* segmentedControl;
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+        // Older AppKit applies segment widths but does not infer the control height, so give toolbar groups an explicit frame.
+        segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSMakeRect(0.0, 0.0, 72.0, 25.0)];
+#else
+        segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
+#endif
         segmentedControl.segmentStyle = NSSegmentStyleTexturedRounded;
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_10
         [(NSSegmentedCell*)segmentedControl.cell setTrackingMode:NSSegmentSwitchTrackingMomentary];
@@ -4867,6 +4881,8 @@ static void removeKeRangerRansomware()
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_10
         [segmentedControl setWidth:32 forSegment:ToolbarGroupTagPause];
         [segmentedControl setWidth:32 forSegment:ToolbarGroupTagResume];
+        groupItem.minSize = segmentedControl.frame.size;
+        groupItem.maxSize = segmentedControl.frame.size;
 #else
         if ([toolbar isKindOfClass:Toolbar.class] && ((Toolbar*)toolbar).isRunningCustomizationPalette)
         {
