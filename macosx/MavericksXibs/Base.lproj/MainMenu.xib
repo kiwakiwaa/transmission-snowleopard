@@ -482,15 +482,14 @@
                     </customView>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="3088" firstAttribute="leading" secondItem="d6L-dv-l2F" secondAttribute="leading" id="24n-gr-fRj"/>
-                    <constraint firstItem="3088" firstAttribute="trailing" secondItem="d6L-dv-l2F" secondAttribute="trailing" id="2Lr-O1-ixK"/>
+                    <constraint firstItem="3088" firstAttribute="leading" secondItem="2" secondAttribute="leading" id="24n-gr-fRj"/>
+                    <constraint firstItem="3088" firstAttribute="trailing" secondItem="2" secondAttribute="trailing" id="2Lr-O1-ixK"/>
                     <constraint firstAttribute="bottom" secondItem="JCm-xb-Dpw" secondAttribute="bottom" id="3p4-RO-fqZ"/>
                     <constraint firstItem="JCm-xb-Dpw" firstAttribute="top" secondItem="3088" secondAttribute="bottom" id="AKz-Hp-l2f"/>
-                    <constraint firstItem="3088" firstAttribute="top" secondItem="d6L-dv-l2F" secondAttribute="top" id="aoY-8i-ff5"/>
+                    <constraint firstItem="3088" firstAttribute="top" secondItem="2" secondAttribute="top" id="aoY-8i-ff5"/>
                     <constraint firstAttribute="trailing" secondItem="JCm-xb-Dpw" secondAttribute="trailing" id="ibE-6g-rdA"/>
                     <constraint firstItem="JCm-xb-Dpw" firstAttribute="leading" secondItem="2" secondAttribute="leading" id="nd4-bq-8Ih"/>
                 </constraints>
-                <viewLayoutGuide key="safeArea" id="d6L-dv-l2F"/>
                 <viewLayoutGuide key="layoutMargins" id="yfA-KK-fCu"/>
             </view>
             <connections>

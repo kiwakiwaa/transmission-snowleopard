@@ -115,6 +115,7 @@ set(TR_MACOS_XIB_COMPAT_10_7 OFF)
 set(TR_MACOS_XIB_COMPAT_10_8 OFF)
 set(TR_MACOS_XIB_COMPAT_10_9 OFF)
 set(TR_MACOS_XIB_COMPAT_LEGACY_IBTOOL OFF)
+set(TR_MACOS_USES_MAVERICKS_STACK_XIBS OFF)
 set(TR_MACOS_USES_COMPAT_STACK_XIBS OFF)
 if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
     set(TR_MACOS_XIB_COMPAT_10_6 ON)
@@ -128,7 +129,10 @@ endif()
 if(TR_MACOS_XIB_COMPAT_10_6 OR TR_MACOS_XIB_COMPAT_10_7)
     set(TR_MACOS_XIB_COMPAT_LEGACY_IBTOOL ON)
 endif()
-if(TR_MACOS_XIB_COMPAT_LEGACY_IBTOOL OR TR_MACOS_XIB_COMPAT_10_8 OR TR_MACOS_XIB_COMPAT_10_9)
+if(NOT TR_MACOS_DEPLOYMENT_BEFORE_10_9 AND TR_MACOS_DEPLOYMENT_BEFORE_10_11)
+    set(TR_MACOS_USES_MAVERICKS_STACK_XIBS ON)
+endif()
+if(TR_MACOS_XIB_COMPAT_LEGACY_IBTOOL OR TR_MACOS_XIB_COMPAT_10_8 OR TR_MACOS_USES_MAVERICKS_STACK_XIBS)
     set(TR_MACOS_USES_COMPAT_STACK_XIBS ON)
 endif()
 
@@ -359,7 +363,7 @@ elseif(TR_MACOS_DEPLOYMENT_BEFORE_10_8)
             LegacyWeakReference.mm)
 endif()
 
-if(TR_MACOS_XIB_COMPAT_10_9)
+if(TR_MACOS_USES_MAVERICKS_STACK_XIBS)
     target_sources(${TR_NAME}-mac
         PRIVATE
             MavericksStackView.h
@@ -711,10 +715,10 @@ else()
         ${BASE_XIB_SOURCE_FILES})
 endif()
 
-if(TR_MACOS_XIB_COMPAT_10_9)
-    # Xcode 6.2's ibtool cannot compile the modern stack-view XIBs, but
-    # Mavericks has NSStackView. Use XIB copies that decode as MavericksStackView
-    # and then rebuild native NSStackView state at runtime.
+if(TR_MACOS_USES_MAVERICKS_STACK_XIBS)
+    # Xcode 6.x's ibtool cannot compile these modern stack-view XIBs, but
+    # OS X 10.9 and 10.10 have NSStackView. Use XIB copies that decode as
+    # MavericksStackView and then rebuild native NSStackView state at runtime.
     tr_wrap_xib(${TR_NAME}-mac
         MavericksXibs/FilterBar.xib
         "${CMAKE_CURRENT_BINARY_DIR}/FilterBar.nib"
