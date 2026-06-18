@@ -1,6 +1,8 @@
 # Building Transmission for Mac OS X 10.6
 
-[Xcode 4.2](https://drive.proton.me/urls/0EK78E78EW#pj5sxK3lQ3eB) is recommended when building on Snow leopard.
+Snow Leopard needs its own setup because ARC builds require Apple's Mac ARC-lite archive. For later legacy targets, see the shared [10.7 through 10.13 compatibility build notes](macOS-Legacy.md).
+
+[Xcode 4.2](https://drive.proton.me/urls/0EK78E78EW#pj5sxK3lQ3eB) is recommended when building on Snow Leopard.
 
 Install a modern compiler, CMake, Ninja, OpenSSL, and curl on the build host. With MacPorts, one suitable setup is:
 
@@ -8,7 +10,7 @@ Install a modern compiler, CMake, Ninja, OpenSSL, and curl on the build host. Wi
 sudo port install clang-16 cmake ninja openssl3 curl ld64-latest
 ```
 
-The linker on Snow leopard is too old for this project. I removed it and created a symlink for `ld-latest`.
+The linker on Snow Leopard is too old for this project. I removed it and created a symlink for `ld-latest`.
 ```bash
 sudo ln -s /opt/local/bin/ld-latest /opt/local/bin/ld
 ```

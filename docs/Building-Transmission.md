@@ -30,7 +30,7 @@ cmake --build build -t transmission-mac
 open ./build/macosx/Transmission.app
 ```
 
-For opt-in legacy macOS compatibility builds, see the [OS X 10.6](macOS-10.6.md), [OS X 10.7](macOS-10.7.md), [OS X 10.8](macOS-10.8.md), and [OS X 10.9](macOS-10.9.md) notes.
+For opt-in legacy macOS compatibility builds, see the [Mac OS X 10.6](macOS-10.6.md) notes and the shared [10.7 through 10.13 compatibility build notes](macOS-Legacy.md).
 
 ### Building the GTK app with CMake ###
 Install GTK and build the app:
