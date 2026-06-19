@@ -175,7 +175,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
         [self.fTabs setImage:image forSegment:segment];
         TRSetSegmentToolTip(self.fTabs, toolTip, segment);
     };
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
     setImageAndToolTipForSegment([NSImage imageNamed:@"InfoGeneral"], NSLocalizedString(@"General Info", "Inspector -> tab"), TabTagGeneral);
     setImageAndToolTipForSegment([NSImage imageNamed:@"InfoActivity"], NSLocalizedString(@"Activity", "Inspector -> tab"), TabTagActivity);
     setImageAndToolTipForSegment([NSImage imageNamed:@"InfoTracker"], NSLocalizedString(@"Trackers", "Inspector -> tab"), TabTagTrackers);
