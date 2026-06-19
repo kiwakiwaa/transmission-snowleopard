@@ -4439,7 +4439,7 @@ static void removeKeRangerRansomware()
 
 - (void)layoutMainWindowForLegacyAppKit
 {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
     TRLayoutLegacyTitlebarAccessoryWindow(self.fWindow);
     NSView* contentView = self.fWindow.contentView;
     NSScrollView* scrollView = self.fTableView.enclosingScrollView;
