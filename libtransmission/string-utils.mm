@@ -22,7 +22,7 @@ static NSString* TRStringByDetectingEncoding(std::string_view sv)
         stringEncodingForData:[NSData dataWithBytes:std::data(sv) length:std::size(sv)]
               encodingOptions:@{
                   NSStringEncodingDetectionAllowLossyKey : @NO,
-                  NSStringEncodingDetectionLikelyLanguageKey : NSLocale.currentLocale.languageCode
+                  NSStringEncodingDetectionLikelyLanguageKey : [NSLocale.currentLocale objectForKey:NSLocaleLanguageCode]
               }
               convertedString:&convertedString
           usedLossyConversion:nil];

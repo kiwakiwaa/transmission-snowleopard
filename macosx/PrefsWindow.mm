@@ -12,7 +12,7 @@
 {
     [super awakeFromNib];
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
+#if !TR_MACOS_DEPLOYMENT_BEFORE_11_0 && !TR_MACOS_SDK_BEFORE_11_0
     self.toolbarStyle = NSWindowToolbarStylePreference;
 #endif
 }

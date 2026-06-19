@@ -106,7 +106,7 @@ add_subdirectory(VDKQueue)
 add_executable(${TR_NAME}-mac MACOSX_BUNDLE)
 
 set(TR_ENABLE_SPARKLE ON)
-if(TR_MACOS_DEPLOYMENT_BEFORE_10_10)
+if(TR_MACOS_DEPLOYMENT_BEFORE_10_11)
     set(TR_ENABLE_SPARKLE OFF)
 endif()
 

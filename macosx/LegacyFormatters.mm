@@ -136,8 +136,13 @@ NSString* TRTimeRemainingString(NSTimeInterval interval)
     });
 
     // The duration of months is variable, so keep the old upstream reference-date behavior.
-    formatter.referenceDate = [NSDate date];
+    NSDate* referenceDate = [NSDate date];
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_13 && !TR_MACOS_SDK_BEFORE_10_13
+    formatter.referenceDate = referenceDate;
     NSString* string = [formatter stringFromTimeInterval:interval];
+#else
+    NSString* string = [formatter stringFromDate:referenceDate toDate:[referenceDate dateByAddingTimeInterval:interval]];
+#endif
     return string ?: TRLegacyTimeRemainingString(interval);
 #else
     return TRLegacyTimeRemainingString(interval);

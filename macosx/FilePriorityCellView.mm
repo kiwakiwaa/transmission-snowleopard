@@ -13,6 +13,9 @@
 
 static CGFloat const kImageOverlap = 1.0;
 
+// NSSegmentedControl.trackingMode is 10.10.3+, so 10.10.0-targeted builds use the cell API.
+#define TR_FILE_PRIORITY_USES_LEGACY_SEGMENTED_CONTROL_API TR_MACOS_DEPLOYMENT_BEFORE_10_11
+
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_10
 static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 {
@@ -80,7 +83,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
 #else
         segmentedControl.translatesAutoresizingMaskIntoConstraints = NO;
 #endif
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+#if TR_FILE_PRIORITY_USES_LEGACY_SEGMENTED_CONTROL_API
         [(NSSegmentedCell*)[segmentedControl cell] setTrackingMode:NSSegmentSwitchTrackingSelectAny];
         [(NSSegmentedCell*)[segmentedControl cell] setControlSize:NSMiniControlSize];
         [segmentedControl setSegmentCount:3];

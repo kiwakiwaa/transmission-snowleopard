@@ -744,7 +744,7 @@ static void removeKeRangerRansomware()
     self.fWindow.toolbar.visible = YES;
 #endif
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
+#if !TR_MACOS_DEPLOYMENT_BEFORE_11_0 && !TR_MACOS_SDK_BEFORE_11_0
     self.fWindow.toolbarStyle = NSWindowToolbarStyleUnified;
 #endif
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
@@ -1892,7 +1892,7 @@ static void removeKeRangerRansomware()
             return;
         }
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_11
         [self.fSession getAllTasksWithCompletionHandler:^(NSArray* tasks) {
             for (NSURLSessionTask* task in tasks)
             {

@@ -277,11 +277,11 @@ typedef NSUInteger NSMatchingOptions;
 #import "LegacySymbols.h"
 #import "LegacyTitlebarAccessory.h"
 
-#if TR_MACOS_SDK_BEFORE_10_10
+#if TR_MACOS_SDK_BEFORE_10_12
 #define NSBezelStyleTexturedRounded NSTexturedRoundedBezelStyle
 #endif
 
-#if TR_MACOS_SDK_BEFORE_10_10
+#if TR_MACOS_SDK_BEFORE_10_12
 #define NSBackgroundStyleEmphasized NSBackgroundStyleDark
 #endif
 
@@ -377,7 +377,7 @@ static NSControlStateValue const NSControlStateValueOff = NSOffState;
 static NSControlStateValue const NSControlStateValueOn = NSOnState;
 #endif
 
-#if TR_MACOS_SDK_BEFORE_10_10
+#if TR_MACOS_SDK_BEFORE_10_12
 #define NSAlertStyleWarning NSWarningAlertStyle
 #define NSAlertStyleCritical NSCriticalAlertStyle
 #define NSAlertStyleInformational NSInformationalAlertStyle
