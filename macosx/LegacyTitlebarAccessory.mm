@@ -132,9 +132,107 @@ void TRLayoutLegacyTitlebarAccessoryWindow(NSWindow* window)
     TRLayoutLegacyTitlebarAccessoryWindow(self);
 }
 @end
+
+BOOL TRTitlebarAccessoryIsHidden(NSWindow* window, NSTitlebarAccessoryViewController* controller)
+{
+    (void)window;
+    return controller.isHidden;
+}
+
+void TRTitlebarAccessorySetHidden(NSWindow* window, NSTitlebarAccessoryViewController* controller, BOOL hidden)
+{
+    (void)window;
+    controller.hidden = hidden;
+}
+
+void TRApplyTitlebarAccessoryVisibility(NSWindow* window, NSArray* orderedControllers)
+{
+    (void)orderedControllers;
+    TRLayoutLegacyTitlebarAccessoryWindow(window);
+}
 #else
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_12
+static char TRTitlebarAccessoryHiddenKey;
+
+static NSNumber* TRTitlebarAccessoryStoredHidden(NSTitlebarAccessoryViewController* controller)
+{
+    return objc_getAssociatedObject(controller, &TRTitlebarAccessoryHiddenKey);
+}
+
+static void TRRemoveTitlebarAccessoryViewController(NSWindow* window, NSTitlebarAccessoryViewController* controller)
+{
+    if (window == nil || controller == nil)
+    {
+        return;
+    }
+
+    for (;;)
+    {
+        NSUInteger const index = [window.titlebarAccessoryViewControllers indexOfObjectIdenticalTo:controller];
+        if (index == NSNotFound)
+        {
+            break;
+        }
+        [window removeTitlebarAccessoryViewControllerAtIndex:index];
+    }
+}
+#endif
+
 void TRLayoutLegacyTitlebarAccessoryWindow(NSWindow* window)
 {
     (void)window;
+}
+
+BOOL TRTitlebarAccessoryIsHidden(NSWindow* window, NSTitlebarAccessoryViewController* controller)
+{
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_12
+    NSNumber* hidden = TRTitlebarAccessoryStoredHidden(controller);
+    if (hidden != nil)
+    {
+        return hidden.boolValue;
+    }
+
+    return window != nil && [window.titlebarAccessoryViewControllers indexOfObjectIdenticalTo:controller] == NSNotFound;
+#else
+    (void)window;
+    return controller.isHidden;
+#endif
+}
+
+void TRTitlebarAccessorySetHidden(NSWindow* window, NSTitlebarAccessoryViewController* controller, BOOL hidden)
+{
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_12
+    (void)window;
+    objc_setAssociatedObject(controller, &TRTitlebarAccessoryHiddenKey, @(hidden), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+#else
+    (void)window;
+    controller.hidden = hidden;
+#endif
+}
+
+void TRApplyTitlebarAccessoryVisibility(NSWindow* window, NSArray* orderedControllers)
+{
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_12
+    if (window == nil)
+    {
+        return;
+    }
+
+    for (NSTitlebarAccessoryViewController* controller in orderedControllers)
+    {
+        TRRemoveTitlebarAccessoryViewController(window, controller);
+    }
+
+    for (NSTitlebarAccessoryViewController* controller in orderedControllers)
+    {
+        if (!TRTitlebarAccessoryIsHidden(window, controller))
+        {
+            [window addTitlebarAccessoryViewController:controller];
+        }
+    }
+#else
+    (void)window;
+    (void)orderedControllers;
+#endif
 }
 #endif

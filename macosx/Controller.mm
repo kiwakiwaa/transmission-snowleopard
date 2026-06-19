@@ -4473,11 +4473,11 @@ static void removeKeRangerRansomware()
         bottomBar.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
 
         CGFloat accessoryHeight = 0.0;
-        if (self.fStatusBar != nil && !self.fStatusBar.isHidden)
+        if (self.fStatusBar != nil && !TRTitlebarAccessoryIsHidden(self.fWindow, self.fStatusBar))
         {
             accessoryHeight += NSHeight(self.fStatusBar.view.frame);
         }
-        if (self.fFilterBar != nil && !self.fFilterBar.isHidden)
+        if (self.fFilterBar != nil && !TRTitlebarAccessoryIsHidden(self.fWindow, self.fFilterBar))
         {
             accessoryHeight += NSHeight(self.fFilterBar.view.frame);
         }
@@ -4509,14 +4509,14 @@ static void removeKeRangerRansomware()
 
 - (void)toggleStatusBar:(id)sender
 {
-    BOOL const show = self.fStatusBar == nil || [self.fStatusBar isHidden];
+    BOOL const show = self.fStatusBar == nil || TRTitlebarAccessoryIsHidden(self.fWindow, self.fStatusBar);
     [self.fDefaults setBool:show forKey:@"StatusBar"];
     [self updateMainWindow];
 }
 
 - (void)toggleFilterBar:(id)sender
 {
-    BOOL const show = self.fFilterBar == nil || [self.fFilterBar isHidden];
+    BOOL const show = self.fFilterBar == nil || TRTitlebarAccessoryIsHidden(self.fWindow, self.fFilterBar);
 
     //disable filtering when hiding (have to do before updateMainWindow:)
     if (!show)
@@ -4535,7 +4535,7 @@ static void removeKeRangerRansomware()
 
 - (void)focusFilterField
 {
-    if (self.fFilterBar == nil || [self.fFilterBar isHidden])
+    if (self.fFilterBar == nil || TRTitlebarAccessoryIsHidden(self.fWindow, self.fFilterBar))
     {
         [self toggleFilterBar:self];
     }
@@ -5095,7 +5095,7 @@ static void removeKeRangerRansomware()
     //set filter item
     if ([ident isEqualToString:ToolbarItemIdentifierFilter])
     {
-        BOOL shown = !(self.fFilterBar == nil || [self.fFilterBar isHidden]);
+        BOOL shown = !(self.fFilterBar == nil || TRTitlebarAccessoryIsHidden(self.fWindow, self.fFilterBar));
         ((NSButton*)toolbarItem.view).state = shown ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     }
@@ -5247,7 +5247,7 @@ static void removeKeRangerRansomware()
     }
 
     //enable toggle status bar
-    BOOL statusBarVisible = self.fStatusBar && ![self.fStatusBar isHidden];
+    BOOL statusBarVisible = self.fStatusBar && !TRTitlebarAccessoryIsHidden(self.fWindow, self.fStatusBar);
     if (action == @selector(toggleStatusBar:))
     {
         NSString* title = !statusBarVisible ? NSLocalizedString(@"Show Status Bar", "View menu -> Status Bar") :
@@ -5258,7 +5258,7 @@ static void removeKeRangerRansomware()
     }
 
     //enable toggle filter bar
-    BOOL filterBarVisible = self.fFilterBar && ![self.fFilterBar isHidden];
+    BOOL filterBarVisible = self.fFilterBar && !TRTitlebarAccessoryIsHidden(self.fWindow, self.fFilterBar);
     if (action == @selector(toggleFilterBar:))
     {
         NSString* title = !filterBarVisible ? NSLocalizedString(@"Show Filter Bar", "View menu -> Filter Bar") :
@@ -5643,37 +5643,48 @@ static void removeKeRangerRansomware()
     {
         self.fStatusBar = [[StatusBarController alloc] initWithLib:self.fLib];
         self.fStatusBar.layoutAttribute = NSLayoutAttributeBottom;
+#if !TR_MACOS_SDK_BEFORE_11_0
         self.fStatusBar.automaticallyAdjustsSize = NO;
+#endif
 
         [self.fWindow addTitlebarAccessoryViewController:self.fStatusBar];
     }
 
-    if ([self.fDefaults boolForKey:@"StatusBar"])
+    BOOL const statusBarVisible = [self.fDefaults boolForKey:@"StatusBar"];
+    if (statusBarVisible)
     {
-        self.fStatusBar.hidden = NO;
+        TRTitlebarAccessorySetHidden(self.fWindow, self.fStatusBar, NO);
     }
     else
     {
-        self.fStatusBar.hidden = YES;
+        TRTitlebarAccessorySetHidden(self.fWindow, self.fStatusBar, YES);
     }
 
     if (self.fFilterBar == nil)
     {
         self.fFilterBar = [[FilterBarController alloc] init];
         self.fFilterBar.layoutAttribute = NSLayoutAttributeBottom;
+#if !TR_MACOS_SDK_BEFORE_11_0
         self.fFilterBar.automaticallyAdjustsSize = NO;
+#endif
 
         [self.fWindow addTitlebarAccessoryViewController:self.fFilterBar];
     }
 
-    if ([self.fDefaults boolForKey:@"FilterBar"])
+    BOOL const filterBarVisible = [self.fDefaults boolForKey:@"FilterBar"];
+    if (filterBarVisible)
     {
-        self.fFilterBar.hidden = NO;
-        [self focusFilterField];
+        TRTitlebarAccessorySetHidden(self.fWindow, self.fFilterBar, NO);
     }
     else
     {
-        self.fFilterBar.hidden = YES;
+        TRTitlebarAccessorySetHidden(self.fWindow, self.fFilterBar, YES);
+    }
+
+    TRApplyTitlebarAccessoryVisibility(self.fWindow, @[ self.fStatusBar, self.fFilterBar ]);
+    if (filterBarVisible)
+    {
+        [self focusFilterField];
     }
 
     [self fullUpdateUI];
@@ -5829,12 +5840,12 @@ static void removeKeRangerRansomware()
 {
     CGFloat height = kBottomBarHeight;
 
-    if (self.fStatusBar != nil && ![self.fStatusBar isHidden])
+    if (self.fStatusBar != nil && !TRTitlebarAccessoryIsHidden(self.fWindow, self.fStatusBar))
     {
         height += kStatusBarHeight;
     }
 
-    if (self.fFilterBar != nil && ![self.fFilterBar isHidden])
+    if (self.fFilterBar != nil && !TRTitlebarAccessoryIsHidden(self.fWindow, self.fFilterBar))
     {
         height += kFilterBarHeight;
     }

@@ -19,3 +19,6 @@
 #endif
 
 void TRLayoutLegacyTitlebarAccessoryWindow(NSWindow* window);
+BOOL TRTitlebarAccessoryIsHidden(NSWindow* window, NSTitlebarAccessoryViewController* controller);
+void TRTitlebarAccessorySetHidden(NSWindow* window, NSTitlebarAccessoryViewController* controller, BOOL hidden);
+void TRApplyTitlebarAccessoryVisibility(NSWindow* window, NSArray* orderedControllers);
