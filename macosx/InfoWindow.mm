@@ -6,7 +6,7 @@
 
 @interface InfoWindow ()
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+#if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
 @property(nonatomic) BOOL settingAnchoredFrame;
 #endif
 
@@ -14,12 +14,12 @@
 
 @implementation InfoWindow
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+#if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
 - (NSRect)anchoredLiveResizeFrame:(NSRect)frameRect
 {
     if (!self.settingAnchoredFrame && self.anchorsLiveResizeTopEdge && self.liveResizeTopEdge > 0.0)
     {
-        // 10.7-10.9 AppKit can re-anchor fixed-height changes during
+        // Older AppKit can re-anchor fixed-height changes during
         // side-edge live resize. Clamp before super stores/draws that frame.
         frameRect.origin.y = self.liveResizeTopEdge - NSHeight(frameRect);
     }

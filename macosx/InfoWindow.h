@@ -6,9 +6,13 @@
 
 #include <libtransmission/macos-version.h>
 
+#ifndef TR_INSPECTOR_ANCHORED_LIVE_RESIZE
+#define TR_INSPECTOR_ANCHORED_LIVE_RESIZE (TR_MACOS_DEPLOYMENT_BEFORE_10_14)
+#endif
+
 @interface InfoWindow : NSPanel
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
+#if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
 @property(nonatomic) BOOL anchorsLiveResizeTopEdge;
 @property(nonatomic) CGFloat liveResizeTopEdge;
 #endif

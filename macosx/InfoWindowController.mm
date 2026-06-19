@@ -29,8 +29,6 @@ static CGFloat const kTabMinHeight = 250;
 
 static NSInteger const kInvalidTag = -99;
 
-#define TR_INSPECTOR_ANCHORED_LIVE_RESIZE (TR_MACOS_DEPLOYMENT_BEFORE_10_10)
-
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 static void TRPrepareLegacyInspectorContentView(NSView* view, NSRect* viewRect, BOOL resizesVertically)
 {
@@ -84,7 +82,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 
 @property(nonatomic) CGFloat fMinWindowWidth;
 #if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
-// 10.8/10.9 can re-anchor programmatic height changes during edge drags.
+// Older AppKit can re-anchor programmatic height changes during edge drags.
 // Keep the mouse-down top edge so auto-height panes grow from the bottom.
 @property(nonatomic) CGFloat fLiveResizeTopEdge;
 @property(nonatomic) BOOL fRestoringLiveResizeTopEdge;
@@ -528,7 +526,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 {
     if (sender == self.window && [self isAutoHeightLayoutPane])
     {
-        // Mavericks centers delegate-proposed height changes during side-edge
+        // Older AppKit centers delegate-proposed height changes during side-edge
         // live resize; InfoWindow clamps AppKit's setFrame: before it is drawn.
         CGFloat contentHeight = 0.0;
         if (self.fViewController == self.fActivityViewController)

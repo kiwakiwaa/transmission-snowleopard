@@ -349,7 +349,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
     windowRect.origin.y += difference;
     windowRect.size.height -= difference;
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9 && TR_MACOS_DEPLOYMENT_BEFORE_10_14
     BOOL const liveResize = [self.view inLiveResize];
     if (!liveResize)
     {
@@ -368,7 +368,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     BOOL const animateLayout = animate && ![self.view inLiveResize];
     [self.view.window setFrame:windowRect display:animateLayout animate:animateLayout];
-#elif TR_MACOS_DEPLOYMENT_BEFORE_10_10
+#elif TR_MACOS_DEPLOYMENT_BEFORE_10_14
     if (!liveResize)
     {
         [self.view.window setFrame:windowRect display:animate animate:animate];
