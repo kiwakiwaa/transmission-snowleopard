@@ -85,10 +85,59 @@ if(CMAKE_PREFIX_PATH)
         CACHE STRING "Installation prefixes for dependency lookup")
 endif()
 
+set(TR_MACOS_LLVM_MIN_VERSION 16
+    CACHE STRING "Minimum LLVM/Clang version to use for the macOS compatibility build")
+
+set(_tr_macos_versioned_c_compiler)
+set(_tr_macos_versioned_cxx_compiler)
+set(_tr_macos_versioned_llvm_version)
+set(_tr_macos_llvm_versions)
+set(_tr_macos_cxx_compiler_provided OFF)
+
+if(CMAKE_CXX_COMPILER)
+    set(_tr_macos_cxx_compiler_provided ON)
+endif()
+
+foreach(_tr_macos_tool_path IN LISTS _tr_macos_tool_paths)
+    file(GLOB _tr_macos_clang_candidates "${_tr_macos_tool_path}/clang-mp-*")
+    foreach(_tr_macos_clang_candidate IN LISTS _tr_macos_clang_candidates)
+        if(_tr_macos_clang_candidate MATCHES "/clang-mp-([0-9]+)$")
+            set(_tr_macos_llvm_version "${CMAKE_MATCH_1}")
+            if(NOT _tr_macos_llvm_version VERSION_LESS TR_MACOS_LLVM_MIN_VERSION
+                    AND EXISTS "${_tr_macos_tool_path}/clang++-mp-${_tr_macos_llvm_version}")
+                list(APPEND _tr_macos_llvm_versions "${_tr_macos_llvm_version}")
+            endif()
+        endif()
+    endforeach()
+endforeach()
+
+if(_tr_macos_llvm_versions)
+    list(REMOVE_DUPLICATES _tr_macos_llvm_versions)
+    list(SORT _tr_macos_llvm_versions COMPARE NATURAL ORDER DESCENDING)
+    list(GET _tr_macos_llvm_versions 0 _tr_macos_versioned_llvm_version)
+
+    foreach(_tr_macos_tool_path IN LISTS _tr_macos_tool_paths)
+        set(_tr_macos_c_compiler_candidate "${_tr_macos_tool_path}/clang-mp-${_tr_macos_versioned_llvm_version}")
+        set(_tr_macos_cxx_compiler_candidate "${_tr_macos_tool_path}/clang++-mp-${_tr_macos_versioned_llvm_version}")
+        if(EXISTS "${_tr_macos_c_compiler_candidate}" AND EXISTS "${_tr_macos_cxx_compiler_candidate}")
+            set(_tr_macos_versioned_c_compiler "${_tr_macos_c_compiler_candidate}")
+            set(_tr_macos_versioned_cxx_compiler "${_tr_macos_cxx_compiler_candidate}")
+            break()
+        endif()
+    endforeach()
+endif()
+
 if(NOT CMAKE_C_COMPILER)
-    find_program(TR_MACOS_C_COMPILER
-        NAMES clang-mp-16 clang
-        PATHS ${_tr_macos_tool_paths})
+    if(_tr_macos_versioned_c_compiler)
+        set(TR_MACOS_C_COMPILER "${_tr_macos_versioned_c_compiler}")
+    else()
+        find_program(_tr_macos_unversioned_c_compiler
+            NAMES clang
+            PATHS ${_tr_macos_tool_paths})
+        if(_tr_macos_unversioned_c_compiler)
+            set(TR_MACOS_C_COMPILER "${_tr_macos_unversioned_c_compiler}")
+        endif()
+    endif()
 
     if(TR_MACOS_C_COMPILER)
         set(CMAKE_C_COMPILER "${TR_MACOS_C_COMPILER}"
@@ -97,9 +146,16 @@ if(NOT CMAKE_C_COMPILER)
 endif()
 
 if(NOT CMAKE_CXX_COMPILER)
-    find_program(TR_MACOS_CXX_COMPILER
-        NAMES clang++-mp-16 clang++
-        PATHS ${_tr_macos_tool_paths})
+    if(_tr_macos_versioned_cxx_compiler)
+        set(TR_MACOS_CXX_COMPILER "${_tr_macos_versioned_cxx_compiler}")
+    else()
+        find_program(_tr_macos_unversioned_cxx_compiler
+            NAMES clang++
+            PATHS ${_tr_macos_tool_paths})
+        if(_tr_macos_unversioned_cxx_compiler)
+            set(TR_MACOS_CXX_COMPILER "${_tr_macos_unversioned_cxx_compiler}")
+        endif()
+    endif()
 
     if(TR_MACOS_CXX_COMPILER)
         set(CMAKE_CXX_COMPILER "${TR_MACOS_CXX_COMPILER}"
@@ -107,23 +163,73 @@ if(NOT CMAKE_CXX_COMPILER)
     endif()
 endif()
 
+set(_tr_macos_active_llvm_version)
+if(DEFINED CMAKE_CXX_COMPILER AND NOT "${CMAKE_CXX_COMPILER}" STREQUAL "")
+    if("${CMAKE_CXX_COMPILER}" MATCHES "/clang\\+\\+-mp-([0-9]+)$")
+        set(_tr_macos_active_llvm_version "${CMAKE_MATCH_1}")
+    elseif("${CMAKE_CXX_COMPILER}" MATCHES "/libexec/llvm-([0-9]+)/bin/clang\\+\\+$")
+        set(_tr_macos_active_llvm_version "${CMAKE_MATCH_1}")
+    endif()
+endif()
+
+set(_tr_macos_llvm_prefixes ${CMAKE_PREFIX_PATH})
+list(APPEND _tr_macos_llvm_prefixes "/opt/local")
+list(REMOVE_DUPLICATES _tr_macos_llvm_prefixes)
+
+set(_tr_macos_llvm_libexec_dirs)
+if(_tr_macos_active_llvm_version)
+    foreach(_tr_macos_prefix IN LISTS _tr_macos_llvm_prefixes)
+        list(APPEND _tr_macos_llvm_libexec_dirs
+            "${_tr_macos_prefix}/libexec/llvm-${_tr_macos_active_llvm_version}")
+    endforeach()
+endif()
+
+set(_tr_macos_installed_llvm_versions)
+if(_tr_macos_active_llvm_version OR NOT _tr_macos_cxx_compiler_provided)
+    foreach(_tr_macos_prefix IN LISTS _tr_macos_llvm_prefixes)
+        file(GLOB _tr_macos_prefix_llvm_libexec_dirs
+            LIST_DIRECTORIES true
+            "${_tr_macos_prefix}/libexec/llvm-*")
+        foreach(_tr_macos_prefix_llvm_libexec_dir IN LISTS _tr_macos_prefix_llvm_libexec_dirs)
+            if(_tr_macos_prefix_llvm_libexec_dir MATCHES "/llvm-([0-9]+)$")
+                set(_tr_macos_installed_llvm_version "${CMAKE_MATCH_1}")
+                if(NOT _tr_macos_installed_llvm_version VERSION_LESS TR_MACOS_LLVM_MIN_VERSION)
+                    list(APPEND _tr_macos_installed_llvm_versions "${_tr_macos_installed_llvm_version}")
+                endif()
+            endif()
+        endforeach()
+    endforeach()
+endif()
+
+if(_tr_macos_installed_llvm_versions)
+    list(REMOVE_DUPLICATES _tr_macos_installed_llvm_versions)
+    list(SORT _tr_macos_installed_llvm_versions COMPARE NATURAL ORDER DESCENDING)
+    foreach(_tr_macos_installed_llvm_version IN LISTS _tr_macos_installed_llvm_versions)
+        foreach(_tr_macos_prefix IN LISTS _tr_macos_llvm_prefixes)
+            set(_tr_macos_installed_llvm_libexec_dir
+                "${_tr_macos_prefix}/libexec/llvm-${_tr_macos_installed_llvm_version}")
+            if(IS_DIRECTORY "${_tr_macos_installed_llvm_libexec_dir}")
+                list(APPEND _tr_macos_llvm_libexec_dirs
+                    "${_tr_macos_installed_llvm_libexec_dir}")
+            endif()
+        endforeach()
+    endforeach()
+endif()
+
+if(_tr_macos_llvm_libexec_dirs)
+    list(REMOVE_DUPLICATES _tr_macos_llvm_libexec_dirs)
+endif()
+
 if(CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.7)
     set(_tr_macos_arclite_candidates)
 
-    if(CMAKE_C_COMPILER MATCHES "^/Developer/usr/bin/clang")
+    foreach(_tr_macos_llvm_libexec_dir IN LISTS _tr_macos_llvm_libexec_dirs)
         list(APPEND _tr_macos_arclite_candidates
-            "/Developer/usr/lib/arc/libarclite_macosx.a")
-    elseif(CMAKE_C_COMPILER MATCHES "^/opt/local/bin/clang.*-mp-([0-9]+)$")
-        list(APPEND _tr_macos_arclite_candidates
-            "/opt/local/libexec/llvm-${CMAKE_MATCH_1}/lib/arc/libarclite_macosx.a")
-    elseif(CMAKE_C_COMPILER MATCHES "^/opt/local/libexec/llvm-([0-9]+)/bin/clang")
-        list(APPEND _tr_macos_arclite_candidates
-            "/opt/local/libexec/llvm-${CMAKE_MATCH_1}/lib/arc/libarclite_macosx.a")
-    endif()
+            "${_tr_macos_llvm_libexec_dir}/lib/arc/libarclite_macosx.a")
+    endforeach()
 
     list(APPEND _tr_macos_arclite_candidates
-        "/Developer/usr/lib/arc/libarclite_macosx.a"
-        "/opt/local/libexec/llvm-16/lib/arc/libarclite_macosx.a")
+        "/Developer/usr/lib/arc/libarclite_macosx.a")
     list(REMOVE_DUPLICATES _tr_macos_arclite_candidates)
 
     set(_tr_macos_arclite_found OFF)
@@ -186,10 +292,37 @@ if(CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.7)
     endif()
 endif()
 
-foreach(_tr_macos_prefix IN LISTS CMAKE_PREFIX_PATH)
-    set(_tr_macos_libcxx_dir "${_tr_macos_prefix}/libexec/llvm-16/lib/libc++")
+foreach(_tr_macos_llvm_libexec_dir IN LISTS _tr_macos_llvm_libexec_dirs)
+    set(_tr_macos_libcxx_dir "${_tr_macos_llvm_libexec_dir}/lib/libc++")
     if(EXISTS "${_tr_macos_libcxx_dir}/libc++.dylib")
+        set(_tr_macos_libcxx_stdlib_flag "-stdlib=libc++")
         set(_tr_macos_libcxx_link_flags "-L${_tr_macos_libcxx_dir} -Wl,-rpath,${_tr_macos_libcxx_dir}")
+        set(_tr_macos_libcxx_companion_libraries)
+
+        if(EXISTS "${_tr_macos_libcxx_dir}/libc++abi.dylib")
+            list(APPEND _tr_macos_libcxx_companion_libraries "-lc++abi")
+        endif()
+
+        if(EXISTS "${_tr_macos_libcxx_dir}/libunwind.dylib")
+            list(APPEND _tr_macos_libcxx_companion_libraries "-lunwind")
+        endif()
+
+        foreach(_tr_macos_cxx_flags_var
+                CMAKE_CXX_FLAGS_INIT
+                CMAKE_OBJCXX_FLAGS_INIT
+                CMAKE_CXX_FLAGS
+                CMAKE_OBJCXX_FLAGS)
+            string(FIND "${${_tr_macos_cxx_flags_var}}" "${_tr_macos_libcxx_stdlib_flag}" _tr_macos_libcxx_stdlib_flag_pos)
+            if(_tr_macos_libcxx_stdlib_flag_pos EQUAL -1)
+                string(APPEND ${_tr_macos_cxx_flags_var}
+                    " ${_tr_macos_libcxx_stdlib_flag}")
+                if(NOT _tr_macos_cxx_flags_var MATCHES "_INIT$")
+                    set(${_tr_macos_cxx_flags_var} "${${_tr_macos_cxx_flags_var}}"
+                        CACHE STRING "Compiler flags for the macOS compatibility build" FORCE)
+                endif()
+            endif()
+        endforeach()
+
         foreach(_tr_macos_linker_flags_var
                 CMAKE_EXE_LINKER_FLAGS_INIT
                 CMAKE_MODULE_LINKER_FLAGS_INIT
@@ -208,6 +341,23 @@ foreach(_tr_macos_prefix IN LISTS CMAKE_PREFIX_PATH)
                     " ${_tr_macos_libcxx_link_flags}")
                 set(${_tr_macos_linker_flags_var} "${${_tr_macos_linker_flags_var}}"
                     CACHE STRING "Linker flags for the macOS compatibility build" FORCE)
+            endif()
+        endforeach()
+
+        foreach(_tr_macos_cxx_libraries_var
+                CMAKE_CXX_STANDARD_LIBRARIES_INIT
+                CMAKE_CXX_STANDARD_LIBRARIES)
+            foreach(_tr_macos_libcxx_companion_library IN LISTS _tr_macos_libcxx_companion_libraries)
+                string(FIND "${${_tr_macos_cxx_libraries_var}}" "${_tr_macos_libcxx_companion_library}" _tr_macos_libcxx_companion_library_pos)
+                if(_tr_macos_libcxx_companion_library_pos EQUAL -1)
+                    string(APPEND ${_tr_macos_cxx_libraries_var}
+                        " ${_tr_macos_libcxx_companion_library}")
+                endif()
+            endforeach()
+
+            if(NOT _tr_macos_cxx_libraries_var MATCHES "_INIT$")
+                set(${_tr_macos_cxx_libraries_var} "${${_tr_macos_cxx_libraries_var}}"
+                    CACHE STRING "C++ standard libraries for the macOS compatibility build" FORCE)
             endif()
         endforeach()
         break()
