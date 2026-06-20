@@ -7,7 +7,9 @@
 #import "Torrent.h"
 #import "FileListNode.h"
 #import "FileOutlineView.h"
+#import "FileOutlineItemDisplay.h"
 #import "FileNameCellView.h"
+#import "FilePriorityCell.h"
 #import "FilePriorityCellView.h"
 #import "FileCheckCellView.h"
 #import "FileRenameSheetController.h"
@@ -235,11 +237,97 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
 
     if ([identifier isEqualToString:@"Name"])
     {
-        return node.name;
+        return node;
     }
     if ([identifier isEqualToString:@"Check"])
     {
         return @([node.torrent checkForFiles:node.indexes]);
+    }
+    if ([identifier isEqualToString:@"Priority"])
+    {
+        return node;
+    }
+
+    return nil;
+}
+
+- (void)outlineView:(NSOutlineView*)outlineView
+    willDisplayCell:(id)cell
+     forTableColumn:(NSTableColumn*)tableColumn
+               item:(id)item
+{
+    FileListNode* node = (FileListNode*)item;
+    NSString* identifier = tableColumn.identifier;
+
+    if ([identifier isEqualToString:@"Check"])
+    {
+        [cell setEnabled:[self.torrent canChangeDownloadCheckForFiles:node.indexes]];
+    }
+    else if ([identifier isEqualToString:@"Priority"])
+    {
+        [cell setRepresentedObject:node];
+
+        if ([cell isKindOfClass:[FilePriorityCell class]])
+        {
+            NSInteger hoveredRow = self.fOutline.hoveredRow;
+            ((FilePriorityCell*)cell).hovered = hoveredRow != -1 && hoveredRow == [self.fOutline rowForItem:node];
+        }
+    }
+}
+
+- (void)outlineView:(NSOutlineView*)outlineView
+     setObjectValue:(id)object
+     forTableColumn:(NSTableColumn*)tableColumn
+             byItem:(id)item
+{
+    if (![tableColumn.identifier isEqualToString:@"Check"])
+    {
+        return;
+    }
+
+    FileListNode* node = (FileListNode*)item;
+    NSIndexSet* indexSet;
+#if TR_MACOS_SDK_BEFORE_10_12
+    if ([NSEvent modifierFlags] & NSAlternateKeyMask)
+#else
+    if (NSEvent.modifierFlags & NSEventModifierFlagOption)
+#endif
+    {
+        indexSet = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, self.torrent.fileCount)];
+    }
+    else
+    {
+        indexSet = node.indexes;
+    }
+
+    [self.torrent setFileCheckState:[object intValue] != NSControlStateValueOff ? NSControlStateValueOn : NSControlStateValueOff
+                         forIndexes:indexSet];
+    [self reloadVisibleRows];
+
+    [NSNotificationCenter.defaultCenter postNotificationName:@"UpdateUI" object:nil];
+}
+
+- (NSString*)outlineView:(NSOutlineView*)outlineView
+          toolTipForCell:(NSCell*)cell
+                    rect:(NSRectPointer)rect
+             tableColumn:(NSTableColumn*)tableColumn
+                    item:(id)item
+           mouseLocation:(NSPoint)mouseLocation
+{
+    FileListNode* node = (FileListNode*)item;
+    NSString* identifier = tableColumn.identifier;
+
+    if ([identifier isEqualToString:@"Name"])
+    {
+        return TRFileOutlinePathTooltip(node);
+    }
+    if ([identifier isEqualToString:@"Check"])
+    {
+        return TRFileOutlineCheckTooltip(cell.state);
+    }
+    if ([identifier isEqualToString:@"Priority"])
+    {
+        return TRFileOutlinePriorityTooltip([self.torrent filePrioritiesForIndexes:node.indexes]);
     }
 
     return nil;
