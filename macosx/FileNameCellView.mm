@@ -3,18 +3,18 @@
 // License text can be found in the licenses/ folder.
 
 #include <libtransmission/macos-version.h>
-#include <libtransmission/transmission.h>
 
 #import "FileNameCellView.h"
 #import "FileListNode.h"
+#import "FileOutlineItemDisplay.h"
 #import "LegacyConstraints.h"
-#import "Torrent.h"
-#import "NSStringAdditions.h"
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
 static CGFloat const kPaddingHorizontal = 2.0;
 static CGFloat const kImageFolderSize = 16.0;
 static CGFloat const kImageIconSize = 32.0;
 static CGFloat const kPaddingBetweenImageAndTitle = 4.0;
+#endif
 static CGFloat const kPaddingAboveTitleFile = 2.0;
 static CGFloat const kPaddingBelowStatusFile = 2.0;
 static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
@@ -157,14 +157,7 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
     self.nameField.stringValue = node.name;
 
     // Update status
-    Torrent* torrent = node.torrent;
-    CGFloat const progress = [torrent fileProgress:node];
-    NSString* percentString = [NSString percentString:progress longDecimals:YES];
-
-    NSString* status = [NSString stringWithFormat:NSLocalizedString(@"%@ of %@", "Inspector -> Files tab -> file status string"),
-                                                  percentString,
-                                                  [NSString stringForFileSize:node.size]];
-    self.statusField.stringValue = status;
+    self.statusField.stringValue = TRFileOutlineStatusString(node);
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self setNeedsDisplay:YES];
@@ -230,13 +223,9 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
     }
 
     NSRect bounds = self.bounds;
-    CGFloat imageSize = self.node.isFolder ? kImageFolderSize : kImageIconSize;
-    CGFloat iconSlot = kImageIconSize;
-    CGFloat iconX = kPaddingHorizontal + (iconSlot - imageSize) / 2.0;
-    CGFloat iconY = NSMidY(bounds) - imageSize / 2.0;
-    self.iconView.frame = NSMakeRect(iconX, iconY, imageSize, imageSize);
+    self.iconView.frame = TRFileOutlineIconRect(self.node, bounds);
 
-    CGFloat textX = kPaddingHorizontal + iconSlot + kPaddingBetweenImageAndTitle;
+    CGFloat textX = TRFileOutlineTextOriginX(self.node, bounds);
     CGFloat textWidth = MAX(0.0, NSWidth(bounds) - textX);
 
     if (self.node.isFolder)
@@ -267,15 +256,7 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
         return;
     }
 
-    FileListNode* node = self.node;
-    Torrent* torrent = node.torrent;
-
-    NSString* path = [torrent fileLocation:node];
-    if (!path)
-    {
-        path = [node.path stringByAppendingPathComponent:node.name];
-    }
-    self.toolTip = path;
+    self.toolTip = TRFileOutlinePathTooltip(self.node);
 }
 
 - (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle
@@ -291,28 +272,8 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
         return;
     }
 
-    FileListNode* node = self.node;
-    Torrent* torrent = node.torrent;
-
-    if (self.backgroundStyle == NSBackgroundStyleEmphasized)
-    {
-        self.nameField.textColor = NSColor.whiteColor;
-        self.statusField.textColor = NSColor.whiteColor;
-    }
-    else if ([torrent checkForFiles:node.indexes] == NSControlStateValueOff)
-    {
-        self.nameField.textColor = NSColor.disabledControlTextColor;
-        self.statusField.textColor = NSColor.disabledControlTextColor;
-    }
-    else
-    {
-        self.nameField.textColor = NSColor.controlTextColor;
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
-        self.statusField.textColor = [NSColor disabledControlTextColor];
-#else
-        self.statusField.textColor = NSColor.secondaryLabelColor;
-#endif
-    }
+    self.nameField.textColor = TRFileOutlineTitleColor(self.node, self.backgroundStyle);
+    self.statusField.textColor = TRFileOutlineStatusColor(self.node, self.backgroundStyle);
 }
 
 @end

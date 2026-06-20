@@ -7,6 +7,7 @@
 #include <libtransmission/macos-version.h>
 
 #import "FileListNode.h"
+#import "FileOutlineItemDisplay.h"
 #import "LegacyConstraints.h"
 #import "Torrent.h"
 
@@ -93,20 +94,7 @@
         return;
     }
 
-    NSString* tooltip = nil;
-    switch (self.checkButton.state)
-    {
-    case NSControlStateValueOff:
-        tooltip = NSLocalizedString(@"Don't Download", "files tab -> tooltip");
-        break;
-    case NSControlStateValueOn:
-        tooltip = NSLocalizedString(@"Download", "files tab -> tooltip");
-        break;
-    case NSControlStateValueMixed:
-        tooltip = NSLocalizedString(@"Download Some", "files tab -> tooltip");
-        break;
-    }
-    self.checkButton.toolTip = tooltip;
+    self.checkButton.toolTip = TRFileOutlineCheckTooltip(self.checkButton.state);
 }
 
 - (void)checkButtonClicked:(NSButton*)sender

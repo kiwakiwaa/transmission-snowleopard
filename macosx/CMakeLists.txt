@@ -198,6 +198,8 @@ target_sources(${TR_NAME}-mac
         FileDescriptorLimit.mm
         FileNameCellView.h
         FileNameCellView.mm
+        FileOutlineItemDisplay.h
+        FileOutlineItemDisplay.mm
         FileOutlineController.h
         FileOutlineController.mm
         FileOutlineView.h

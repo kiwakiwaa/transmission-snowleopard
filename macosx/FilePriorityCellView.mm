@@ -7,61 +7,12 @@
 #include <libtransmission/macos-version.h>
 
 #import "FileListNode.h"
+#import "FileOutlineItemDisplay.h"
 #import "LegacyConstraints.h"
-#import "NSImageAdditions.h"
 #import "Torrent.h"
-
-static CGFloat const kImageOverlap = 1.0;
 
 // NSSegmentedControl.trackingMode is 10.10.3+, so 10.10.0-targeted builds use the cell API.
 #define TR_FILE_PRIORITY_USES_LEGACY_SEGMENTED_CONTROL_API TR_MACOS_DEPLOYMENT_BEFORE_10_11
-
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
-static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
-{
-    NSImage* image = [NSImage imageNamed:imageName];
-    if (image.size.width > 0.0 && image.size.height > 0.0)
-    {
-        return [image imageWithColor:color];
-    }
-
-    NSImage* fallback = [[NSImage alloc] initWithSize:NSMakeSize(9.0, 12.0)];
-    [fallback lockFocus];
-    [color setFill];
-
-    NSBezierPath* path = [NSBezierPath bezierPath];
-    if ([imageName isEqualToString:@"PriorityHighTemplate"])
-    {
-        [path moveToPoint:NSMakePoint(4.5, 11.0)];
-        [path lineToPoint:NSMakePoint(8.0, 6.5)];
-        [path lineToPoint:NSMakePoint(5.8, 6.5)];
-        [path lineToPoint:NSMakePoint(5.8, 1.0)];
-        [path lineToPoint:NSMakePoint(3.2, 1.0)];
-        [path lineToPoint:NSMakePoint(3.2, 6.5)];
-        [path lineToPoint:NSMakePoint(1.0, 6.5)];
-    }
-    else if ([imageName isEqualToString:@"PriorityLowTemplate"])
-    {
-        [path moveToPoint:NSMakePoint(4.5, 1.0)];
-        [path lineToPoint:NSMakePoint(8.0, 5.5)];
-        [path lineToPoint:NSMakePoint(5.8, 5.5)];
-        [path lineToPoint:NSMakePoint(5.8, 11.0)];
-        [path lineToPoint:NSMakePoint(3.2, 11.0)];
-        [path lineToPoint:NSMakePoint(3.2, 5.5)];
-        [path lineToPoint:NSMakePoint(1.0, 5.5)];
-    }
-    else
-    {
-        [path appendBezierPathWithRect:NSMakeRect(2.0, 5.0, 5.0, 2.0)];
-    }
-
-    [path closePath];
-    [path fill];
-    [fallback unlockFocus];
-
-    return fallback;
-}
-#endif
 
 @interface FilePriorityCellView ()
 @property(nonatomic, TR_OBJC_WEAK) NSSegmentedControl* segmentedControl;
@@ -222,54 +173,8 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
         [subview removeFromSuperview];
     }
 
-    NSUInteger const count = priorities.count;
-    NSMutableArray* images = [NSMutableArray arrayWithCapacity:MAX(count, 1u)];
-
-    if (count == 0)
-    {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
-        NSImage* image = PriorityTemplateImage(@"PriorityNormalTemplate", [NSColor lightGrayColor]);
-#else
-        NSImage* image = [[NSImage imageNamed:@"PriorityNormalTemplate"] imageWithColor:NSColor.lightGrayColor];
-#endif
-        [images addObject:image];
-    }
-    else
-    {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
-        NSColor* priorityColor = self.backgroundStyle == NSBackgroundStyleEmphasized ? [NSColor whiteColor] : [NSColor darkGrayColor];
-#else
-        NSColor* priorityColor = self.backgroundStyle == NSBackgroundStyleEmphasized ? NSColor.whiteColor : NSColor.darkGrayColor;
-#endif
-
-        if ([priorities containsObject:@(TR_PRI_LOW)])
-        {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
-            [images addObject:PriorityTemplateImage(@"PriorityLowTemplate", priorityColor)];
-#else
-            NSImage* image = [[NSImage imageNamed:@"PriorityLowTemplate"] imageWithColor:priorityColor];
-            [images addObject:image];
-#endif
-        }
-        if ([priorities containsObject:@(TR_PRI_NORMAL)])
-        {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
-            [images addObject:PriorityTemplateImage(@"PriorityNormalTemplate", priorityColor)];
-#else
-            NSImage* image = [[NSImage imageNamed:@"PriorityNormalTemplate"] imageWithColor:priorityColor];
-            [images addObject:image];
-#endif
-        }
-        if ([priorities containsObject:@(TR_PRI_HIGH)])
-        {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
-            [images addObject:PriorityTemplateImage(@"PriorityHighTemplate", priorityColor)];
-#else
-            NSImage* image = [[NSImage imageNamed:@"PriorityHighTemplate"] imageWithColor:priorityColor];
-            [images addObject:image];
-#endif
-        }
-    }
+    NSArray* images = TRFileOutlinePriorityImages(priorities, self.backgroundStyle);
+    CGFloat const imageOverlap = TRFileOutlinePriorityImageOverlap();
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     CGFloat totalWidth = 0.0;
@@ -285,7 +190,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
     }
     if (images.count > 1)
     {
-        totalWidth -= kImageOverlap * (images.count - 1);
+        totalWidth -= imageOverlap * (images.count - 1);
     }
 
     self.iconsContainerView.frame = NSMakeRect(NSMidX(self.bounds) - totalWidth / 2.0, NSMidY(self.bounds) - maxHeight / 2.0, totalWidth, maxHeight);
@@ -301,7 +206,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
             initWithFrame:NSMakeRect(x, (maxHeight - image.size.height) / 2.0, image.size.width, image.size.height)];
         imageView.image = image;
         [self.iconsContainerView addSubview:imageView];
-        x += image.size.width - kImageOverlap;
+        x += image.size.width - imageOverlap;
     }
 #else
     NSView* previousView = nil;
@@ -340,7 +245,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
                                        NSLayoutRelationEqual,
                                        previousView,
                                        NSLayoutAttributeTrailing,
-                                       -kImageOverlap)];
+                                       -imageOverlap)];
         }
 
         previousView = imageView;
@@ -432,7 +337,8 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
         [self removeTrackingArea:self.trackingArea];
     }
 
-    NSTrackingAreaOptions options = NSTrackingMouseEnteredAndExited | NSTrackingActiveInActiveApp;
+    NSTrackingAreaOptions options = static_cast<NSTrackingAreaOptions>(NSTrackingMouseEnteredAndExited) |
+        static_cast<NSTrackingAreaOptions>(NSTrackingActiveInActiveApp);
 
     // Check if mouse is currently inside the bounds
     NSPoint mouseLocation = [self.window mouseLocationOutsideOfEventStream];
@@ -475,31 +381,7 @@ static NSImage* PriorityTemplateImage(NSString* imageName, NSColor* color)
         return;
     }
 
-    NSString* tooltip = nil;
-    switch (priorities.count)
-    {
-    case 0:
-        tooltip = NSLocalizedString(@"Priority Not Available", "files tab -> tooltip");
-        break;
-    case 1:
-        switch ([[priorities anyObject] intValue])
-        {
-        case TR_PRI_LOW:
-            tooltip = NSLocalizedString(@"Low Priority", "files tab -> tooltip");
-            break;
-        case TR_PRI_HIGH:
-            tooltip = NSLocalizedString(@"High Priority", "files tab -> tooltip");
-            break;
-        case TR_PRI_NORMAL:
-            tooltip = NSLocalizedString(@"Normal Priority", "files tab -> tooltip");
-            break;
-        }
-        break;
-    default:
-        tooltip = NSLocalizedString(@"Multiple Priorities", "files tab -> tooltip");
-        break;
-    }
-    self.toolTip = tooltip;
+    self.toolTip = TRFileOutlinePriorityTooltip(priorities);
 }
 
 @end
