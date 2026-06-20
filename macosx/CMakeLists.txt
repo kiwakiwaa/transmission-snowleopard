@@ -196,6 +196,8 @@ target_sources(${TR_NAME}-mac
         FileCheckCellView.mm
         FileDescriptorLimit.h
         FileDescriptorLimit.mm
+        FileNameCell.h
+        FileNameCell.mm
         FileNameCellView.h
         FileNameCellView.mm
         FileOutlineItemDisplay.h
@@ -204,6 +206,8 @@ target_sources(${TR_NAME}-mac
         FileOutlineController.mm
         FileOutlineView.h
         FileOutlineView.mm
+        FilePriorityCell.h
+        FilePriorityCell.mm
         FilePriorityCellView.h
         FilePriorityCellView.mm
         FileRenameSheetController.h
