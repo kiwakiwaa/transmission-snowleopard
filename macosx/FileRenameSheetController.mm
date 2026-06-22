@@ -7,6 +7,8 @@
 #import "FileListNode.h"
 #import "Torrent.h"
 
+#include <libtransmission/macos-version.h>
+
 typedef void (^CompletionBlock)(BOOL);
 
 @interface FileRenameSheetController ()<NSControlTextEditingDelegate>
@@ -24,6 +26,15 @@ typedef void (^CompletionBlock)(BOOL);
 @end
 
 @implementation FileRenameSheetController
+
+- (void)endRenameSheetWithReturnCode:(NSModalResponse)returnCode
+{
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+    [NSApp endSheet:self.window returnCode:returnCode];
+#else
+    [self.window.sheetParent endSheet:self.window returnCode:returnCode];
+#endif
+}
 
 + (void)presentSheetForTorrent:(Torrent*)torrent
                 modalForWindow:(NSWindow*)window
@@ -109,7 +120,7 @@ typedef void (^CompletionBlock)(BOOL);
     void (^completionHandler)(BOOL) = ^(BOOL didRename) {
         if (didRename)
         {
-            [NSApp endSheet:self.window returnCode:NSModalResponseOK];
+            [self endRenameSheetWithReturnCode:NSModalResponseOK];
         }
         else
         {
@@ -130,7 +141,7 @@ typedef void (^CompletionBlock)(BOOL);
 
 - (IBAction)cancelRename:(id)sender
 {
-    [NSApp endSheet:self.window returnCode:NSModalResponseCancel];
+    [self endRenameSheetWithReturnCode:NSModalResponseCancel];
 }
 
 - (void)controlTextDidChange:(NSNotification*)notification

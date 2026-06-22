@@ -5,6 +5,8 @@
 #import "URLSheetWindowController.h"
 #import "Controller.h"
 
+#include <libtransmission/macos-version.h>
+
 @interface URLSheetWindowController ()<NSControlTextEditingDelegate>
 
 @property(nonatomic) IBOutlet NSTextField* fLabelField;
@@ -15,6 +17,15 @@
 @end
 
 @implementation URLSheetWindowController
+
+- (void)endSheetWithReturnCode:(NSModalResponse)returnCode
+{
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+    [NSApp endSheet:self.window returnCode:returnCode];
+#else
+    [self.window.sheetParent endSheet:self.window returnCode:returnCode];
+#endif
+}
 
 - (instancetype)init
 {
@@ -56,12 +67,12 @@
 
 - (void)openURLEndSheet:(id)sender
 {
-    [NSApp endSheet:self.window returnCode:1];
+    [self endSheetWithReturnCode:1];
 }
 
 - (void)openURLCancelEndSheet:(id)sender
 {
-    [NSApp endSheet:self.window returnCode:0];
+    [self endSheetWithReturnCode:0];
 }
 
 - (NSString*)urlString
