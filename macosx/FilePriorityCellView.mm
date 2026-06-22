@@ -21,6 +21,12 @@
 @property(nonatomic, strong) NSArray* priorityIconConstraints;
 @end
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+@interface FilePriorityCellView ()
+- (void)layoutSubviewsForLegacyFrame;
+@end
+#endif
+
 @implementation FilePriorityCellView
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -142,6 +148,9 @@
         [self.segmentedControl setSelected:[priorities containsObject:@(TR_PRI_LOW)] forSegment:0];
         [self.segmentedControl setSelected:[priorities containsObject:@(TR_PRI_NORMAL)] forSegment:1];
         [self.segmentedControl setSelected:[priorities containsObject:@(TR_PRI_HIGH)] forSegment:2];
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+        [self layoutSubviewsForLegacyFrame];
+#endif
     }
     else
     {
@@ -155,6 +164,9 @@
 #endif
 
         [self updatePriorityIcons:priorities];
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+        [self layoutSubviewsForLegacyFrame];
+#endif
     }
 
     // Update tooltip
@@ -268,15 +280,22 @@
 }
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
-- (void)layout
+- (void)setFrameSize:(NSSize)newSize
 {
-    [super layout];
+    [super setFrameSize:newSize];
+    [self layoutSubviewsForLegacyFrame];
+}
 
+- (void)layoutSubviewsForLegacyFrame
+{
     self.segmentedControl.frame = NSMakeRect(NSMidX(self.bounds) - 14.0, NSMidY(self.bounds) - 9.0, 28.0, 18.0);
     if (![self.iconsContainerView isHidden] && self.node)
     {
-        Torrent* torrent = self.node.torrent;
-        [self updatePriorityIcons:[torrent filePrioritiesForIndexes:self.node.indexes]];
+        self.iconsContainerView.frame = NSMakeRect(
+            NSMidX(self.bounds) - NSWidth(self.iconsContainerView.frame) / 2.0,
+            NSMidY(self.bounds) - NSHeight(self.iconsContainerView.frame) / 2.0,
+            NSWidth(self.iconsContainerView.frame),
+            NSHeight(self.iconsContainerView.frame));
     }
 }
 #endif

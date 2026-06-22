@@ -28,6 +28,12 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
 @property(nonatomic, strong) NSArray* dynamicConstraints;
 @end
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+@interface FileNameCellView ()
+- (void)layoutSubviewsForLegacyFrame;
+@end
+#endif
+
 @implementation FileNameCellView
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -161,7 +167,7 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     [self setNeedsDisplay:YES];
-    [self layout];
+    [self layoutSubviewsForLegacyFrame];
 #else
     // Update layout constraints based on folder vs file
     TRDeactivateConstraints(self, self.dynamicConstraints);
@@ -213,10 +219,14 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
 }
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
-- (void)layout
+- (void)setFrameSize:(NSSize)newSize
 {
-    [super layout];
+    [super setFrameSize:newSize];
+    [self layoutSubviewsForLegacyFrame];
+}
 
+- (void)layoutSubviewsForLegacyFrame
+{
     if (!self.node)
     {
         return;

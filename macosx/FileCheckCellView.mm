@@ -15,6 +15,12 @@
 @property(nonatomic, TR_OBJC_WEAK) NSButton* checkButton;
 @end
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+@interface FileCheckCellView ()
+- (void)layoutSubviewsForLegacyFrame;
+@end
+#endif
+
 @implementation FileCheckCellView
 
 - (instancetype)initWithFrame:(NSRect)frameRect
@@ -54,10 +60,14 @@
 }
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
-- (void)layout
+- (void)setFrameSize:(NSSize)newSize
 {
-    [super layout];
+    [super setFrameSize:newSize];
+    [self layoutSubviewsForLegacyFrame];
+}
 
+- (void)layoutSubviewsForLegacyFrame
+{
     CGFloat const size = 18.0;
     self.checkButton.frame = NSMakeRect(floor(NSMidX(self.bounds) - size * 0.5), floor(NSMidY(self.bounds) - size * 0.5), size, size);
 }
