@@ -26,7 +26,7 @@ NSColor* TRSecondaryLabelColor(void)
 
 NSColor* TRSystemRedColor(void)
 {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_12
     return [NSColor systemRedColor];
 #else
     return [NSColor redColor];
@@ -35,7 +35,7 @@ NSColor* TRSystemRedColor(void)
 
 NSColor* TRSystemOrangeColor(void)
 {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_12
     return [NSColor systemOrangeColor];
 #else
     return [NSColor orangeColor];
@@ -44,7 +44,7 @@ NSColor* TRSystemOrangeColor(void)
 
 NSColor* TRSystemYellowColor(void)
 {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_12
     return [NSColor systemYellowColor];
 #else
     return [NSColor yellowColor];
@@ -53,7 +53,7 @@ NSColor* TRSystemYellowColor(void)
 
 NSColor* TRSystemGreenColor(void)
 {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_12
     return [NSColor systemGreenColor];
 #else
     return [NSColor greenColor];
@@ -62,7 +62,7 @@ NSColor* TRSystemGreenColor(void)
 
 NSColor* TRSystemBlueColor(void)
 {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_12
     return [NSColor systemBlueColor];
 #else
     return [NSColor blueColor];
@@ -71,7 +71,7 @@ NSColor* TRSystemBlueColor(void)
 
 NSColor* TRSystemPurpleColor(void)
 {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_12
     return [NSColor systemPurpleColor];
 #else
     return [NSColor purpleColor];
@@ -80,7 +80,7 @@ NSColor* TRSystemPurpleColor(void)
 
 NSColor* TRSystemGrayColor(void)
 {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_12
     return [NSColor systemGrayColor];
 #else
     return [NSColor grayColor];
