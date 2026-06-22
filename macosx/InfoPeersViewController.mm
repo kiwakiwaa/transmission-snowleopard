@@ -15,7 +15,7 @@
 static NSString* const kAnimationIdKey = @"animationId";
 static NSString* const kWebSeedAnimationId = @"webSeed";
 
-#if !TR_MACOS_SDK_BEFORE_10_11
+#if !TR_MACOS_SDK_BEFORE_10_12
 @interface InfoPeersViewController ()<CAAnimationDelegate>
 #else
 @interface InfoPeersViewController ()
