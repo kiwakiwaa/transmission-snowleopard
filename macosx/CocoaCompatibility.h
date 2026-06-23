@@ -36,6 +36,49 @@ static inline NSTimer* TRTimerWithFireDate(NSDate* date, NSTimeInterval interval
 #endif
 }
 
+static inline void TRNormalizeLegacyTableHeaderAppearance(NSTableView* tableView)
+{
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8 || !TR_MACOS_DEPLOYMENT_BEFORE_10_10
+    (void)tableView;
+#endif
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_8 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
+    NSTableHeaderView* oldHeaderView = tableView.headerView;
+    if (oldHeaderView == nil)
+    {
+        return;
+    }
+
+    NSTableHeaderView* headerView = [[NSTableHeaderView alloc] initWithFrame:oldHeaderView.frame];
+    headerView.autoresizingMask = oldHeaderView.autoresizingMask;
+    tableView.headerView = headerView;
+
+    NSRect headerFrame = tableView.headerView.frame;
+    headerFrame.size.height = tableView.rowHeight + tableView.intercellSpacing.height;
+    tableView.headerView.frame = headerFrame;
+
+    NSScrollView* scrollView = tableView.enclosingScrollView;
+    scrollView.drawsBackground = YES;
+    scrollView.backgroundColor = [NSColor controlColor];
+    scrollView.contentView.drawsBackground = YES;
+    scrollView.contentView.backgroundColor = [NSColor controlColor];
+    tableView.backgroundColor = [NSColor controlBackgroundColor];
+
+    NSView* headerClipView = tableView.headerView.superview;
+    if ([headerClipView isKindOfClass:[NSClipView class]])
+    {
+        NSClipView* clipView = (NSClipView*)headerClipView;
+        clipView.drawsBackground = YES;
+        clipView.backgroundColor = [NSColor controlColor];
+    }
+
+    for (NSTableColumn* tableColumn in tableView.tableColumns)
+    {
+        NSTableHeaderCell* headerCell = (NSTableHeaderCell*)tableColumn.headerCell;
+        [headerCell setBackgroundColor:[NSColor headerColor]];
+    }
+#endif
+}
+
 #if TR_MACOS_SDK_BEFORE_10_7
 typedef NSInteger NSLayoutAttribute;
 typedef NSInteger NSLayoutRelation;

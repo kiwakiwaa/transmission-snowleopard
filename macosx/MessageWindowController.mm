@@ -99,6 +99,8 @@ static NSUInteger const kMaxQueueLength = 10000U;
     [[[self.fMessageTable tableColumnWithIdentifier:@"Message"] headerCell]
         setStringValue:NSLocalizedString(@"Message", "Message window -> table column")];
 
+    TRNormalizeLegacyTableHeaderAppearance(self.fMessageTable);
+
     //set and size buttons
     self.fSaveButton.title = [NSLocalizedString(@"Save", "Message window -> save button") stringByAppendingEllipsis];
     [self.fSaveButton sizeToFit];
