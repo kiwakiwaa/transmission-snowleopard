@@ -13,6 +13,7 @@
 #import "FilePriorityCellView.h"
 #import "FileCheckCellView.h"
 #import "FileBatchRenameSheetController.h"
+#import "FileBatchRenameSession.h"
 #import "FileRenameSheetController.h"
 #import "NSMutableArrayAdditions.h"
 #import "NSStringAdditions.h"
@@ -35,12 +36,18 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
 @property(nonatomic) NSMutableArray* fFileList;
 
 @property(nonatomic) IBOutlet FileOutlineView* fOutline;
+@property(nonatomic, TR_OBJC_WEAK) NSUndoManager* batchRenameUndoManager;
 
 @property(nonatomic, readonly) NSMenu* menu;
 
 @end
 
 @implementation FileOutlineController
+
+- (void)dealloc
+{
+    [self.batchRenameUndoManager removeAllActionsWithTarget:self];
+}
 
 - (void)awakeFromNib
 {
@@ -530,9 +537,12 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
         }
 
         Torrent* torrent = ((FileListNode*)[nodes objectAtIndex:0]).torrent;
-        [FileBatchRenameSheetController presentSheetForFileListNodes:nodes modalForWindow:self.fOutline.window completionHandler:^(BOOL didRename) {
+        [FileBatchRenameSheetController presentSheetForFileListNodes:nodes
+                                                      modalForWindow:self.fOutline.window
+                                                   completionHandler:^(BOOL didRename, NSArray* operations) {
             if (didRename)
             {
+                [self registerUndoForBatchRenameOperations:operations];
                 [NSNotificationCenter.defaultCenter postNotificationName:@"ResetInspector" object:self
                                                                 userInfo:@{ @"Torrent" : torrent }];
             }
@@ -699,6 +709,86 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
 }
 
 #pragma mark - Private
+
+- (void)registerUndoForBatchRenameOperations:(NSArray*)operations
+{
+    if (operations.count == 0)
+    {
+        return;
+    }
+
+    NSUndoManager* undoManager = self.fOutline.window.undoManager;
+    if (undoManager == nil)
+    {
+        undoManager = self.batchRenameUndoManager;
+    }
+    if (undoManager == nil)
+    {
+        return;
+    }
+
+    if (self.batchRenameUndoManager != nil && self.batchRenameUndoManager != undoManager)
+    {
+        [self.batchRenameUndoManager removeAllActionsWithTarget:self];
+    }
+    self.batchRenameUndoManager = undoManager;
+
+    NSArray* inverseOperations = [self inverseBatchRenameOperationsForOperations:operations];
+    [undoManager registerUndoWithTarget:self selector:@selector(performUndoRedoBatchRename:) object:inverseOperations];
+    [undoManager setActionName:NSLocalizedString(@"Batch Rename", "Batch rename undo action")];
+}
+
+- (NSArray*)inverseBatchRenameOperationsForOperations:(NSArray*)operations
+{
+    NSMutableArray* inverseOperations = [NSMutableArray arrayWithCapacity:operations.count];
+    for (FileBatchRenameOperation* operation in [operations reverseObjectEnumerator])
+    {
+        [inverseOperations addObject:operation.inverseOperation];
+    }
+    return inverseOperations;
+}
+
+- (void)performUndoRedoBatchRename:(NSArray*)operations
+{
+    // NSUndoManager records redo only while this method is still on the undo stack.
+    [self registerUndoForBatchRenameOperations:operations];
+
+    [FileBatchRenameSession executeOperations:operations rollbackOnFailure:NO completionHandler:^(BOOL success, NSString* errorMessage) {
+        if (success)
+        {
+            [self postBatchRenameUpdateForOperations:operations];
+        }
+        else
+        {
+            [self.batchRenameUndoManager removeAllActionsWithTarget:self];
+            [self showBatchRenameFailureMessage:errorMessage];
+        }
+    }];
+}
+
+- (void)postBatchRenameUpdateForOperations:(NSArray*)operations
+{
+    if (operations.count == 0)
+    {
+        return;
+    }
+
+    FileBatchRenameOperation* operation = [operations objectAtIndex:0];
+    Torrent* torrent = operation.node.torrent;
+    if (torrent != nil)
+    {
+        [NSNotificationCenter.defaultCenter postNotificationName:@"ResetInspector" object:self userInfo:@{ @"Torrent" : torrent }];
+    }
+}
+
+- (void)showBatchRenameFailureMessage:(NSString*)message
+{
+    NSAlert* alert = [[NSAlert alloc] init];
+    alert.messageText = NSLocalizedString(@"Batch rename failed.", "Batch rename alert title");
+    alert.informativeText = message ?: @"";
+    alert.alertStyle = NSAlertStyleWarning;
+    [alert runModal];
+}
 
 - (NSMenu*)menu
 {

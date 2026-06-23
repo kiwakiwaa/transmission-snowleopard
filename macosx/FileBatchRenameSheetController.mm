@@ -55,7 +55,8 @@ typedef NS_ENUM(NSInteger, BatchRenameRulePopupTag) {
 @property(nonatomic, TR_OBJC_WEAK) IBOutlet NSButton* cancelButton;
 
 @property(nonatomic) FileBatchRenameSession* session;
-@property(nonatomic, copy) void (^completionHandler)(BOOL didRename);
+@property(nonatomic, copy) void (^completionHandler)(BOOL didRename, NSArray* operations);
+@property(nonatomic, copy) NSArray* completedOperations;
 
 @property(nonatomic, TR_OBJC_WEAK) IBOutlet NSPopUpButton* replaceModePopup;
 @property(nonatomic, TR_OBJC_WEAK) IBOutlet NSPopUpButton* dateTextPlacementPopup;
@@ -96,7 +97,7 @@ typedef NS_ENUM(NSInteger, BatchRenameRulePopupTag) {
 
 + (void)presentSheetForFileListNodes:(NSArray*)nodes
                        modalForWindow:(NSWindow*)window
-                    completionHandler:(void (^)(BOOL didRename))completionHandler
+                    completionHandler:(void (^)(BOOL didRename, NSArray* operations))completionHandler
 {
     NSParameterAssert(nodes.count > 1);
     NSParameterAssert(window != nil);
@@ -109,7 +110,7 @@ typedef NS_ENUM(NSInteger, BatchRenameRulePopupTag) {
     [window beginSheet:controller.window completionHandler:^(NSModalResponse returnCode) {
         if (strongController.completionHandler != nil)
         {
-            strongController.completionHandler(returnCode == NSModalResponseOK);
+            strongController.completionHandler(returnCode == NSModalResponseOK, strongController.completedOperations);
         }
         strongController = nil;
     }];
@@ -656,9 +657,10 @@ typedef NS_ENUM(NSInteger, BatchRenameRulePopupTag) {
     self.statusField.textColor = NSColor.controlTextColor;
     self.statusField.stringValue = NSLocalizedString(@"Renaming...", "Batch rename validation status");
 
-    [self.session executeWithUndoManager:self.window.undoManager completionHandler:^(BOOL success, NSString* errorMessage) {
+    [self.session executeWithCompletionHandler:^(BOOL success, NSString* errorMessage, NSArray* operations) {
         if (success)
         {
+            self.completedOperations = operations;
             [self endRenameSheetWithReturnCode:NSModalResponseOK];
         }
         else

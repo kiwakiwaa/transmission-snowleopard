@@ -10,6 +10,18 @@
 @class FileListNode;
 
 typedef void (^FileBatchRenameCompletionHandler)(BOOL success, NSString* errorMessage);
+typedef void (^FileBatchRenameExecutionCompletionHandler)(BOOL success, NSString* errorMessage, NSArray* operations);
+
+@interface FileBatchRenameOperation : NSObject
+
+@property(nonatomic, readonly) FileListNode* node;
+@property(nonatomic, copy, readonly) NSString* fromName;
+@property(nonatomic, copy, readonly) NSString* toName;
+
++ (instancetype)operationWithNode:(FileListNode*)node fromName:(NSString*)fromName toName:(NSString*)toName;
+- (FileBatchRenameOperation*)inverseOperation;
+
+@end
 
 @interface FileBatchRenameSession : NSObject
 
@@ -25,6 +37,10 @@ typedef void (^FileBatchRenameCompletionHandler)(BOOL success, NSString* errorMe
 - (void)recomputePreview;
 - (void)setActive:(BOOL)active forDisplayedItemAtIndex:(NSUInteger)row;
 - (void)moveDisplayedItemAtIndex:(NSUInteger)fromIndex toIndex:(NSUInteger)toIndex;
-- (void)executeWithUndoManager:(NSUndoManager*)undoManager completionHandler:(FileBatchRenameCompletionHandler)completionHandler;
+- (void)executeWithCompletionHandler:(FileBatchRenameExecutionCompletionHandler)completionHandler;
+
++ (void)executeOperations:(NSArray*)operations
+        rollbackOnFailure:(BOOL)rollbackOnFailure
+        completionHandler:(FileBatchRenameCompletionHandler)completionHandler;
 
 @end

@@ -8,7 +8,7 @@
 
 + (void)presentSheetForFileListNodes:(NSArray*)nodes
                        modalForWindow:(NSWindow*)window
-                    completionHandler:(void (^)(BOOL didRename))completionHandler;
+                    completionHandler:(void (^)(BOOL didRename, NSArray* operations))completionHandler;
 
 - (IBAction)rename:(id)sender;
 - (IBAction)cancelRename:(id)sender;

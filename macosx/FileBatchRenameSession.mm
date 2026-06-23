@@ -13,14 +13,11 @@
 
 static NSString* const kFileBatchRenameSessionErrorDomain = @"org.transmissionbt.batch-rename";
 
-@interface FileBatchRenameOperation : NSObject
+@interface FileBatchRenameOperation ()
 
 @property(nonatomic) FileListNode* node;
 @property(nonatomic, copy) NSString* fromName;
 @property(nonatomic, copy) NSString* toName;
-
-+ (instancetype)operationWithNode:(FileListNode*)node fromName:(NSString*)fromName toName:(NSString*)toName;
-- (FileBatchRenameOperation*)inverseOperation;
 
 @end
 
@@ -50,7 +47,6 @@ typedef void (^FileBatchRenameErrorCompletionHandler)(NSError* error);
 @property(nonatomic, copy) NSArray* displayedItems;
 @property(nonatomic) BOOL canRename;
 @property(nonatomic, copy) NSString* validationSummary;
-@property(nonatomic, TR_OBJC_WEAK) NSUndoManager* undoManager;
 
 @end
 
@@ -154,14 +150,14 @@ typedef void (^FileBatchRenameErrorCompletionHandler)(NSError* error);
     [self recomputePreview];
 }
 
-- (void)executeWithUndoManager:(NSUndoManager*)undoManager completionHandler:(FileBatchRenameCompletionHandler)completionHandler
+- (void)executeWithCompletionHandler:(FileBatchRenameExecutionCompletionHandler)completionHandler
 {
     [self recomputePreview];
     if (!self.canRename)
     {
         if (completionHandler != nil)
         {
-            completionHandler(NO, self.validationSummary);
+            completionHandler(NO, self.validationSummary, nil);
         }
         return;
     }
@@ -176,15 +172,9 @@ typedef void (^FileBatchRenameErrorCompletionHandler)(NSError* error);
     }
 
     [self executeOperations:operations rollbackOnFailure:YES completionHandler:^(BOOL success, NSString* errorMessage) {
-        if (success && undoManager != nil)
-        {
-            self.undoManager = undoManager;
-            [self registerUndoForOperations:operations];
-        }
-
         if (completionHandler != nil)
         {
-            completionHandler(success, errorMessage);
+            completionHandler(success, errorMessage, success ? operations : nil);
         }
     }];
 }
@@ -340,8 +330,13 @@ typedef void (^FileBatchRenameErrorCompletionHandler)(NSError* error);
 - (NSArray*)allTorrentNodes
 {
     FileBatchRenameItem* firstItem = [self.mutableItems objectAtIndex:0];
+    return [self allTorrentNodesForTorrent:firstItem.node.torrent];
+}
+
+- (NSArray*)allTorrentNodesForTorrent:(Torrent*)torrent
+{
     NSMutableArray* nodes = [NSMutableArray array];
-    for (FileListNode* node in firstItem.node.torrent.fileList)
+    for (FileListNode* node in torrent.fileList)
     {
         [self addNodeAndDescendants:node toArray:nodes];
     }
@@ -404,6 +399,14 @@ typedef void (^FileBatchRenameErrorCompletionHandler)(NSError* error);
 }
 
 #pragma mark - Execution
+
++ (void)executeOperations:(NSArray*)operations
+        rollbackOnFailure:(BOOL)rollbackOnFailure
+        completionHandler:(FileBatchRenameCompletionHandler)completionHandler
+{
+    FileBatchRenameSession* session = [[self alloc] init];
+    [session executeOperations:operations rollbackOnFailure:rollbackOnFailure completionHandler:completionHandler];
+}
 
 - (void)executeOperations:(NSArray*)operations
         rollbackOnFailure:(BOOL)rollbackOnFailure
@@ -580,7 +583,7 @@ typedef void (^FileBatchRenameErrorCompletionHandler)(NSError* error);
 
 - (BOOL)siblingNameExists:(NSString*)name forNode:(FileListNode*)node
 {
-    for (FileListNode* sibling in [self allTorrentNodes])
+    for (FileListNode* sibling in [self allTorrentNodesForTorrent:node.torrent])
     {
         if (sibling != node && [sibling.path isEqualToString:node.path] && [sibling.name caseInsensitiveCompare:name] == NSOrderedSame)
         {
@@ -593,48 +596,6 @@ typedef void (^FileBatchRenameErrorCompletionHandler)(NSError* error);
 - (BOOL)name:(NSString*)firstName differsOnlyByCaseFromName:(NSString*)secondName
 {
     return ![firstName isEqualToString:secondName] && [firstName caseInsensitiveCompare:secondName] == NSOrderedSame;
-}
-
-#pragma mark - Undo
-
-- (void)registerUndoForOperations:(NSArray*)operations
-{
-    NSArray* inverseOperations = [self inverseOperationsForOperations:operations];
-    [self.undoManager registerUndoWithTarget:self selector:@selector(performUndoRedoBatchRename:) object:inverseOperations];
-    [self.undoManager setActionName:NSLocalizedString(@"Batch Rename", "Batch rename undo action")];
-}
-
-- (NSArray*)inverseOperationsForOperations:(NSArray*)operations
-{
-    NSMutableArray* inverseOperations = [NSMutableArray arrayWithCapacity:operations.count];
-    for (FileBatchRenameOperation* operation in [operations reverseObjectEnumerator])
-    {
-        [inverseOperations addObject:operation.inverseOperation];
-    }
-    return inverseOperations;
-}
-
-- (void)performUndoRedoBatchRename:(NSArray*)operations
-{
-    [self executeOperations:operations rollbackOnFailure:NO completionHandler:^(BOOL success, NSString* errorMessage) {
-        if (success)
-        {
-            [self registerUndoForOperations:operations];
-        }
-        else
-        {
-            [self showFailureMessage:errorMessage];
-        }
-    }];
-}
-
-- (void)showFailureMessage:(NSString*)message
-{
-    NSAlert* alert = [[NSAlert alloc] init];
-    alert.messageText = NSLocalizedString(@"Batch rename failed.", "Batch rename alert title");
-    alert.informativeText = message ?: @"";
-    alert.alertStyle = NSAlertStyleWarning;
-    [alert runModal];
 }
 
 - (NSError*)errorWithMessage:(NSString*)message
