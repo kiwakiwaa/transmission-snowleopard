@@ -344,7 +344,10 @@ typedef NS_ENUM(NSInteger, BatchRenameRulePopupTag) {
 - (void)configurePopupAppearance:(NSPopUpButton*)popup
 {
     [popup setBordered:YES];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     [popup setBezelStyle:NSRoundedBezelStyle];
+#pragma clang diagnostic pop
     [popup setShowsBorderOnlyWhileMouseInside:NO];
     [popup setPullsDown:NO];
     [(NSPopUpButtonCell*)popup.cell setArrowPosition:NSPopUpArrowAtCenter];

@@ -422,7 +422,10 @@ static NSUInteger const kMaxQueueLength = 10000U;
 {
     if ([(id)item isKindOfClass:NSMenuItem.class])
     {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         return [self validateMenuItem:(NSMenuItem*)item];
+#pragma clang diagnostic pop
     }
 
     return YES;

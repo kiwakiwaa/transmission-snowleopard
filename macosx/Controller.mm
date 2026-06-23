@@ -5121,12 +5121,18 @@ static void removeKeRangerRansomware()
 {
     if ([(id)item isKindOfClass:NSToolbarItem.class])
     {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         return [self validateToolbarItem:(NSToolbarItem*)item];
+#pragma clang diagnostic pop
     }
 
     if ([(id)item isKindOfClass:NSMenuItem.class])
     {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         return [self validateMenuItem:(NSMenuItem*)item];
+#pragma clang diagnostic pop
     }
 
     return YES;
