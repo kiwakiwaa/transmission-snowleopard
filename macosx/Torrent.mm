@@ -107,9 +107,10 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
             NSString* const newName = tr_strv_to_utf8_nsstring(newname);
 
             dispatch_async(dispatch_get_main_queue(), ^{
-                Torrent* torrentObject = contextInfo[@"Torrent"];
-                [torrentObject renameFinished:error.code() == 0 nodes:contextInfo[@"Nodes"]
-                            completionHandler:contextInfo[@"CompletionHandler"]
+                Torrent* torrentObject = [contextInfo objectForKey:@"Torrent"];
+                [torrentObject renameFinished:error.code() == 0
+                                        nodes:[contextInfo objectForKey:@"Nodes"]
+                            completionHandler:[contextInfo objectForKey:@"CompletionHandler"]
                                       oldPath:oldPath
                                       newName:newName];
             });
@@ -888,7 +889,8 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
         return;
     }
 
-    NSDictionary* contextInfo = @{ @"Torrent" : self, @"CompletionHandler" : [completionHandler copy] };
+    void (^handler)(BOOL) = completionHandler ?: ^(BOOL /*didRename*/) {};
+    NSDictionary* contextInfo = @{ @"Torrent" : self, @"CompletionHandler" : [handler copy] };
 
     tr_torrentRenamePath(self.fHandle, tr_torrentName(self.fHandle), newName.UTF8String, makeRenameDoneCallback(contextInfo));
 }
@@ -910,7 +912,8 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
         return;
     }
 
-    NSDictionary* contextInfo = @{ @"Torrent" : self, @"Nodes" : @[ node ], @"CompletionHandler" : [completionHandler copy] };
+    void (^handler)(BOOL) = completionHandler ?: ^(BOOL /*didRename*/) {};
+    NSDictionary* contextInfo = @{ @"Torrent" : self, @"Nodes" : @[ node ], @"CompletionHandler" : [handler copy] };
 
     NSString* oldPath = [node.path stringByAppendingPathComponent:node.name];
     tr_torrentRenamePath(self.fHandle, oldPath.UTF8String, newName.UTF8String, makeRenameDoneCallback(contextInfo));

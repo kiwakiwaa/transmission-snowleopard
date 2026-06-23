@@ -192,6 +192,10 @@ target_sources(${TR_NAME}-mac
         ExpandedPathToIconTransformer.mm
         ExpandedPathToPathTransformer.h
         ExpandedPathToPathTransformer.mm
+        FileBatchRenameItem.h
+        FileBatchRenameItem.mm
+        FileBatchRenameSession.h
+        FileBatchRenameSession.mm
         FileListNode.h
         FileListNode.mm
         FileCheckCellView.h
@@ -214,6 +218,10 @@ target_sources(${TR_NAME}-mac
         FilePriorityCellView.mm
         FileRenameSheetController.h
         FileRenameSheetController.mm
+        RenameRule.h
+        RenameRule.mm
+        RenameRules.h
+        RenameRules.mm
         FilterBarController.h
         FilterBarController.mm
         FilterButton.h
