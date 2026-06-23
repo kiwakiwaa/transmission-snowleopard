@@ -2379,7 +2379,7 @@ oAcAAAAAySceAAAAAAAAAAAAAAAAAAAAAAA</bytes>
 					<object class="NSPopUpButton" id="903100003">
 						<reference key="NSNextResponder" ref="284666863"/>
 						<int key="NSvFlags">256</int>
-						<string key="NSFrame">{{371, 171}, {130, 26}}</string>
+						<string key="NSFrame">{{371, 171}, {225, 26}}</string>
 						<reference key="NSSuperview" ref="284666863"/>
 						<bool key="NSEnabled">YES</bool>
 						<object class="NSPopUpButtonCell" key="NSCell" id="903100004">
