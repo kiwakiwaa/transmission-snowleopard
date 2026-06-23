@@ -336,7 +336,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     if ([ident isEqualToString:ToolbarTabGeneral])
     {
         item.label = NSLocalizedString(@"General", "Preferences -> toolbar item title");
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         item.image = [NSImage imageNamed:NSImageNamePreferencesGeneral];
 #else
         item.image = TRImageForSystemSymbol(@"gearshape", nil);
@@ -348,7 +348,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     else if ([ident isEqualToString:ToolbarTabTransfers])
     {
         item.label = NSLocalizedString(@"Transfers", "Preferences -> toolbar item title");
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         item.image = [NSImage imageNamed:@"Transfers"];
 #else
         item.image = TRImageForSystemSymbol(@"arrow.up.arrow.down", nil);
@@ -360,7 +360,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     else if ([ident isEqualToString:ToolbarTabGroups])
     {
         item.label = NSLocalizedString(@"Groups", "Preferences -> toolbar item title");
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         item.image = [NSImage imageNamed:@"Groups"];
 #else
         item.image = TRImageForSystemSymbol(@"pin", nil);
@@ -372,7 +372,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     else if ([ident isEqualToString:ToolbarTabBandwidth])
     {
         item.label = NSLocalizedString(@"Bandwidth", "Preferences -> toolbar item title");
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         item.image = [NSImage imageNamed:@"Bandwidth"];
 #else
         item.image = TRImageForSystemSymbol(@"speedometer", nil);
@@ -384,7 +384,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     else if ([ident isEqualToString:ToolbarTabPeers])
     {
         item.label = NSLocalizedString(@"Peers", "Preferences -> toolbar item title");
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         item.image = [NSImage imageNamed:NSImageNameUserGroup];
 #else
         item.image = TRImageForSystemSymbol(@"person.2", nil);
@@ -396,7 +396,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     else if ([ident isEqualToString:ToolbarTabNetwork])
     {
         item.label = NSLocalizedString(@"Network", "Preferences -> toolbar item title");
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         item.image = [NSImage imageNamed:NSImageNameNetwork];
 #else
         item.image = TRImageForSystemSymbol(@"network", nil);
@@ -408,7 +408,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     else if ([ident isEqualToString:ToolbarTabRemote])
     {
         item.label = NSLocalizedString(@"Remote", "Preferences -> toolbar item title");
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         item.image = [NSImage imageNamed:@"Remote"];
 #else
         item.image = TRImageForSystemSymbol(@"antenna.radiowaves.left.and.right", nil);

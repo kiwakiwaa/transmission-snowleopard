@@ -4678,19 +4678,19 @@ static void removeKeRangerRansomware()
     ButtonToolbarItem* item = [[klass alloc] initWithItemIdentifier:ident];
 
     NSButton* button;
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
     // Older toolbar layout needs a concrete button frame to avoid clipped icons.
     button = [[NSButton alloc] initWithFrame:NSMakeRect(0.0, 0.0, 32.0, 25.0)];
 #else
     button = [[NSButton alloc] init];
 #endif
     button.bezelStyle = NSBezelStyleTexturedRounded;
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
     button.imagePosition = NSImageOnly;
 #endif
     button.stringValue = @"";
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
     item.minSize = button.frame.size;
     item.maxSize = button.frame.size;
 #endif
@@ -4708,7 +4708,7 @@ static void removeKeRangerRansomware()
         item.label = NSLocalizedString(@"Create", "Create toolbar item -> label");
         item.paletteLabel = NSLocalizedString(@"Create Torrent File", "Create toolbar item -> palette label");
         item.toolTip = NSLocalizedString(@"Create torrent file", "Create toolbar item -> tooltip");
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         item.image = [NSImage imageNamed:@"ToolbarCreateTemplate"];
 #else
         item.image = TRImageForSystemSymbol(@"doc.badge.plus", nil);
@@ -4726,7 +4726,7 @@ static void removeKeRangerRansomware()
         item.label = NSLocalizedString(@"Open", "Open toolbar item -> label");
         item.paletteLabel = NSLocalizedString(@"Open Torrent Files", "Open toolbar item -> palette label");
         item.toolTip = NSLocalizedString(@"Open torrent files", "Open toolbar item -> tooltip");
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         item.image = [NSImage imageNamed:@"ToolbarOpenTemplate"];
 #else
         item.image = TRImageForSystemSymbol(@"folder", nil);
@@ -4744,7 +4744,7 @@ static void removeKeRangerRansomware()
         item.label = NSLocalizedString(@"Open Address", "Open address toolbar item -> label");
         item.paletteLabel = NSLocalizedString(@"Open Torrent Address", "Open address toolbar item -> palette label");
         item.toolTip = NSLocalizedString(@"Open torrent web address", "Open address toolbar item -> tooltip");
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         item.image = [NSImage imageNamed:@"Globe"];
 #else
         item.image = TRImageForSystemSymbol(@"globe", nil);
@@ -4762,7 +4762,7 @@ static void removeKeRangerRansomware()
         item.label = NSLocalizedString(@"Remove", "Remove toolbar item -> label");
         item.paletteLabel = NSLocalizedString(@"Remove Selected", "Remove toolbar item -> palette label");
         item.toolTip = NSLocalizedString(@"Remove selected transfers", "Remove toolbar item -> tooltip");
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         item.image = [NSImage imageNamed:@"ToolbarRemoveTemplate"];
 #else
         item.image = TRImageForSystemSymbol(@"nosign", nil);
@@ -4781,7 +4781,7 @@ static void removeKeRangerRansomware()
         item.label = NSLocalizedString(@"Inspector", "Inspector toolbar item -> label");
         item.paletteLabel = NSLocalizedString(@"Toggle Inspector", "Inspector toolbar item -> palette label");
         item.toolTip = NSLocalizedString(@"Toggle the torrent inspector", "Inspector toolbar item -> tooltip");
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         item.image = [NSImage imageNamed:@"ToolbarInfoTemplate"];
 #else
         item.image = TRImageForSystemSymbol(@"info.circle", nil);
@@ -4799,14 +4799,14 @@ static void removeKeRangerRansomware()
         NSToolbarItem* itemResume = [self standardToolbarButtonWithIdentifier:ToolbarItemIdentifierResumeAll];
 
         NSSegmentedControl* segmentedControl;
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         // Older AppKit applies segment widths but does not infer the control height, so give toolbar groups an explicit frame.
         segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSMakeRect(0.0, 0.0, 72.0, 25.0)];
 #else
         segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
 #endif
         segmentedControl.segmentStyle = NSSegmentStyleTexturedRounded;
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         [(NSSegmentedCell*)segmentedControl.cell setTrackingMode:NSSegmentSwitchTrackingMomentary];
 #else
         segmentedControl.trackingMode = NSSegmentSwitchTrackingMomentary;
@@ -4820,7 +4820,7 @@ static void removeKeRangerRansomware()
         TRSetSegmentTag(segmentedControl, ToolbarGroupTagResume, ToolbarGroupTagResume);
         [segmentedControl setImage:TRImageForSystemSymbol(@"arrow.clockwise.circle.fill", nil) forSegment:ToolbarGroupTagResume];
         TRSetSegmentToolTip(segmentedControl, NSLocalizedString(@"Resume all transfers", "All toolbar item -> tooltip"), ToolbarGroupTagResume);
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         [segmentedControl setWidth:32 forSegment:ToolbarGroupTagPause];
         [segmentedControl setWidth:32 forSegment:ToolbarGroupTagResume];
         groupItem.minSize = segmentedControl.frame.size;
@@ -4857,14 +4857,14 @@ static void removeKeRangerRansomware()
         NSToolbarItem* itemResume = [self standardToolbarButtonWithIdentifier:ToolbarItemIdentifierResumeSelected];
 
         NSSegmentedControl* segmentedControl;
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         // Older AppKit applies segment widths but does not infer the control height, so give toolbar groups an explicit frame.
         segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSMakeRect(0.0, 0.0, 72.0, 25.0)];
 #else
         segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
 #endif
         segmentedControl.segmentStyle = NSSegmentStyleTexturedRounded;
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         [(NSSegmentedCell*)segmentedControl.cell setTrackingMode:NSSegmentSwitchTrackingMomentary];
 #else
         segmentedControl.trackingMode = NSSegmentSwitchTrackingMomentary;
@@ -4878,7 +4878,7 @@ static void removeKeRangerRansomware()
         TRSetSegmentTag(segmentedControl, ToolbarGroupTagResume, ToolbarGroupTagResume);
         [segmentedControl setImage:TRImageForSystemSymbol(@"arrow.clockwise", nil) forSegment:ToolbarGroupTagResume];
         TRSetSegmentToolTip(segmentedControl, NSLocalizedString(@"Resume selected transfers", "Selected toolbar item -> tooltip"), ToolbarGroupTagResume);
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+#if TR_MACOS_DEPLOYMENT_BEFORE_11_0
         [segmentedControl setWidth:32 forSegment:ToolbarGroupTagPause];
         [segmentedControl setWidth:32 forSegment:ToolbarGroupTagResume];
         groupItem.minSize = segmentedControl.frame.size;
@@ -5649,9 +5649,7 @@ static void removeKeRangerRansomware()
     {
         self.fStatusBar = [[StatusBarController alloc] initWithLib:self.fLib];
         self.fStatusBar.layoutAttribute = NSLayoutAttributeBottom;
-#if !TR_MACOS_SDK_BEFORE_11_0
-        self.fStatusBar.automaticallyAdjustsSize = NO;
-#endif
+        TRTitlebarAccessoryUseFixedViewSize(self.fStatusBar);
 
         [self.fWindow addTitlebarAccessoryViewController:self.fStatusBar];
     }
@@ -5670,9 +5668,7 @@ static void removeKeRangerRansomware()
     {
         self.fFilterBar = [[FilterBarController alloc] init];
         self.fFilterBar.layoutAttribute = NSLayoutAttributeBottom;
-#if !TR_MACOS_SDK_BEFORE_11_0
-        self.fFilterBar.automaticallyAdjustsSize = NO;
-#endif
+        TRTitlebarAccessoryUseFixedViewSize(self.fFilterBar);
 
         [self.fWindow addTitlebarAccessoryViewController:self.fFilterBar];
     }

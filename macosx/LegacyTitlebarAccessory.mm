@@ -8,6 +8,29 @@
 
 #import <objc/runtime.h>
 
+void TRTitlebarAccessoryUseFixedViewSize(NSTitlebarAccessoryViewController* controller)
+{
+    if (controller == nil)
+    {
+        return;
+    }
+
+#if !TR_MACOS_SDK_BEFORE_10_10
+    NSView* view = controller.view;
+    if (view != nil)
+    {
+        controller.preferredContentSize = NSMakeSize(0.0, NSHeight(view.frame));
+    }
+#endif
+
+#if !TR_MACOS_SDK_BEFORE_11_0
+    if (@available(macOS 11.0, *))
+    {
+        controller.automaticallyAdjustsSize = NO;
+    }
+#endif
+}
+
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_10
 static char TRLegacyTitlebarAccessoryControllersKey;
 

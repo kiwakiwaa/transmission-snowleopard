@@ -510,7 +510,7 @@ foreach(IMG IN LISTS IMAGESETS)
         ${IMG_DIR}/Contents.json)
 endforeach()
 
-if(TR_MACOS_DEPLOYMENT_BEFORE_10_14)
+if(TR_MACOS_DEPLOYMENT_BEFORE_11_0)
     foreach(IMG IN LISTS LEGACY_ICON_IMAGESETS)
         set(IMG_DIR "${LEGACY_ICON_ASSETS_DIR}/${IMG}.imageset")
         list(APPEND LEGACY_ICON_ASSETS
@@ -543,7 +543,7 @@ if(TR_MACOS_TARGET_BEFORE_11_0)
                 "${CMAKE_CURRENT_SOURCE_DIR}/${IMAGE_ASSETS_DIR}/${IMG}.imageset/${IMG}@2x.png"
                 "${CMAKE_CURRENT_BINARY_DIR}/${IMG}@2x.png")
     endforeach()
-    if(TR_MACOS_DEPLOYMENT_BEFORE_10_14)
+    if(TR_MACOS_DEPLOYMENT_BEFORE_11_0)
         foreach(IMG IN LISTS LEGACY_ICON_IMAGESETS)
             list(APPEND COMPILED_IMAGE_ASSETS
                 "${CMAKE_CURRENT_BINARY_DIR}/${IMG}.png"
