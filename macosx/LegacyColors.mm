@@ -89,7 +89,7 @@ NSColor* TRSystemGrayColor(void)
 
 NSColor* TRSystemTealColor(void)
 {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_12 && !TR_MACOS_SDK_BEFORE_10_12
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_12 && !TR_MACOS_SDK_BEFORE_10_15
     return [NSColor systemTealColor];
 #else
     return [NSColor cyanColor];
