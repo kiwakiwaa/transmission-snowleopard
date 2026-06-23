@@ -173,6 +173,8 @@ target_sources(${TR_NAME}-mac
         ButtonToolbarItem.mm
         CocoaCompatibility.h
         CocoaCompatibility.mm
+        LegacyRegularExpression.h
+        LegacyRegularExpression.mm
         ColorTextField.h
         ColorTextField.mm
         ObjectiveCCompatibility.h
@@ -789,6 +791,10 @@ target_link_libraries(${TR_NAME}-mac
         "-framework Foundation"
         "-framework Quartz"
         "-framework Security")
+
+if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
+    target_link_libraries(${TR_NAME}-mac PRIVATE "-licucore")
+endif()
 
 if(NOT TR_MACOS_TARGET_BEFORE_11_0)
     target_link_libraries(${TR_NAME}-mac PRIVATE "-weak_framework UniformTypeIdentifiers")

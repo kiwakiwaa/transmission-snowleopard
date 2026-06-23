@@ -70,7 +70,24 @@ target_sources(libtransmission-test
 if(APPLE)
     target_sources(libtransmission-test
         PRIVATE
-            utils-apple-test.mm)
+            utils-apple-test.mm
+            legacy-regular-expression-test.mm
+            ../../macosx/LegacyRegularExpression.h
+            ../../macosx/LegacyRegularExpression.mm)
+
+    target_include_directories(libtransmission-test
+        PRIVATE
+            ../../macosx)
+
+    target_link_libraries(libtransmission-test
+        PRIVATE
+            "-framework Foundation")
+
+    if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
+        target_link_libraries(libtransmission-test
+            PRIVATE
+                "-licucore")
+    endif()
 endif()
 
 set_property(

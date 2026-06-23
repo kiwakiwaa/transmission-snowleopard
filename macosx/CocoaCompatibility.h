@@ -7,6 +7,7 @@
 #include <libtransmission/macos-version.h>
 
 #import "ObjectiveCCompatibility.h"
+#import "LegacyRegularExpression.h"
 
 typedef void (^TRTimerBlock)(NSTimer* timer);
 
@@ -146,23 +147,6 @@ static inline uint32_t arc4random_uniform(uint32_t upper_bound)
 @property(nonatomic) BOOL restorable;
 @property(nonatomic, assign) Class restorationClass;
 - (NSRect)convertRectToScreen:(NSRect)rect;
-@end
-
-typedef NSUInteger NSRegularExpressionOptions;
-typedef NSUInteger NSMatchingOptions;
-
-@interface NSRegularExpression : NSObject
-{
-@protected
-    BOOL fMatchesLinks;
-}
-+ (instancetype)regularExpressionWithPattern:(NSString*)pattern options:(NSRegularExpressionOptions)options error:(NSError**)error;
-- (NSArray*)matchesInString:(NSString*)string options:(NSMatchingOptions)options range:(NSRange)range;
-- (NSTextCheckingResult*)firstMatchInString:(NSString*)string options:(NSMatchingOptions)options range:(NSRange)range;
-@end
-
-@interface NSDataDetector : NSRegularExpression
-+ (instancetype)dataDetectorWithTypes:(uint64_t)checkingTypes error:(NSError**)error;
 @end
 
 #ifndef NSImageNameShareTemplate
