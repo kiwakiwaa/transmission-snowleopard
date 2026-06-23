@@ -287,6 +287,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
     if (NSWidth(self.view.window.frame) >= self.fHorizLayoutWidth + 1)
     {
         self.fActivityStackView.orientation = NSUserInterfaceLayoutOrientationHorizontal;
+        self.fActivityStackView.alignment = NSLayoutAttributeTop;
 
         //add some padding between views in horizontal layout
         self.fActivityStackView.spacing = kStackViewHorizontalSpacing;
@@ -295,6 +296,7 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
     else
     {
         self.fActivityStackView.orientation = NSUserInterfaceLayoutOrientationVertical;
+        self.fActivityStackView.alignment = NSLayoutAttributeLeading;
         self.fActivityStackView.spacing = kStackViewVerticalSpacing;
         self.fCurrentHeight = self.fVertLayoutHeight;
     }
