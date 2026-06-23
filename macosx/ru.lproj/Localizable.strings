@@ -1170,3 +1170,173 @@
 
 /* Groups preferences -> announced client identity */
 "Real (%@)" = "Настоящий (%@)";
+
+/* Batch rename */
+"%lu rows ready to rename." = "%lu строк готовы к переименованию.";
+
+/* Batch rename */
+"%@ Rollback also failed: %@" = "%@ Откат также не удался: %@";
+
+/* Batch rename */
+"%@ Temporary case-only rollback also failed: %@" = "%@ Временный откат изменения регистра также не удался: %@";
+
+/* Batch rename */
+"A selected folder already contains this item." = "Выбранная папка уже содержит этот элемент.";
+
+/* Batch rename */
+"A sibling item already has this name." = "Элемент в той же папке уже имеет это имя.";
+
+/* Batch rename */
+"Another selected item still has this name." = "Другой выбранный элемент всё ещё имеет это имя.";
+
+/* Batch rename */
+"Append" = "Добавить в конец";
+
+/* Batch rename */
+"Batch Rename" = "Пакетное переименование";
+
+/* Batch rename */
+"Batch rename failed." = "Пакетное переименование не удалось.";
+
+/* Batch rename */
+"Change Case" = "Изменить регистр";
+
+/* Batch rename */
+"Character Removal" = "Удаление символов";
+
+/* Batch rename */
+"Character count must be at least 1." = "Количество символов должно быть не меньше 1.";
+
+/* Batch rename */
+"Character position must be at least 1." = "Позиция символа должна быть не меньше 1.";
+
+/* Batch rename */
+"Count:" = "Количество:";
+
+
+/* Batch rename */
+"Destination name contains a path separator." = "Имя назначения содержит разделитель пути.";
+
+/* Batch rename */
+"Destination name is empty." = "Имя назначения пусто.";
+
+/* Batch rename */
+"Destination name is reserved." = "Имя назначения зарезервировано.";
+
+/* Batch rename */
+"Digit count must be at least 1." = "Количество цифр должно быть не меньше 1.";
+
+/* Batch rename */
+"Digits:" = "Цифры:";
+
+/* Batch rename */
+"Expected \"%@\" but found \"%@\"." = "Ожидалось \"%@\", но найдено \"%@\".";
+
+/* Batch rename */
+"First" = "Первое";
+
+/* Batch rename */
+"Format:" = "Формат:";
+
+/* Batch rename */
+"From End" = "С конца";
+
+/* Batch rename */
+"From Start" = "С начала";
+
+/* Batch rename */
+"Last" = "Последнее";
+
+/* Batch rename */
+"Location:" = "Расположение:";
+
+/* Batch rename */
+"Mode:" = "Режим:";
+
+/* Batch rename */
+"New Text" = "Новый текст";
+
+
+/* Batch rename */
+"Original Filename" = "Исходное имя файла";
+
+/* Batch rename */
+"Original Text" = "Исходный текст";
+
+
+/* Batch rename */
+"Pattern:" = "Шаблон:";
+
+/* Batch rename */
+"Position:" = "Позиция:";
+
+/* Batch rename */
+"Prepend" = "Добавить в начало";
+
+/* Batch rename */
+"Regular Expression" = "Регулярное выражение";
+
+
+/* Batch rename */
+"Renamed Filename" = "Новое имя файла";
+
+/* Batch rename */
+"Renaming..." = "Переименование...";
+
+/* Batch rename */
+"Replace" = "Заменить";
+
+/* Batch rename */
+"Replace All" = "Заменить все";
+
+/* Batch rename */
+"Replace First" = "Заменить первое";
+
+/* Batch rename */
+"Replace Last" = "Заменить последнее";
+
+/* Batch rename */
+"Replacement:" = "Замена:";
+
+/* Batch rename */
+"Rule:" = "Правило:";
+
+
+/* Batch rename */
+"Search:" = "Поиск:";
+
+/* Batch rename */
+"Sequence" = "Последовательность";
+
+
+/* Batch rename */
+"Start:" = "Начало:";
+
+/* Batch rename */
+"Status" = "Статус";
+
+
+/* Batch rename */
+"Text" = "Текст";
+
+/* Batch rename */
+"Text:" = "Текст:";
+
+/* Batch rename */
+"The rename failed." = "Переименование не удалось.";
+
+
+/* Batch rename */
+"Title Case" = "Как В Заголовке";
+
+/* Batch rename */
+"UPPERCASE" = "ВЕРХНИЙ РЕГИСТР";
+
+/* Batch rename */
+"lowercase" = "нижний регистр";
+
+/* Batch rename */
+"Range" = "Диапазон";
+
+/* Batch rename */
+"Uncheck or edit highlighted rows." = "Снимите отметку или измените выделенные строки.";

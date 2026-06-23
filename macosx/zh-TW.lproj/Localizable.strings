@@ -1170,3 +1170,173 @@
 
 /* Groups preferences -> announced client identity */
 "Real (%@)" = "真實 (%@)";
+
+/* Batch rename */
+"%lu rows ready to rename." = "%lu 列已準備好重新命名。";
+
+/* Batch rename */
+"%@ Rollback also failed: %@" = "%@ 回復也失敗：%@";
+
+/* Batch rename */
+"%@ Temporary case-only rollback also failed: %@" = "%@ 暫時大小寫回復也失敗：%@";
+
+/* Batch rename */
+"A selected folder already contains this item." = "所選資料夾已包含此項目。";
+
+/* Batch rename */
+"A sibling item already has this name." = "同一資料夾中的項目已使用此名稱。";
+
+/* Batch rename */
+"Another selected item still has this name." = "另一個所選項目仍使用此名稱。";
+
+/* Batch rename */
+"Append" = "附加";
+
+/* Batch rename */
+"Batch Rename" = "批次重新命名";
+
+/* Batch rename */
+"Batch rename failed." = "批次重新命名失敗。";
+
+/* Batch rename */
+"Change Case" = "變更大小寫";
+
+/* Batch rename */
+"Character Removal" = "移除字元";
+
+/* Batch rename */
+"Character count must be at least 1." = "字元數必須至少為 1。";
+
+/* Batch rename */
+"Character position must be at least 1." = "字元位置必須至少為 1。";
+
+/* Batch rename */
+"Count:" = "數量：";
+
+
+/* Batch rename */
+"Destination name contains a path separator." = "目標名稱包含路徑分隔符號。";
+
+/* Batch rename */
+"Destination name is empty." = "目標名稱為空。";
+
+/* Batch rename */
+"Destination name is reserved." = "目標名稱為保留名稱。";
+
+/* Batch rename */
+"Digit count must be at least 1." = "位數必須至少為 1。";
+
+/* Batch rename */
+"Digits:" = "位數：";
+
+/* Batch rename */
+"Expected \"%@\" but found \"%@\"." = "預期為「%@」，但找到「%@」。";
+
+/* Batch rename */
+"First" = "第一個";
+
+/* Batch rename */
+"Format:" = "格式：";
+
+/* Batch rename */
+"From End" = "從結尾";
+
+/* Batch rename */
+"From Start" = "從開頭";
+
+/* Batch rename */
+"Last" = "最後一個";
+
+/* Batch rename */
+"Location:" = "位置：";
+
+/* Batch rename */
+"Mode:" = "模式：";
+
+/* Batch rename */
+"New Text" = "新文字";
+
+
+/* Batch rename */
+"Original Filename" = "原始檔名";
+
+/* Batch rename */
+"Original Text" = "原始文字";
+
+
+/* Batch rename */
+"Pattern:" = "樣式：";
+
+/* Batch rename */
+"Position:" = "位置：";
+
+/* Batch rename */
+"Prepend" = "前置";
+
+/* Batch rename */
+"Regular Expression" = "正規表示式";
+
+
+/* Batch rename */
+"Renamed Filename" = "重新命名後的檔名";
+
+/* Batch rename */
+"Renaming..." = "正在重新命名...";
+
+/* Batch rename */
+"Replace" = "取代";
+
+/* Batch rename */
+"Replace All" = "全部取代";
+
+/* Batch rename */
+"Replace First" = "取代第一個";
+
+/* Batch rename */
+"Replace Last" = "取代最後一個";
+
+/* Batch rename */
+"Replacement:" = "取代為：";
+
+/* Batch rename */
+"Rule:" = "規則：";
+
+
+/* Batch rename */
+"Search:" = "搜尋：";
+
+/* Batch rename */
+"Sequence" = "序列";
+
+
+/* Batch rename */
+"Start:" = "開始：";
+
+/* Batch rename */
+"Status" = "狀態";
+
+
+/* Batch rename */
+"Text" = "文字";
+
+/* Batch rename */
+"Text:" = "文字：";
+
+/* Batch rename */
+"The rename failed." = "重新命名失敗。";
+
+
+/* Batch rename */
+"Title Case" = "標題大小寫";
+
+/* Batch rename */
+"UPPERCASE" = "大寫";
+
+/* Batch rename */
+"lowercase" = "小寫";
+
+/* Batch rename */
+"Range" = "範圍";
+
+/* Batch rename */
+"Uncheck or edit highlighted rows." = "取消勾選或編輯醒目提示的列。";

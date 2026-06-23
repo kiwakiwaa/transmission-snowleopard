@@ -1170,3 +1170,173 @@
 
 /* Groups preferences -> announced client identity */
 "Real (%@)" = "Faktisk (%@)";
+
+/* Batch rename */
+"%lu rows ready to rename." = "%lu rækker klar til omdøbning.";
+
+/* Batch rename */
+"%@ Rollback also failed: %@" = "%@ Tilbagerulning mislykkedes også: %@";
+
+/* Batch rename */
+"%@ Temporary case-only rollback also failed: %@" = "%@ Midlertidig tilbagerulning af kun store/små bogstaver mislykkedes også: %@";
+
+/* Batch rename */
+"A selected folder already contains this item." = "En valgt mappe indeholder allerede dette emne.";
+
+/* Batch rename */
+"A sibling item already has this name." = "Et emne på samme niveau har allerede dette navn.";
+
+/* Batch rename */
+"Another selected item still has this name." = "Et andet valgt emne har stadig dette navn.";
+
+/* Batch rename */
+"Append" = "Tilføj til slutning";
+
+/* Batch rename */
+"Batch Rename" = "Omdøb flere";
+
+/* Batch rename */
+"Batch rename failed." = "Omdøbning af flere mislykkedes.";
+
+/* Batch rename */
+"Change Case" = "Skift store/små bogstaver";
+
+/* Batch rename */
+"Character Removal" = "Fjern tegn";
+
+/* Batch rename */
+"Character count must be at least 1." = "Antal tegn skal være mindst 1.";
+
+/* Batch rename */
+"Character position must be at least 1." = "Tegnposition skal være mindst 1.";
+
+/* Batch rename */
+"Count:" = "Antal:";
+
+
+/* Batch rename */
+"Destination name contains a path separator." = "Destinationsnavnet indeholder en stiadskiller.";
+
+/* Batch rename */
+"Destination name is empty." = "Destinationsnavnet er tomt.";
+
+/* Batch rename */
+"Destination name is reserved." = "Destinationsnavnet er reserveret.";
+
+/* Batch rename */
+"Digit count must be at least 1." = "Antal cifre skal være mindst 1.";
+
+/* Batch rename */
+"Digits:" = "Cifre:";
+
+/* Batch rename */
+"Expected \"%@\" but found \"%@\"." = "Forventede \"%@\", men fandt \"%@\".";
+
+/* Batch rename */
+"First" = "Første";
+
+/* Batch rename */
+"Format:" = "Format:";
+
+/* Batch rename */
+"From End" = "Fra slutning";
+
+/* Batch rename */
+"From Start" = "Fra start";
+
+/* Batch rename */
+"Last" = "Sidste";
+
+/* Batch rename */
+"Location:" = "Placering:";
+
+/* Batch rename */
+"Mode:" = "Tilstand:";
+
+/* Batch rename */
+"New Text" = "Ny tekst";
+
+
+/* Batch rename */
+"Original Filename" = "Oprindeligt filnavn";
+
+/* Batch rename */
+"Original Text" = "Oprindelig tekst";
+
+
+/* Batch rename */
+"Pattern:" = "Mønster:";
+
+/* Batch rename */
+"Position:" = "Position:";
+
+/* Batch rename */
+"Prepend" = "Tilføj til begyndelse";
+
+/* Batch rename */
+"Regular Expression" = "Regulært udtryk";
+
+
+/* Batch rename */
+"Renamed Filename" = "Omdøbt filnavn";
+
+/* Batch rename */
+"Renaming..." = "Omdøber...";
+
+/* Batch rename */
+"Replace" = "Erstat";
+
+/* Batch rename */
+"Replace All" = "Erstat alle";
+
+/* Batch rename */
+"Replace First" = "Erstat første";
+
+/* Batch rename */
+"Replace Last" = "Erstat sidste";
+
+/* Batch rename */
+"Replacement:" = "Erstatning:";
+
+/* Batch rename */
+"Rule:" = "Regel:";
+
+
+/* Batch rename */
+"Search:" = "Søg:";
+
+/* Batch rename */
+"Sequence" = "Sekvens";
+
+
+/* Batch rename */
+"Start:" = "Start:";
+
+/* Batch rename */
+"Status" = "Status";
+
+
+/* Batch rename */
+"Text" = "Tekst";
+
+/* Batch rename */
+"Text:" = "Tekst:";
+
+/* Batch rename */
+"The rename failed." = "Omdøbningen mislykkedes.";
+
+
+/* Batch rename */
+"Title Case" = "Titelbogstaver";
+
+/* Batch rename */
+"UPPERCASE" = "STORE BOGSTAVER";
+
+/* Batch rename */
+"lowercase" = "små bogstaver";
+
+/* Batch rename */
+"Range" = "Interval";
+
+/* Batch rename */
+"Uncheck or edit highlighted rows." = "Fjern markering eller rediger fremhævede rækker.";

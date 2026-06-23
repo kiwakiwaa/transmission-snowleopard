@@ -1170,3 +1170,173 @@
 
 /* Groups preferences -> announced client identity */
 "Real (%@)" = "Справжній (%@)";
+
+/* Batch rename */
+"%lu rows ready to rename." = "%lu рядків готові до перейменування.";
+
+/* Batch rename */
+"%@ Rollback also failed: %@" = "%@ Відкат також не вдався: %@";
+
+/* Batch rename */
+"%@ Temporary case-only rollback also failed: %@" = "%@ Тимчасовий відкат зміни регістру також не вдався: %@";
+
+/* Batch rename */
+"A selected folder already contains this item." = "Вибрана тека вже містить цей елемент.";
+
+/* Batch rename */
+"A sibling item already has this name." = "Елемент у тій самій теці вже має цю назву.";
+
+/* Batch rename */
+"Another selected item still has this name." = "Інший вибраний елемент досі має цю назву.";
+
+/* Batch rename */
+"Append" = "Додати в кінець";
+
+/* Batch rename */
+"Batch Rename" = "Пакетне перейменування";
+
+/* Batch rename */
+"Batch rename failed." = "Пакетне перейменування не вдалося.";
+
+/* Batch rename */
+"Change Case" = "Змінити регістр";
+
+/* Batch rename */
+"Character Removal" = "Видалення символів";
+
+/* Batch rename */
+"Character count must be at least 1." = "Кількість символів має бути щонайменше 1.";
+
+/* Batch rename */
+"Character position must be at least 1." = "Позиція символу має бути щонайменше 1.";
+
+/* Batch rename */
+"Count:" = "Кількість:";
+
+
+/* Batch rename */
+"Destination name contains a path separator." = "Назва призначення містить роздільник шляху.";
+
+/* Batch rename */
+"Destination name is empty." = "Назва призначення порожня.";
+
+/* Batch rename */
+"Destination name is reserved." = "Назва призначення зарезервована.";
+
+/* Batch rename */
+"Digit count must be at least 1." = "Кількість цифр має бути щонайменше 1.";
+
+/* Batch rename */
+"Digits:" = "Цифри:";
+
+/* Batch rename */
+"Expected \"%@\" but found \"%@\"." = "Очікувалося \"%@\", але знайдено \"%@\".";
+
+/* Batch rename */
+"First" = "Перше";
+
+/* Batch rename */
+"Format:" = "Формат:";
+
+/* Batch rename */
+"From End" = "З кінця";
+
+/* Batch rename */
+"From Start" = "З початку";
+
+/* Batch rename */
+"Last" = "Останнє";
+
+/* Batch rename */
+"Location:" = "Розташування:";
+
+/* Batch rename */
+"Mode:" = "Режим:";
+
+/* Batch rename */
+"New Text" = "Новий текст";
+
+
+/* Batch rename */
+"Original Filename" = "Початкова назва файлу";
+
+/* Batch rename */
+"Original Text" = "Початковий текст";
+
+
+/* Batch rename */
+"Pattern:" = "Шаблон:";
+
+/* Batch rename */
+"Position:" = "Позиція:";
+
+/* Batch rename */
+"Prepend" = "Додати на початок";
+
+/* Batch rename */
+"Regular Expression" = "Регулярний вираз";
+
+
+/* Batch rename */
+"Renamed Filename" = "Нова назва файлу";
+
+/* Batch rename */
+"Renaming..." = "Перейменування...";
+
+/* Batch rename */
+"Replace" = "Замінити";
+
+/* Batch rename */
+"Replace All" = "Замінити всі";
+
+/* Batch rename */
+"Replace First" = "Замінити перше";
+
+/* Batch rename */
+"Replace Last" = "Замінити останнє";
+
+/* Batch rename */
+"Replacement:" = "Заміна:";
+
+/* Batch rename */
+"Rule:" = "Правило:";
+
+
+/* Batch rename */
+"Search:" = "Пошук:";
+
+/* Batch rename */
+"Sequence" = "Послідовність";
+
+
+/* Batch rename */
+"Start:" = "Початок:";
+
+/* Batch rename */
+"Status" = "Стан";
+
+
+/* Batch rename */
+"Text" = "Текст";
+
+/* Batch rename */
+"Text:" = "Текст:";
+
+/* Batch rename */
+"The rename failed." = "Перейменування не вдалося.";
+
+
+/* Batch rename */
+"Title Case" = "Як У Заголовку";
+
+/* Batch rename */
+"UPPERCASE" = "ВЕЛИКІ ЛІТЕРИ";
+
+/* Batch rename */
+"lowercase" = "малі літери";
+
+/* Batch rename */
+"Range" = "Діапазон";
+
+/* Batch rename */
+"Uncheck or edit highlighted rows." = "Зніміть позначку або відредагуйте виділені рядки.";

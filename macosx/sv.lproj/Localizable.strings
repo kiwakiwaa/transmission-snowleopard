@@ -1170,3 +1170,173 @@
 
 /* Groups preferences -> announced client identity */
 "Real (%@)" = "Verklig (%@)";
+
+/* Batch rename */
+"%lu rows ready to rename." = "%lu rader redo att byta namn.";
+
+/* Batch rename */
+"%@ Rollback also failed: %@" = "%@ Återställningen misslyckades också: %@";
+
+/* Batch rename */
+"%@ Temporary case-only rollback also failed: %@" = "%@ Tillfällig återställning av endast skiftläge misslyckades också: %@";
+
+/* Batch rename */
+"A selected folder already contains this item." = "En vald mapp innehåller redan det här objektet.";
+
+/* Batch rename */
+"A sibling item already has this name." = "Ett objekt i samma mapp har redan det här namnet.";
+
+/* Batch rename */
+"Another selected item still has this name." = "Ett annat valt objekt har fortfarande det här namnet.";
+
+/* Batch rename */
+"Append" = "Lägg till på slutet";
+
+/* Batch rename */
+"Batch Rename" = "Byt namn på flera";
+
+/* Batch rename */
+"Batch rename failed." = "Namnbyte av flera misslyckades.";
+
+/* Batch rename */
+"Change Case" = "Ändra skiftläge";
+
+/* Batch rename */
+"Character Removal" = "Ta bort tecken";
+
+/* Batch rename */
+"Character count must be at least 1." = "Antal tecken måste vara minst 1.";
+
+/* Batch rename */
+"Character position must be at least 1." = "Teckenpositionen måste vara minst 1.";
+
+/* Batch rename */
+"Count:" = "Antal:";
+
+
+/* Batch rename */
+"Destination name contains a path separator." = "Målnamnet innehåller en sökvägsavskiljare.";
+
+/* Batch rename */
+"Destination name is empty." = "Målnamnet är tomt.";
+
+/* Batch rename */
+"Destination name is reserved." = "Målnamnet är reserverat.";
+
+/* Batch rename */
+"Digit count must be at least 1." = "Antal siffror måste vara minst 1.";
+
+/* Batch rename */
+"Digits:" = "Siffror:";
+
+/* Batch rename */
+"Expected \"%@\" but found \"%@\"." = "Förväntade \"%@\" men hittade \"%@\".";
+
+/* Batch rename */
+"First" = "Första";
+
+/* Batch rename */
+"Format:" = "Format:";
+
+/* Batch rename */
+"From End" = "Från slutet";
+
+/* Batch rename */
+"From Start" = "Från början";
+
+/* Batch rename */
+"Last" = "Sista";
+
+/* Batch rename */
+"Location:" = "Plats:";
+
+/* Batch rename */
+"Mode:" = "Läge:";
+
+/* Batch rename */
+"New Text" = "Ny text";
+
+
+/* Batch rename */
+"Original Filename" = "Ursprungligt filnamn";
+
+/* Batch rename */
+"Original Text" = "Ursprunglig text";
+
+
+/* Batch rename */
+"Pattern:" = "Mönster:";
+
+/* Batch rename */
+"Position:" = "Position:";
+
+/* Batch rename */
+"Prepend" = "Lägg till i början";
+
+/* Batch rename */
+"Regular Expression" = "Reguljärt uttryck";
+
+
+/* Batch rename */
+"Renamed Filename" = "Nytt filnamn";
+
+/* Batch rename */
+"Renaming..." = "Byter namn...";
+
+/* Batch rename */
+"Replace" = "Ersätt";
+
+/* Batch rename */
+"Replace All" = "Ersätt alla";
+
+/* Batch rename */
+"Replace First" = "Ersätt första";
+
+/* Batch rename */
+"Replace Last" = "Ersätt sista";
+
+/* Batch rename */
+"Replacement:" = "Ersättning:";
+
+/* Batch rename */
+"Rule:" = "Regel:";
+
+
+/* Batch rename */
+"Search:" = "Sök:";
+
+/* Batch rename */
+"Sequence" = "Sekvens";
+
+
+/* Batch rename */
+"Start:" = "Start:";
+
+/* Batch rename */
+"Status" = "Status";
+
+
+/* Batch rename */
+"Text" = "Text";
+
+/* Batch rename */
+"Text:" = "Text:";
+
+/* Batch rename */
+"The rename failed." = "Namnbytet misslyckades.";
+
+
+/* Batch rename */
+"Title Case" = "Titelstil";
+
+/* Batch rename */
+"UPPERCASE" = "VERSALER";
+
+/* Batch rename */
+"lowercase" = "gemener";
+
+/* Batch rename */
+"Range" = "Intervall";
+
+/* Batch rename */
+"Uncheck or edit highlighted rows." = "Avmarkera eller redigera markerade rader.";

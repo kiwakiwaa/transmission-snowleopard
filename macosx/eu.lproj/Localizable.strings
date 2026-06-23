@@ -1170,3 +1170,173 @@
 
 /* Groups preferences -> announced client identity */
 "Real (%@)" = "Benetakoa (%@)";
+
+/* Batch rename */
+"%lu rows ready to rename." = "%lu errenkada prest daude izena aldatzeko.";
+
+/* Batch rename */
+"%@ Rollback also failed: %@" = "%@ Leheneratzeak ere huts egin du: %@";
+
+/* Batch rename */
+"%@ Temporary case-only rollback also failed: %@" = "%@ Maiuskula/minuskulen aldi baterako leheneratzeak ere huts egin du: %@";
+
+/* Batch rename */
+"A selected folder already contains this item." = "Hautatutako karpeta batek elementu hau badu dagoeneko.";
+
+/* Batch rename */
+"A sibling item already has this name." = "Maila bereko elementu batek izen hau du dagoeneko.";
+
+/* Batch rename */
+"Another selected item still has this name." = "Hautatutako beste elementu batek izen hau du oraindik.";
+
+/* Batch rename */
+"Append" = "Gehitu amaieran";
+
+/* Batch rename */
+"Batch Rename" = "Aldatu izenak multzoka";
+
+/* Batch rename */
+"Batch rename failed." = "Izenak multzoka aldatzeak huts egin du.";
+
+/* Batch rename */
+"Change Case" = "Aldatu maiuskulak/minuskulak";
+
+/* Batch rename */
+"Character Removal" = "Kendu karaktereak";
+
+/* Batch rename */
+"Character count must be at least 1." = "Karaktere kopuruak gutxienez 1 izan behar du.";
+
+/* Batch rename */
+"Character position must be at least 1." = "Karaktere-posizioak gutxienez 1 izan behar du.";
+
+/* Batch rename */
+"Count:" = "Kopurua:";
+
+
+/* Batch rename */
+"Destination name contains a path separator." = "Helburuko izenak bide-banatzaile bat dauka.";
+
+/* Batch rename */
+"Destination name is empty." = "Helburuko izena hutsik dago.";
+
+/* Batch rename */
+"Destination name is reserved." = "Helburuko izena erreserbatuta dago.";
+
+/* Batch rename */
+"Digit count must be at least 1." = "Digitu kopuruak gutxienez 1 izan behar du.";
+
+/* Batch rename */
+"Digits:" = "Digituak:";
+
+/* Batch rename */
+"Expected \"%@\" but found \"%@\"." = "\"%@\" espero zen, baina \"%@\" aurkitu da.";
+
+/* Batch rename */
+"First" = "Lehena";
+
+/* Batch rename */
+"Format:" = "Formatua:";
+
+/* Batch rename */
+"From End" = "Amaieratik";
+
+/* Batch rename */
+"From Start" = "Hasieratik";
+
+/* Batch rename */
+"Last" = "Azkena";
+
+/* Batch rename */
+"Location:" = "Kokalekua:";
+
+/* Batch rename */
+"Mode:" = "Modua:";
+
+/* Batch rename */
+"New Text" = "Testu berria";
+
+
+/* Batch rename */
+"Original Filename" = "Jatorrizko fitxategi-izena";
+
+/* Batch rename */
+"Original Text" = "Jatorrizko testua";
+
+
+/* Batch rename */
+"Pattern:" = "Eredua:";
+
+/* Batch rename */
+"Position:" = "Posizioa:";
+
+/* Batch rename */
+"Prepend" = "Gehitu hasieran";
+
+/* Batch rename */
+"Regular Expression" = "Adierazpen erregularra";
+
+
+/* Batch rename */
+"Renamed Filename" = "Aldatutako fitxategi-izena";
+
+/* Batch rename */
+"Renaming..." = "Izena aldatzen...";
+
+/* Batch rename */
+"Replace" = "Ordeztu";
+
+/* Batch rename */
+"Replace All" = "Ordeztu dena";
+
+/* Batch rename */
+"Replace First" = "Ordeztu lehena";
+
+/* Batch rename */
+"Replace Last" = "Ordeztu azkena";
+
+/* Batch rename */
+"Replacement:" = "Ordezkoa:";
+
+/* Batch rename */
+"Rule:" = "Araua:";
+
+
+/* Batch rename */
+"Search:" = "Bilatu:";
+
+/* Batch rename */
+"Sequence" = "Sekuentzia";
+
+
+/* Batch rename */
+"Start:" = "Hasiera:";
+
+/* Batch rename */
+"Status" = "Egoera";
+
+
+/* Batch rename */
+"Text" = "Testua";
+
+/* Batch rename */
+"Text:" = "Testua:";
+
+/* Batch rename */
+"The rename failed." = "Izena aldatzeak huts egin du.";
+
+
+/* Batch rename */
+"Title Case" = "Izenburu-formatua";
+
+/* Batch rename */
+"UPPERCASE" = "MAIUSKULAK";
+
+/* Batch rename */
+"lowercase" = "minuskulak";
+
+/* Batch rename */
+"Range" = "Barrutia";
+
+/* Batch rename */
+"Uncheck or edit highlighted rows." = "Desmarkatu edo editatu nabarmendutako errenkadak.";

@@ -196,6 +196,8 @@ target_sources(${TR_NAME}-mac
         FileBatchRenameItem.mm
         FileBatchRenameSession.h
         FileBatchRenameSession.mm
+        FileBatchRenameSheetController.h
+        FileBatchRenameSheetController.mm
         FileListNode.h
         FileListNode.mm
         FileCheckCellView.h
@@ -406,6 +408,7 @@ endif()
 set(XIB_FILES
     AboutWindow.xib
     BlocklistStatusWindow.xib
+    FileBatchRenameSheetController.xib
     FileRenameSheetController.xib
     InfoFileView.xib
     InfoPeersView.xib
@@ -726,8 +729,14 @@ if(TR_MACOS_XIB_COMPAT_LEGACY_IBTOOL)
         endforeach()
     endforeach()
 else()
+    set(TR_MACOS_XIB_SOURCE_FILES ${XIB_FILES})
+    if(TR_MACOS_XIB_COMPAT_10_8 OR TR_MACOS_USES_MAVERICKS_STACK_XIBS)
+        list(REMOVE_ITEM TR_MACOS_XIB_SOURCE_FILES
+            FileBatchRenameSheetController.xib)
+    endif()
+
     tr_target_xib_files(${TR_NAME}-mac
-        ${XIB_FILES}
+        ${TR_MACOS_XIB_SOURCE_FILES}
         ${BASE_XIB_SOURCE_FILES})
 endif()
 
@@ -735,6 +744,10 @@ if(TR_MACOS_USES_MAVERICKS_STACK_XIBS)
     # Xcode 6.x's ibtool cannot compile these modern stack-view XIBs, but
     # OS X 10.9 and 10.10 have NSStackView. Use XIB copies that decode as
     # MavericksStackView and then rebuild native NSStackView state at runtime.
+    tr_wrap_xib(${TR_NAME}-mac
+        MavericksXibs/FileBatchRenameSheetController.xib
+        "${CMAKE_CURRENT_BINARY_DIR}/FileBatchRenameSheetController.nib"
+        "")
     tr_wrap_xib(${TR_NAME}-mac
         MavericksXibs/FilterBar.xib
         "${CMAKE_CURRENT_BINARY_DIR}/FilterBar.nib"
@@ -758,6 +771,10 @@ if(TR_MACOS_USES_MAVERICKS_STACK_XIBS)
 endif()
 
 if(TR_MACOS_XIB_COMPAT_10_8)
+    tr_wrap_xib(${TR_NAME}-mac
+        MountainLionXibs/FileBatchRenameSheetController.xib
+        "${CMAKE_CURRENT_BINARY_DIR}/FileBatchRenameSheetController.nib"
+        "")
     tr_wrap_xib(${TR_NAME}-mac
         MountainLionXibs/FilterBar.xib
         "${CMAKE_CURRENT_BINARY_DIR}/FilterBar.nib"

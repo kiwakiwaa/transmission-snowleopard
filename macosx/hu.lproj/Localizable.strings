@@ -1170,3 +1170,173 @@
 
 /* Groups preferences -> announced client identity */
 "Real (%@)" = "Valódi (%@)";
+
+/* Batch rename */
+"%lu rows ready to rename." = "%lu sor készen áll az átnevezésre.";
+
+/* Batch rename */
+"%@ Rollback also failed: %@" = "%@ A visszaállítás is sikertelen: %@";
+
+/* Batch rename */
+"%@ Temporary case-only rollback also failed: %@" = "%@ Az ideiglenes kis-/nagybetűs visszaállítás is sikertelen: %@";
+
+/* Batch rename */
+"A selected folder already contains this item." = "Egy kijelölt mappa már tartalmazza ezt az elemet.";
+
+/* Batch rename */
+"A sibling item already has this name." = "Egy azonos szintű elemnek már ez a neve.";
+
+/* Batch rename */
+"Another selected item still has this name." = "Egy másik kijelölt elemnek még mindig ez a neve.";
+
+/* Batch rename */
+"Append" = "Hozzáfűzés";
+
+/* Batch rename */
+"Batch Rename" = "Kötegelt átnevezés";
+
+/* Batch rename */
+"Batch rename failed." = "A kötegelt átnevezés sikertelen.";
+
+/* Batch rename */
+"Change Case" = "Kis-/nagybetű módosítása";
+
+/* Batch rename */
+"Character Removal" = "Karakterek eltávolítása";
+
+/* Batch rename */
+"Character count must be at least 1." = "A karakterek számának legalább 1-nek kell lennie.";
+
+/* Batch rename */
+"Character position must be at least 1." = "A karakterpozíciónak legalább 1-nek kell lennie.";
+
+/* Batch rename */
+"Count:" = "Darab:";
+
+
+/* Batch rename */
+"Destination name contains a path separator." = "A célnév útvonal-elválasztót tartalmaz.";
+
+/* Batch rename */
+"Destination name is empty." = "A célnév üres.";
+
+/* Batch rename */
+"Destination name is reserved." = "A célnév fenntartott.";
+
+/* Batch rename */
+"Digit count must be at least 1." = "A számjegyek számának legalább 1-nek kell lennie.";
+
+/* Batch rename */
+"Digits:" = "Számjegyek:";
+
+/* Batch rename */
+"Expected \"%@\" but found \"%@\"." = "\"%@\" volt várható, de \"%@\" található.";
+
+/* Batch rename */
+"First" = "Első";
+
+/* Batch rename */
+"Format:" = "Formátum:";
+
+/* Batch rename */
+"From End" = "Végétől";
+
+/* Batch rename */
+"From Start" = "Elejétől";
+
+/* Batch rename */
+"Last" = "Utolsó";
+
+/* Batch rename */
+"Location:" = "Hely:";
+
+/* Batch rename */
+"Mode:" = "Mód:";
+
+/* Batch rename */
+"New Text" = "Új szöveg";
+
+
+/* Batch rename */
+"Original Filename" = "Eredeti fájlnév";
+
+/* Batch rename */
+"Original Text" = "Eredeti szöveg";
+
+
+/* Batch rename */
+"Pattern:" = "Minta:";
+
+/* Batch rename */
+"Position:" = "Pozíció:";
+
+/* Batch rename */
+"Prepend" = "Elé fűzés";
+
+/* Batch rename */
+"Regular Expression" = "Reguláris kifejezés";
+
+
+/* Batch rename */
+"Renamed Filename" = "Átnevezett fájlnév";
+
+/* Batch rename */
+"Renaming..." = "Átnevezés...";
+
+/* Batch rename */
+"Replace" = "Csere";
+
+/* Batch rename */
+"Replace All" = "Összes cseréje";
+
+/* Batch rename */
+"Replace First" = "Első cseréje";
+
+/* Batch rename */
+"Replace Last" = "Utolsó cseréje";
+
+/* Batch rename */
+"Replacement:" = "Csere:";
+
+/* Batch rename */
+"Rule:" = "Szabály:";
+
+
+/* Batch rename */
+"Search:" = "Keresés:";
+
+/* Batch rename */
+"Sequence" = "Sorozat";
+
+
+/* Batch rename */
+"Start:" = "Kezdés:";
+
+/* Batch rename */
+"Status" = "Állapot";
+
+
+/* Batch rename */
+"Text" = "Szöveg";
+
+/* Batch rename */
+"Text:" = "Szöveg:";
+
+/* Batch rename */
+"The rename failed." = "Az átnevezés sikertelen.";
+
+
+/* Batch rename */
+"Title Case" = "Cím szerinti nagybetűzés";
+
+/* Batch rename */
+"UPPERCASE" = "NAGYBETŰS";
+
+/* Batch rename */
+"lowercase" = "kisbetűs";
+
+/* Batch rename */
+"Range" = "Tartomány";
+
+/* Batch rename */
+"Uncheck or edit highlighted rows." = "Törölje a kijelölést vagy szerkessze a kiemelt sorokat.";

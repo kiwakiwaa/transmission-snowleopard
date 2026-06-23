@@ -1170,3 +1170,173 @@
 
 /* Groups preferences -> announced client identity */
 "Real (%@)" = "Gerçek (%@)";
+
+/* Batch rename */
+"%lu rows ready to rename." = "%lu satır yeniden adlandırılmaya hazır.";
+
+/* Batch rename */
+"%@ Rollback also failed: %@" = "%@ Geri alma da başarısız oldu: %@";
+
+/* Batch rename */
+"%@ Temporary case-only rollback also failed: %@" = "%@ Geçici büyük/küçük harf geri alma da başarısız oldu: %@";
+
+/* Batch rename */
+"A selected folder already contains this item." = "Seçili bir klasör bu öğeyi zaten içeriyor.";
+
+/* Batch rename */
+"A sibling item already has this name." = "Aynı klasördeki bir öğe zaten bu ada sahip.";
+
+/* Batch rename */
+"Another selected item still has this name." = "Başka bir seçili öğe hâlâ bu ada sahip.";
+
+/* Batch rename */
+"Append" = "Sona ekle";
+
+/* Batch rename */
+"Batch Rename" = "Toplu Yeniden Adlandır";
+
+/* Batch rename */
+"Batch rename failed." = "Toplu yeniden adlandırma başarısız oldu.";
+
+/* Batch rename */
+"Change Case" = "Büyük/küçük harf değiştir";
+
+/* Batch rename */
+"Character Removal" = "Karakter kaldırma";
+
+/* Batch rename */
+"Character count must be at least 1." = "Karakter sayısı en az 1 olmalıdır.";
+
+/* Batch rename */
+"Character position must be at least 1." = "Karakter konumu en az 1 olmalıdır.";
+
+/* Batch rename */
+"Count:" = "Sayı:";
+
+
+/* Batch rename */
+"Destination name contains a path separator." = "Hedef ad bir yol ayırıcı içeriyor.";
+
+/* Batch rename */
+"Destination name is empty." = "Hedef ad boş.";
+
+/* Batch rename */
+"Destination name is reserved." = "Hedef ad ayrılmış.";
+
+/* Batch rename */
+"Digit count must be at least 1." = "Basamak sayısı en az 1 olmalıdır.";
+
+/* Batch rename */
+"Digits:" = "Basamak:";
+
+/* Batch rename */
+"Expected \"%@\" but found \"%@\"." = "\"%@\" bekleniyordu, ancak \"%@\" bulundu.";
+
+/* Batch rename */
+"First" = "İlk";
+
+/* Batch rename */
+"Format:" = "Biçim:";
+
+/* Batch rename */
+"From End" = "Sondan";
+
+/* Batch rename */
+"From Start" = "Baştan";
+
+/* Batch rename */
+"Last" = "Son";
+
+/* Batch rename */
+"Location:" = "Konum:";
+
+/* Batch rename */
+"Mode:" = "Mod:";
+
+/* Batch rename */
+"New Text" = "Yeni metin";
+
+
+/* Batch rename */
+"Original Filename" = "Özgün dosya adı";
+
+/* Batch rename */
+"Original Text" = "Özgün metin";
+
+
+/* Batch rename */
+"Pattern:" = "Desen:";
+
+/* Batch rename */
+"Position:" = "Konum:";
+
+/* Batch rename */
+"Prepend" = "Başa ekle";
+
+/* Batch rename */
+"Regular Expression" = "Düzenli ifade";
+
+
+/* Batch rename */
+"Renamed Filename" = "Yeniden adlandırılmış dosya adı";
+
+/* Batch rename */
+"Renaming..." = "Yeniden adlandırılıyor...";
+
+/* Batch rename */
+"Replace" = "Değiştir";
+
+/* Batch rename */
+"Replace All" = "Tümünü değiştir";
+
+/* Batch rename */
+"Replace First" = "İlkini değiştir";
+
+/* Batch rename */
+"Replace Last" = "Sonuncuyu değiştir";
+
+/* Batch rename */
+"Replacement:" = "Yerine:";
+
+/* Batch rename */
+"Rule:" = "Kural:";
+
+
+/* Batch rename */
+"Search:" = "Ara:";
+
+/* Batch rename */
+"Sequence" = "Sıra";
+
+
+/* Batch rename */
+"Start:" = "Başlangıç:";
+
+/* Batch rename */
+"Status" = "Durum";
+
+
+/* Batch rename */
+"Text" = "Metin";
+
+/* Batch rename */
+"Text:" = "Metin:";
+
+/* Batch rename */
+"The rename failed." = "Yeniden adlandırma başarısız oldu.";
+
+
+/* Batch rename */
+"Title Case" = "Başlık Biçimi";
+
+/* Batch rename */
+"UPPERCASE" = "BÜYÜK HARF";
+
+/* Batch rename */
+"lowercase" = "küçük harf";
+
+/* Batch rename */
+"Range" = "Aralık";
+
+/* Batch rename */
+"Uncheck or edit highlighted rows." = "Vurgulanan satırların işaretini kaldırın veya düzenleyin.";

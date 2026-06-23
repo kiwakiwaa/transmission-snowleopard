@@ -1170,3 +1170,173 @@
 
 /* Groups preferences -> announced client identity */
 "Real (%@)" = "実際 (%@)";
+
+/* Batch rename */
+"%lu rows ready to rename." = "%lu 行の名前を変更できます。";
+
+/* Batch rename */
+"%@ Rollback also failed: %@" = "%@ ロールバックにも失敗しました: %@";
+
+/* Batch rename */
+"%@ Temporary case-only rollback also failed: %@" = "%@ 一時的な大文字/小文字変更のロールバックにも失敗しました: %@";
+
+/* Batch rename */
+"A selected folder already contains this item." = "選択中のフォルダにこの項目が含まれています。";
+
+/* Batch rename */
+"A sibling item already has this name." = "同じ場所に同名の項目があります。";
+
+/* Batch rename */
+"Another selected item still has this name." = "別の選択項目がまだこの名前を使っています。";
+
+/* Batch rename */
+"Append" = "追加";
+
+/* Batch rename */
+"Batch Rename" = "一括名前変更";
+
+/* Batch rename */
+"Batch rename failed." = "一括名前変更に失敗しました。";
+
+/* Batch rename */
+"Change Case" = "大文字/小文字変更";
+
+/* Batch rename */
+"Character Removal" = "文字削除";
+
+/* Batch rename */
+"Character count must be at least 1." = "文字数は 1 以上にしてください。";
+
+/* Batch rename */
+"Character position must be at least 1." = "文字位置は 1 以上にしてください。";
+
+/* Batch rename */
+"Count:" = "数:";
+
+
+/* Batch rename */
+"Destination name contains a path separator." = "名前にパス区切り文字を含めることはできません。";
+
+/* Batch rename */
+"Destination name is empty." = "名前を空にすることはできません。";
+
+/* Batch rename */
+"Destination name is reserved." = "この名前は予約されています。";
+
+/* Batch rename */
+"Digit count must be at least 1." = "桁数は 1 以上にしてください。";
+
+/* Batch rename */
+"Digits:" = "桁数:";
+
+/* Batch rename */
+"Expected \"%@\" but found \"%@\"." = "\"%@\" のはずですが \"%@\" でした。";
+
+/* Batch rename */
+"First" = "最初";
+
+/* Batch rename */
+"Format:" = "形式:";
+
+/* Batch rename */
+"From End" = "末尾から";
+
+/* Batch rename */
+"From Start" = "先頭から";
+
+/* Batch rename */
+"Last" = "最後";
+
+/* Batch rename */
+"Location:" = "位置:";
+
+/* Batch rename */
+"Mode:" = "モード:";
+
+/* Batch rename */
+"New Text" = "新しいテキスト";
+
+
+/* Batch rename */
+"Original Filename" = "元のファイル名";
+
+/* Batch rename */
+"Original Text" = "元のテキスト";
+
+
+/* Batch rename */
+"Pattern:" = "パターン:";
+
+/* Batch rename */
+"Position:" = "位置:";
+
+/* Batch rename */
+"Prepend" = "先頭に追加";
+
+/* Batch rename */
+"Regular Expression" = "正規表現";
+
+
+/* Batch rename */
+"Renamed Filename" = "変更後のファイル名";
+
+/* Batch rename */
+"Renaming..." = "名前を変更中...";
+
+/* Batch rename */
+"Replace" = "置換";
+
+/* Batch rename */
+"Replace All" = "すべて置換";
+
+/* Batch rename */
+"Replace First" = "最初を置換";
+
+/* Batch rename */
+"Replace Last" = "最後を置換";
+
+/* Batch rename */
+"Replacement:" = "置換後:";
+
+/* Batch rename */
+"Rule:" = "ルール:";
+
+
+/* Batch rename */
+"Search:" = "検索:";
+
+/* Batch rename */
+"Sequence" = "連番";
+
+
+/* Batch rename */
+"Start:" = "開始:";
+
+/* Batch rename */
+"Status" = "状態";
+
+
+/* Batch rename */
+"Text" = "テキスト";
+
+/* Batch rename */
+"Text:" = "テキスト:";
+
+/* Batch rename */
+"The rename failed." = "名前の変更に失敗しました。";
+
+
+/* Batch rename */
+"Title Case" = "タイトルケース";
+
+/* Batch rename */
+"UPPERCASE" = "大文字";
+
+/* Batch rename */
+"lowercase" = "小文字";
+
+/* Batch rename */
+"Range" = "範囲";
+
+/* Batch rename */
+"Uncheck or edit highlighted rows." = "強調表示された行を外すか修正してください。";

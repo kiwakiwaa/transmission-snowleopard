@@ -1170,3 +1170,173 @@
 
 /* Groups preferences -> announced client identity */
 "Real (%@)" = "Werkelijk (%@)";
+
+/* Batch rename */
+"%lu rows ready to rename." = "%lu rijen klaar om te hernoemen.";
+
+/* Batch rename */
+"%@ Rollback also failed: %@" = "%@ Terugdraaien is ook mislukt: %@";
+
+/* Batch rename */
+"%@ Temporary case-only rollback also failed: %@" = "%@ Tijdelijk terugdraaien van alleen hoofd-/kleine letters is ook mislukt: %@";
+
+/* Batch rename */
+"A selected folder already contains this item." = "Een geselecteerde map bevat dit item al.";
+
+/* Batch rename */
+"A sibling item already has this name." = "Een item in dezelfde map heeft deze naam al.";
+
+/* Batch rename */
+"Another selected item still has this name." = "Een ander geselecteerd item heeft deze naam nog.";
+
+/* Batch rename */
+"Append" = "Achteraan toevoegen";
+
+/* Batch rename */
+"Batch Rename" = "Meerdere hernoemen";
+
+/* Batch rename */
+"Batch rename failed." = "Meerdere hernoemen is mislukt.";
+
+/* Batch rename */
+"Change Case" = "Hoofd-/kleine letters wijzigen";
+
+/* Batch rename */
+"Character Removal" = "Tekens verwijderen";
+
+/* Batch rename */
+"Character count must be at least 1." = "Het aantal tekens moet minstens 1 zijn.";
+
+/* Batch rename */
+"Character position must be at least 1." = "De tekenpositie moet minstens 1 zijn.";
+
+/* Batch rename */
+"Count:" = "Aantal:";
+
+
+/* Batch rename */
+"Destination name contains a path separator." = "De doelnaam bevat een padscheidingsteken.";
+
+/* Batch rename */
+"Destination name is empty." = "De doelnaam is leeg.";
+
+/* Batch rename */
+"Destination name is reserved." = "De doelnaam is gereserveerd.";
+
+/* Batch rename */
+"Digit count must be at least 1." = "Het aantal cijfers moet minstens 1 zijn.";
+
+/* Batch rename */
+"Digits:" = "Cijfers:";
+
+/* Batch rename */
+"Expected \"%@\" but found \"%@\"." = "\"%@\" verwacht, maar \"%@\" gevonden.";
+
+/* Batch rename */
+"First" = "Eerste";
+
+/* Batch rename */
+"Format:" = "Notatie:";
+
+/* Batch rename */
+"From End" = "Vanaf einde";
+
+/* Batch rename */
+"From Start" = "Vanaf begin";
+
+/* Batch rename */
+"Last" = "Laatste";
+
+/* Batch rename */
+"Location:" = "Locatie:";
+
+/* Batch rename */
+"Mode:" = "Modus:";
+
+/* Batch rename */
+"New Text" = "Nieuwe tekst";
+
+
+/* Batch rename */
+"Original Filename" = "Oorspronkelijke bestandsnaam";
+
+/* Batch rename */
+"Original Text" = "Oorspronkelijke tekst";
+
+
+/* Batch rename */
+"Pattern:" = "Patroon:";
+
+/* Batch rename */
+"Position:" = "Positie:";
+
+/* Batch rename */
+"Prepend" = "Vooraan toevoegen";
+
+/* Batch rename */
+"Regular Expression" = "Reguliere expressie";
+
+
+/* Batch rename */
+"Renamed Filename" = "Hernoemde bestandsnaam";
+
+/* Batch rename */
+"Renaming..." = "Hernoemen...";
+
+/* Batch rename */
+"Replace" = "Vervangen";
+
+/* Batch rename */
+"Replace All" = "Alles vervangen";
+
+/* Batch rename */
+"Replace First" = "Eerste vervangen";
+
+/* Batch rename */
+"Replace Last" = "Laatste vervangen";
+
+/* Batch rename */
+"Replacement:" = "Vervanging:";
+
+/* Batch rename */
+"Rule:" = "Regel:";
+
+
+/* Batch rename */
+"Search:" = "Zoeken:";
+
+/* Batch rename */
+"Sequence" = "Reeks";
+
+
+/* Batch rename */
+"Start:" = "Start:";
+
+/* Batch rename */
+"Status" = "Status";
+
+
+/* Batch rename */
+"Text" = "Tekst";
+
+/* Batch rename */
+"Text:" = "Tekst:";
+
+/* Batch rename */
+"The rename failed." = "Hernoemen is mislukt.";
+
+
+/* Batch rename */
+"Title Case" = "Titelhoofdletters";
+
+/* Batch rename */
+"UPPERCASE" = "HOOFDLETTERS";
+
+/* Batch rename */
+"lowercase" = "kleine letters";
+
+/* Batch rename */
+"Range" = "Bereik";
+
+/* Batch rename */
+"Uncheck or edit highlighted rows." = "Schakel gemarkeerde rijen uit of bewerk ze.";

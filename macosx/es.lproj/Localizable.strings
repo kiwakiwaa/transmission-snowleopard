@@ -1170,3 +1170,173 @@
 
 /* Groups preferences -> announced client identity */
 "Real (%@)" = "Real (%@)";
+
+/* Batch rename */
+"%lu rows ready to rename." = "%lu filas listas para renombrar.";
+
+/* Batch rename */
+"%@ Rollback also failed: %@" = "%@ También falló la reversión: %@";
+
+/* Batch rename */
+"%@ Temporary case-only rollback also failed: %@" = "%@ También falló la reversión temporal de mayúsculas/minúsculas: %@";
+
+/* Batch rename */
+"A selected folder already contains this item." = "Una carpeta seleccionada ya contiene este elemento.";
+
+/* Batch rename */
+"A sibling item already has this name." = "Un elemento de la misma carpeta ya tiene este nombre.";
+
+/* Batch rename */
+"Another selected item still has this name." = "Otro elemento seleccionado todavía tiene este nombre.";
+
+/* Batch rename */
+"Append" = "Añadir al final";
+
+/* Batch rename */
+"Batch Rename" = "Renombrado por lotes";
+
+/* Batch rename */
+"Batch rename failed." = "Falló el renombrado por lotes.";
+
+/* Batch rename */
+"Change Case" = "Cambiar mayúsculas/minúsculas";
+
+/* Batch rename */
+"Character Removal" = "Eliminación de caracteres";
+
+/* Batch rename */
+"Character count must be at least 1." = "El número de caracteres debe ser al menos 1.";
+
+/* Batch rename */
+"Character position must be at least 1." = "La posición del carácter debe ser al menos 1.";
+
+/* Batch rename */
+"Count:" = "Cantidad:";
+
+
+/* Batch rename */
+"Destination name contains a path separator." = "El nombre de destino contiene un separador de ruta.";
+
+/* Batch rename */
+"Destination name is empty." = "El nombre de destino está vacío.";
+
+/* Batch rename */
+"Destination name is reserved." = "El nombre de destino está reservado.";
+
+/* Batch rename */
+"Digit count must be at least 1." = "El número de dígitos debe ser al menos 1.";
+
+/* Batch rename */
+"Digits:" = "Dígitos:";
+
+/* Batch rename */
+"Expected \"%@\" but found \"%@\"." = "Se esperaba \"%@\", pero se encontró \"%@\".";
+
+/* Batch rename */
+"First" = "Primero";
+
+/* Batch rename */
+"Format:" = "Formato:";
+
+/* Batch rename */
+"From End" = "Desde el final";
+
+/* Batch rename */
+"From Start" = "Desde el inicio";
+
+/* Batch rename */
+"Last" = "Último";
+
+/* Batch rename */
+"Location:" = "Ubicación:";
+
+/* Batch rename */
+"Mode:" = "Modo:";
+
+/* Batch rename */
+"New Text" = "Texto nuevo";
+
+
+/* Batch rename */
+"Original Filename" = "Nombre de archivo original";
+
+/* Batch rename */
+"Original Text" = "Texto original";
+
+
+/* Batch rename */
+"Pattern:" = "Patrón:";
+
+/* Batch rename */
+"Position:" = "Posición:";
+
+/* Batch rename */
+"Prepend" = "Añadir al principio";
+
+/* Batch rename */
+"Regular Expression" = "Expresión regular";
+
+
+/* Batch rename */
+"Renamed Filename" = "Nombre de archivo renombrado";
+
+/* Batch rename */
+"Renaming..." = "Renombrando...";
+
+/* Batch rename */
+"Replace" = "Reemplazar";
+
+/* Batch rename */
+"Replace All" = "Reemplazar todo";
+
+/* Batch rename */
+"Replace First" = "Reemplazar primero";
+
+/* Batch rename */
+"Replace Last" = "Reemplazar último";
+
+/* Batch rename */
+"Replacement:" = "Reemplazo:";
+
+/* Batch rename */
+"Rule:" = "Regla:";
+
+
+/* Batch rename */
+"Search:" = "Buscar:";
+
+/* Batch rename */
+"Sequence" = "Secuencia";
+
+
+/* Batch rename */
+"Start:" = "Inicio:";
+
+/* Batch rename */
+"Status" = "Estado";
+
+
+/* Batch rename */
+"Text" = "Texto";
+
+/* Batch rename */
+"Text:" = "Texto:";
+
+/* Batch rename */
+"The rename failed." = "Falló el renombrado.";
+
+
+/* Batch rename */
+"Title Case" = "Formato título";
+
+/* Batch rename */
+"UPPERCASE" = "MAYÚSCULAS";
+
+/* Batch rename */
+"lowercase" = "minúsculas";
+
+/* Batch rename */
+"Range" = "Rango";
+
+/* Batch rename */
+"Uncheck or edit highlighted rows." = "Desmarque o edite las filas resaltadas.";

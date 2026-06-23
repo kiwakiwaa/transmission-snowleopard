@@ -12,6 +12,7 @@
 #import "FilePriorityCell.h"
 #import "FilePriorityCellView.h"
 #import "FileCheckCellView.h"
+#import "FileBatchRenameSheetController.h"
 #import "FileRenameSheetController.h"
 #import "NSMutableArrayAdditions.h"
 #import "NSStringAdditions.h"
@@ -515,7 +516,29 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
 - (void)renameSelected:(id)sender
 {
     NSIndexSet* indexes = self.fOutline.selectedRowIndexes;
-    NSAssert(indexes.count == 1, @"1 file needs to be selected to rename, but %ld are selected", indexes.count);
+    if (indexes.count == 0)
+    {
+        return;
+    }
+
+    if (indexes.count > 1)
+    {
+        NSMutableArray* nodes = [NSMutableArray arrayWithCapacity:indexes.count];
+        for (NSUInteger i = indexes.firstIndex; i != NSNotFound; i = [indexes indexGreaterThanIndex:i])
+        {
+            [nodes addObject:[self.fOutline itemAtRow:i]];
+        }
+
+        Torrent* torrent = ((FileListNode*)[nodes objectAtIndex:0]).torrent;
+        [FileBatchRenameSheetController presentSheetForFileListNodes:nodes modalForWindow:self.fOutline.window completionHandler:^(BOOL didRename) {
+            if (didRename)
+            {
+                [NSNotificationCenter.defaultCenter postNotificationName:@"ResetInspector" object:self
+                                                                userInfo:@{ @"Torrent" : torrent }];
+            }
+        }];
+        return;
+    }
 
     FileListNode* node = [self.fOutline itemAtRow:indexes.firstIndex];
     Torrent* torrent = node.torrent;
@@ -666,7 +689,10 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
 
     if (action == @selector(renameSelected:))
     {
-        return self.fOutline.numberOfSelectedRows == 1;
+        menuItem.title = self.fOutline.numberOfSelectedRows > 1 ?
+            [NSLocalizedString(@"Batch Rename", "File Outline -> Menu") stringByAppendingEllipsis] :
+            [NSLocalizedString(@"Rename File", "File Outline -> Menu") stringByAppendingEllipsis];
+        return self.fOutline.numberOfSelectedRows > 0;
     }
 
     return YES;

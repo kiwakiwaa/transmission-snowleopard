@@ -1170,3 +1170,173 @@
 
 /* Groups preferences -> announced client identity */
 "Real (%@)" = "אמיתי (%@)";
+
+/* Batch rename */
+"%lu rows ready to rename." = "%lu שורות מוכנות לשינוי שם.";
+
+/* Batch rename */
+"%@ Rollback also failed: %@" = "%@ גם השחזור נכשל: %@";
+
+/* Batch rename */
+"%@ Temporary case-only rollback also failed: %@" = "%@ גם השחזור הזמני של שינוי רישיות נכשל: %@";
+
+/* Batch rename */
+"A selected folder already contains this item." = "תיקייה שנבחרה כבר מכילה את הפריט הזה.";
+
+/* Batch rename */
+"A sibling item already has this name." = "לפריט באותה תיקייה כבר יש את השם הזה.";
+
+/* Batch rename */
+"Another selected item still has this name." = "לפריט נבחר אחר עדיין יש את השם הזה.";
+
+/* Batch rename */
+"Append" = "הוספה לסוף";
+
+/* Batch rename */
+"Batch Rename" = "שינוי שמות באצווה";
+
+/* Batch rename */
+"Batch rename failed." = "שינוי השמות באצווה נכשל.";
+
+/* Batch rename */
+"Change Case" = "שינוי רישיות";
+
+/* Batch rename */
+"Character Removal" = "הסרת תווים";
+
+/* Batch rename */
+"Character count must be at least 1." = "מספר התווים חייב להיות לפחות 1.";
+
+/* Batch rename */
+"Character position must be at least 1." = "מיקום התו חייב להיות לפחות 1.";
+
+/* Batch rename */
+"Count:" = "כמות:";
+
+
+/* Batch rename */
+"Destination name contains a path separator." = "שם היעד מכיל מפריד נתיב.";
+
+/* Batch rename */
+"Destination name is empty." = "שם היעד ריק.";
+
+/* Batch rename */
+"Destination name is reserved." = "שם היעד שמור.";
+
+/* Batch rename */
+"Digit count must be at least 1." = "מספר הספרות חייב להיות לפחות 1.";
+
+/* Batch rename */
+"Digits:" = "ספרות:";
+
+/* Batch rename */
+"Expected \"%@\" but found \"%@\"." = "ציפיתי ל-\"%@\" אך נמצא \"%@\".";
+
+/* Batch rename */
+"First" = "ראשון";
+
+/* Batch rename */
+"Format:" = "תבנית:";
+
+/* Batch rename */
+"From End" = "מהסוף";
+
+/* Batch rename */
+"From Start" = "מההתחלה";
+
+/* Batch rename */
+"Last" = "אחרון";
+
+/* Batch rename */
+"Location:" = "מיקום:";
+
+/* Batch rename */
+"Mode:" = "מצב:";
+
+/* Batch rename */
+"New Text" = "טקסט חדש";
+
+
+/* Batch rename */
+"Original Filename" = "שם הקובץ המקורי";
+
+/* Batch rename */
+"Original Text" = "טקסט מקורי";
+
+
+/* Batch rename */
+"Pattern:" = "תבנית:";
+
+/* Batch rename */
+"Position:" = "מיקום:";
+
+/* Batch rename */
+"Prepend" = "הוספה להתחלה";
+
+/* Batch rename */
+"Regular Expression" = "ביטוי רגולרי";
+
+
+/* Batch rename */
+"Renamed Filename" = "שם הקובץ החדש";
+
+/* Batch rename */
+"Renaming..." = "משנה שם...";
+
+/* Batch rename */
+"Replace" = "החלפה";
+
+/* Batch rename */
+"Replace All" = "החלפת הכול";
+
+/* Batch rename */
+"Replace First" = "החלפת הראשון";
+
+/* Batch rename */
+"Replace Last" = "החלפת האחרון";
+
+/* Batch rename */
+"Replacement:" = "החלפה:";
+
+/* Batch rename */
+"Rule:" = "כלל:";
+
+
+/* Batch rename */
+"Search:" = "חיפוש:";
+
+/* Batch rename */
+"Sequence" = "רצף";
+
+
+/* Batch rename */
+"Start:" = "התחלה:";
+
+/* Batch rename */
+"Status" = "מצב";
+
+
+/* Batch rename */
+"Text" = "טקסט";
+
+/* Batch rename */
+"Text:" = "טקסט:";
+
+/* Batch rename */
+"The rename failed." = "שינוי השם נכשל.";
+
+
+/* Batch rename */
+"Title Case" = "רישיות כותרת";
+
+/* Batch rename */
+"UPPERCASE" = "אותיות גדולות";
+
+/* Batch rename */
+"lowercase" = "אותיות קטנות";
+
+/* Batch rename */
+"Range" = "טווח";
+
+/* Batch rename */
+"Uncheck or edit highlighted rows." = "בטלו סימון או ערכו את השורות המודגשות.";
