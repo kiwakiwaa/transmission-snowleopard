@@ -2,7 +2,7 @@
 
 Current Transmission, built for older Macs.
 
-This fork keeps Transmission usable on Snow Leopard-era Macs. OS X 10.6 Snow Leopard through OS X 10.9 Mavericks are tested. OS X 10.10 and newer legacy targets still need testing. Some UI polishing remains.
+This fork keeps Transmission usable on Snow Leopard-era Macs. OS X 10.6 Snow Leopard through OS X 10.9 Mavericks are tested. OS X 10.10 and newer legacy targets still need testing.
 
 <p align="left">
   <img src="docs/images/readme-main-window.png" alt="Transmission main window on Snow Leopard" width="420">
@@ -29,6 +29,10 @@ The announce identity is applied where trackers and peers see it: HTTP user agen
 
 <p align="left">
   <img src="docs/images/readme-batch-rename.png" alt="Filename batch rename on Snow Leopard" width="560">
+</p>
+
+<p align="left">
+  <img src="docs/images/readme-group-rules.png" alt="Preference window (Group rules) on Snow Leopard" width="560">
 </p>
 
 </details>
