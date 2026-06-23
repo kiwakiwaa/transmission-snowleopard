@@ -84,6 +84,16 @@
                 "TR_MACOS_DEPLOYMENT_TARGET": "10.13",
                 "TR_MACOS_SDK_VERSION": "10.13"
             }
+        },
+        {
+            "name": "macos-10.15",
+            "displayName": "macOS 10.15 compatibility",
+            "inherits": "macos-legacy-base",
+            "binaryDir": "${sourceDir}/build-10.15",
+            "cacheVariables": {
+                "TR_MACOS_DEPLOYMENT_TARGET": "10.15",
+                "TR_MACOS_SDK_VERSION": "10.15"
+            }
         }
     ],
     "buildPresets": [
@@ -121,6 +131,11 @@
             "name": "macos-10.13",
             "inherits": "macos-legacy-base",
             "configurePreset": "macos-10.13"
+        },
+        {
+            "name": "macos-10.15",
+            "inherits": "macos-legacy-base",
+            "configurePreset": "macos-10.15"
         }
     ]
 }
