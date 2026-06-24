@@ -106,9 +106,6 @@ add_subdirectory(VDKQueue)
 add_executable(${TR_NAME}-mac MACOSX_BUNDLE)
 
 set(TR_ENABLE_SPARKLE ON)
-if(TR_MACOS_DEPLOYMENT_BEFORE_10_11)
-    set(TR_ENABLE_SPARKLE OFF)
-endif()
 
 set(TR_MACOS_XIB_COMPAT_10_6 OFF)
 set(TR_MACOS_XIB_COMPAT_10_7 OFF)
@@ -138,15 +135,25 @@ endif()
 
 set(TR_SPARKLE_INFO_PLIST_KEYS "")
 if(TR_ENABLE_SPARKLE)
+    set(TR_SPARKLE_APPCAST_URL "https://kiwakiwaa.github.io/transmission-legacy-updates/appcast-${CMAKE_OSX_DEPLOYMENT_TARGET}.xml")
+    if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
+        set(TR_SPARKLE_PUBLIC_KEY_INFO_PLIST_KEYS [=[
+	<key>SUPublicDSAKeyFile</key>
+	<string>sparkle_snow_dsa_pub.pem</string>]=])
+    else()
+        set(TR_SPARKLE_PUBLIC_KEY_INFO_PLIST_KEYS [=[
+	<key>SUPublicEDKey</key>
+	<string>SM9N3myfE1GXDWvWpackSLKyAEkJaylouWhFROTNhAw=</string>]=])
+    endif()
     set(TR_SPARKLE_INFO_PLIST_KEYS [=[
 	<key>SUAllowsAutomaticUpdates</key>
 	<false/>
 	<key>SUFeedURL</key>
-	<string>https://kiwakiwaa.github.io/transmission-legacy-updates/appcast-10.13.xml</string>
-	<key>SUPublicEDKey</key>
-	<string>SM9N3myfE1GXDWvWpackSLKyAEkJaylouWhFROTNhAw=</string>
+	<string>@TR_SPARKLE_APPCAST_URL@</string>
+@TR_SPARKLE_PUBLIC_KEY_INFO_PLIST_KEYS@
 	<key>SUScheduledCheckInterval</key>
 	<string>86400</string>]=])
+    string(CONFIGURE "${TR_SPARKLE_INFO_PLIST_KEYS}" TR_SPARKLE_INFO_PLIST_KEYS @ONLY)
 endif()
 
 target_sources(${TR_NAME}-mac
@@ -428,8 +435,9 @@ set(RESOURCES
     Credits.rtf
     ../COPYING
     Images/TransmissionDocument.icns)
-if(TR_ENABLE_SPARKLE)
-    list(APPEND RESOURCES sparkle_dsa_pub.pem)
+if(TR_ENABLE_SPARKLE AND TR_MACOS_DEPLOYMENT_BEFORE_10_7)
+    list(APPEND RESOURCES
+        sparkle_snow_dsa_pub.pem)
 endif()
 source_group(Resources
     FILES ${RESOURCES})
@@ -799,9 +807,20 @@ endif()
 
 set(SPARKLE_LINK_LIBRARIES)
 if(TR_ENABLE_SPARKLE)
+    if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
+        set(TR_SPARKLE_FRAMEWORK_SEARCH_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Sparkle/1.6.1)
+    elseif(TR_MACOS_DEPLOYMENT_BEFORE_10_9)
+        set(TR_SPARKLE_FRAMEWORK_SEARCH_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Sparkle/1.24.0)
+    else()
+        set(TR_SPARKLE_FRAMEWORK_SEARCH_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+    endif()
+
     find_library(SPARKLE_FRAMEWORK Sparkle
-        PATHS ${CMAKE_CURRENT_SOURCE_DIR}
+        PATHS ${TR_SPARKLE_FRAMEWORK_SEARCH_PATH}
         NO_DEFAULT_PATHS)
+    if(NOT SPARKLE_FRAMEWORK)
+        message(FATAL_ERROR "Sparkle.framework not found in ${TR_SPARKLE_FRAMEWORK_SEARCH_PATH}")
+    endif()
     set(SPARKLE_LINK_LIBRARIES ${SPARKLE_FRAMEWORK} "-weak_framework Sparkle")
 endif()
 
@@ -834,6 +853,15 @@ else()
 endif()
 if(USERNOTIFICATIONS_FRAMEWORK)
     target_link_libraries(${TR_NAME}-mac PRIVATE "-weak_framework UserNotifications")
+endif()
+
+if(TR_ENABLE_SPARKLE AND NOT CMAKE_GENERATOR STREQUAL Xcode)
+    add_custom_command(
+        TARGET ${TR_NAME}-mac
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E rm -rf "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/Frameworks/Sparkle.framework"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/Frameworks"
+        COMMAND /usr/bin/ditto "${SPARKLE_FRAMEWORK}" "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/Frameworks/Sparkle.framework")
 endif()
 
 if(NOT CMAKE_GENERATOR STREQUAL Xcode AND NOT TR_MACOS_DEPLOYMENT_BEFORE_10_7)
