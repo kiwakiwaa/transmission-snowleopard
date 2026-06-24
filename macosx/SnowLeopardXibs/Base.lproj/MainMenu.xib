@@ -1705,12 +1705,15 @@ AAAGEAAAoAcAAAAAySceAAAAAAAAAAAAAAAAAAAAAAA</bytes>
 				</array>
 				<string key="NSName">_NSMainMenu</string>
 			</object>
-			<object class="NSCustomObject" id="13531421">
-				<string key="NSClassName">Controller</string>
-			</object>
-			<object class="NSMenu" id="121997305">
-				<string key="NSTitle">Menu</string>
-				<array class="NSMutableArray" key="NSMenuItems">
+				<object class="NSCustomObject" id="13531421">
+					<string key="NSClassName">Controller</string>
+				</object>
+				<object class="NSCustomObject" id="1812">
+					<string key="NSClassName">SUUpdater</string>
+				</object>
+				<object class="NSMenu" id="121997305">
+					<string key="NSTitle">Menu</string>
+					<array class="NSMutableArray" key="NSMenuItems">
 					<object class="NSMenuItem" id="426213337">
 						<reference key="NSMenu" ref="121997305"/>
 						<string key="NSTitle">Pause Selected</string>
@@ -2718,10 +2721,18 @@ AAAGEAAAoAcAAAAAySceAAAAAAAAAAAAAAAAAAAAAAA</bytes>
 					</object>
 					<string key="id">1562</string>
 				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBOutletConnection" key="connection">
-						<string key="label">menu</string>
-						<reference key="source" ref="503198528"/>
+					<object class="IBConnectionRecord">
+						<object class="IBActionConnection" key="connection">
+							<string key="label">checkForUpdates:</string>
+							<reference key="source" ref="1812"/>
+							<reference key="destination" ref="925446525"/>
+						</object>
+						<string key="id">1814</string>
+					</object>
+					<object class="IBConnectionRecord">
+						<object class="IBOutletConnection" key="connection">
+							<string key="label">menu</string>
+							<reference key="source" ref="503198528"/>
 						<reference key="destination" ref="852200985"/>
 					</object>
 					<string key="id">2687</string>
@@ -4660,15 +4671,21 @@ AAAGEAAAoAcAAAAAySceAAAAAAAAAAAAAAAAAAAAAAA</bytes>
 						<reference key="object" ref="639632753"/>
 						<reference key="parent" ref="27873790"/>
 					</object>
-					<object class="IBObjectRecord">
-						<string key="id">206</string>
-						<reference key="object" ref="13531421"/>
-						<reference key="parent" ref="0"/>
-						<string key="objectName">Controller</string>
-					</object>
-					<object class="IBObjectRecord">
-						<string key="id">456</string>
-						<reference key="object" ref="121997305"/>
+						<object class="IBObjectRecord">
+							<string key="id">206</string>
+							<reference key="object" ref="13531421"/>
+							<reference key="parent" ref="0"/>
+							<string key="objectName">Controller</string>
+						</object>
+						<object class="IBObjectRecord">
+							<string key="id">1812</string>
+							<reference key="object" ref="1812"/>
+							<reference key="parent" ref="0"/>
+							<string key="objectName">SUUpdater</string>
+						</object>
+						<object class="IBObjectRecord">
+							<string key="id">456</string>
+							<reference key="object" ref="121997305"/>
 						<array class="NSMutableArray" key="children">
 							<reference ref="426213337"/>
 							<reference ref="328374199"/>
