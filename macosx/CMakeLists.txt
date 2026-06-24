@@ -142,9 +142,9 @@ if(TR_ENABLE_SPARKLE)
 	<key>SUAllowsAutomaticUpdates</key>
 	<false/>
 	<key>SUFeedURL</key>
-	<string>https://update.transmissionbt.com/appcast.xml</string>
-	<key>SUPublicDSAKeyFile</key>
-	<string>sparkle_dsa_pub.pem</string>
+	<string>https://kiwakiwaa.github.io/transmission-legacy-updates/appcast-10.13.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>SM9N3myfE1GXDWvWpackSLKyAEkJaylouWhFROTNhAw=</string>
 	<key>SUScheduledCheckInterval</key>
 	<string>86400</string>]=])
 endif()
