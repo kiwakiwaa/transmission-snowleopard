@@ -171,11 +171,21 @@ set(TR_NAME ${PROJECT_NAME})
 # dev builds come between releases, e.g. autobuilds from CI
 
 # these should be the only five lines you need to change
-set(TR_VERSION_MAJOR "4")
-set(TR_VERSION_MINOR "2")
-set(TR_VERSION_PATCH "0")
-set(TR_VERSION_BETA_NUMBER "") # empty string for not beta
-set(TR_VERSION_DEV TRUE)
+if(NOT DEFINED TR_VERSION_MAJOR)
+    set(TR_VERSION_MAJOR "4")
+endif()
+if(NOT DEFINED TR_VERSION_MINOR)
+    set(TR_VERSION_MINOR "2")
+endif()
+if(NOT DEFINED TR_VERSION_PATCH)
+    set(TR_VERSION_PATCH "0")
+endif()
+if(NOT DEFINED TR_VERSION_BETA_NUMBER)
+    set(TR_VERSION_BETA_NUMBER "") # empty string for not beta
+endif()
+if(NOT DEFINED TR_VERSION_DEV)
+    set(TR_VERSION_DEV TRUE)
+endif()
 
 # derived from above: release type
 if(TR_VERSION_DEV)
