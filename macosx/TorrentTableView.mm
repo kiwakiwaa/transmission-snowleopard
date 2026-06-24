@@ -484,16 +484,20 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
         id rowItem = [self itemAtRow:row];
         if (![rowItem isKindOfClass:[TorrentGroup class]])
         {
+            TorrentCell* torrentCell;
             if (minimal)
             {
-                SmallTorrentCell* smallCell = [self viewAtColumn:0 row:row makeIfNecessary:NO];
+                SmallTorrentCell* smallCell = (SmallTorrentCell*)[self viewAtColumn:0 row:row makeIfNecessary:NO];
                 [(TorrentCellControlButton*)smallCell.fControlButton resetImage];
+                torrentCell = smallCell;
             }
             else
             {
-                TorrentCell* torrentCell = [self viewAtColumn:0 row:row makeIfNecessary:NO];
+                torrentCell = (TorrentCell*)[self viewAtColumn:0 row:row makeIfNecessary:NO];
                 [(TorrentCellControlButton*)torrentCell.fControlButton resetImage];
             }
+
+            [torrentCell setNeedsDisplayInRect:torrentCell.fTorrentProgressBarView.frame];
         }
     }];
 #endif
