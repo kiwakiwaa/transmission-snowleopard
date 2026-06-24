@@ -30,7 +30,7 @@ static CGFloat const kGroupDisclosureWidth = 18.0;
 #import "ProgressBarView.h"
 
 @interface LegacyTorrentTableCell : NSCell
-@property(nonatomic, TR_OBJC_WEAK) TorrentTableView* tableView;
+@property(nonatomic, weak) TorrentTableView* tableView;
 @property(nonatomic, strong) id legacyObjectValue;
 @end
 

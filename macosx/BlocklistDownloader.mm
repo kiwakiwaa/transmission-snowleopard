@@ -34,7 +34,7 @@
 
 @implementation BlocklistDownloader
 
-BlocklistDownloader* fBLDownloader = nil;
+static BlocklistDownloader* fBLDownloader = nil;
 
 + (BlocklistDownloader*)downloader
 {

@@ -15,7 +15,7 @@
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
 @property(nonatomic) IBOutlet TorrentCell* torrentCell;
 #else
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet TorrentCell* torrentCell;
+@property(nonatomic, weak) IBOutlet TorrentCell* torrentCell;
 #endif
 @property(nonatomic, readonly) TorrentTableView* torrentTableView;
 @end

@@ -8,8 +8,8 @@
 
 @interface TrackerTableView : NSTableView<NSMenuItemValidation>
 
-@property(nonatomic, TR_OBJC_WEAK) Torrent* torrent;
-@property(nonatomic, TR_OBJC_WEAK) NSArray* trackers;
+@property(nonatomic, weak) Torrent* torrent;
+@property(nonatomic, weak) NSArray* trackers;
 
 - (void)copy:(id)sender;
 - (void)paste:(id)sender;

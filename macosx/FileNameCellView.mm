@@ -20,9 +20,9 @@ static CGFloat const kPaddingBelowStatusFile = 2.0;
 static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
 
 @interface FileNameCellView ()
-@property(nonatomic, TR_OBJC_WEAK) NSImageView* iconView;
-@property(nonatomic, TR_OBJC_WEAK) NSTextField* nameField;
-@property(nonatomic, TR_OBJC_WEAK) NSTextField* statusField;
+@property(nonatomic, weak) NSImageView* iconView;
+@property(nonatomic, weak) NSTextField* nameField;
+@property(nonatomic, weak) NSTextField* statusField;
 @property(nonatomic, strong) NSLayoutConstraint* iconWidthConstraint;
 @property(nonatomic, strong) NSLayoutConstraint* iconHeightConstraint;
 @property(nonatomic, strong) NSArray* dynamicConstraints;

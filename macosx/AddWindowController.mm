@@ -72,7 +72,7 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
 @property(nonatomic, readonly) BOOL fCanToggleDelete;
 @property(nonatomic) NSInteger fGroupValue;
 
-@property(nonatomic, TR_OBJC_WEAK) NSTimer* fTimer;
+@property(nonatomic, weak) NSTimer* fTimer;
 
 @property(nonatomic) TorrentDeterminationType fGroupValueDetermination;
 
@@ -338,7 +338,9 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
         {
             if (!self.fDestination)
             {
-                [self performSelectorOnMainThread:@selector(cancelAdd:) withObject:nil waitUntilDone:NO];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self cancelAdd:nil];
+                });
             }
         }
     }];
@@ -368,7 +370,9 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
 
             if (returnCode == NSAlertSecondButtonReturn)
             {
-                [self performSelectorOnMainThread:@selector(confirmAdd) withObject:nil waitUntilDone:NO];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self confirmAdd];
+                });
             }
         }];
     }

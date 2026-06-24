@@ -15,8 +15,14 @@
 #define TR_FILE_PRIORITY_USES_LEGACY_SEGMENTED_CONTROL_API TR_MACOS_DEPLOYMENT_BEFORE_10_11
 
 @interface FilePriorityCellView ()
-@property(nonatomic, TR_OBJC_WEAK) NSSegmentedControl* segmentedControl;
-@property(nonatomic, TR_OBJC_WEAK) NSView* iconsContainerView;
+@property(nonatomic, weak) NSSegmentedControl* segmentedControl;
+@property(nonatomic, weak) NSView* iconsContainerView;
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
+@property(nonatomic, strong) NSStackView* stackView;
+@property(nonatomic, strong) NSImageView* lowPriorityView;
+@property(nonatomic, strong) NSImageView* mediumPriorityView;
+@property(nonatomic, strong) NSImageView* highPriorityView;
+#endif
 @property(nonatomic, strong) NSTrackingArea* trackingArea;
 @property(nonatomic, strong) NSArray* priorityIconConstraints;
 @end
@@ -103,10 +109,58 @@
             ]);
 #endif
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
+        [self updateIconsContainerView];
+#endif
+
         _hovered = NO;
     }
     return self;
 }
+
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
+- (void)updateIconsContainerView
+{
+    NSImage* lowPriority = [NSImage imageNamed:@"PriorityLowTemplate"];
+    NSImage* mediumPriority = [NSImage imageNamed:@"PriorityNormalTemplate"];
+    NSImage* highPriority = [NSImage imageNamed:@"PriorityHighTemplate"];
+
+    NSImageView* lowPriorityView = [[NSImageView alloc] init];
+    lowPriorityView.image = lowPriority;
+    NSImageView* mediumPriorityView = [[NSImageView alloc] init];
+    mediumPriorityView.image = mediumPriority;
+    NSImageView* highPriorityView = [[NSImageView alloc] init];
+    highPriorityView.image = highPriority;
+
+    NSStackView* stackView = [[NSStackView alloc] init];
+    stackView.spacing = -TRFileOutlinePriorityImageOverlap();
+
+    [stackView addArrangedSubview:lowPriorityView];
+    [stackView addArrangedSubview:mediumPriorityView];
+    [stackView addArrangedSubview:highPriorityView];
+
+    self.stackView = stackView;
+    self.lowPriorityView = lowPriorityView;
+    self.mediumPriorityView = mediumPriorityView;
+    self.highPriorityView = highPriorityView;
+
+    [self.iconsContainerView addSubview:stackView];
+
+    __auto_type view = stackView;
+    __auto_type superview = stackView.superview;
+    view.translatesAutoresizingMaskIntoConstraints = NO;
+
+    CGFloat height = lowPriority.size.height;
+
+    [NSLayoutConstraint activateConstraints:@[
+        [view.leadingAnchor constraintEqualToAnchor:superview.leadingAnchor],
+        [view.trailingAnchor constraintEqualToAnchor:superview.trailingAnchor],
+        [view.topAnchor constraintEqualToAnchor:superview.topAnchor],
+        [view.bottomAnchor constraintEqualToAnchor:superview.bottomAnchor],
+        [view.heightAnchor constraintEqualToConstant:height]
+    ]];
+}
+#endif
 
 - (void)setNode:(FileListNode*)node
 {
@@ -175,20 +229,15 @@
 
 - (void)updatePriorityIcons:(NSSet*)priorities
 {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
-    // Remove all existing image views
-    TRDeactivateConstraints(self.iconsContainerView, self.priorityIconConstraints);
-    self.priorityIconConstraints = @[];
-#endif
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+    NSArray* images = TRFileOutlinePriorityImages(priorities, self.backgroundStyle);
+    CGFloat const imageOverlap = TRFileOutlinePriorityImageOverlap();
+
     for (NSView* subview in self.iconsContainerView.subviews)
     {
         [subview removeFromSuperview];
     }
 
-    NSArray* images = TRFileOutlinePriorityImages(priorities, self.backgroundStyle);
-    CGFloat const imageOverlap = TRFileOutlinePriorityImageOverlap();
-
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     CGFloat totalWidth = 0.0;
     CGFloat maxHeight = 0.0;
     for (NSImage* image in images)
@@ -220,7 +269,18 @@
         [self.iconsContainerView addSubview:imageView];
         x += image.size.width - imageOverlap;
     }
-#else
+#elif TR_MACOS_DEPLOYMENT_BEFORE_10_14
+    // Remove all existing image views
+    TRDeactivateConstraints(self.iconsContainerView, self.priorityIconConstraints);
+    self.priorityIconConstraints = @[];
+    for (NSView* subview in self.iconsContainerView.subviews)
+    {
+        [subview removeFromSuperview];
+    }
+
+    NSArray* images = TRFileOutlinePriorityImages(priorities, self.backgroundStyle);
+    CGFloat const imageOverlap = TRFileOutlinePriorityImageOverlap();
+
     NSView* previousView = nil;
     NSMutableArray* constraints = [NSMutableArray array];
 
@@ -276,6 +336,20 @@
 
     self.priorityIconConstraints = constraints;
     TRActivateConstraints(self.iconsContainerView, self.priorityIconConstraints);
+#else
+    NSUInteger const count = priorities.count;
+    if (count == 0)
+    {
+        self.lowPriorityView.hidden = YES;
+        self.mediumPriorityView.hidden = NO;
+        self.highPriorityView.hidden = YES;
+    }
+    else
+    {
+        self.lowPriorityView.hidden = [priorities containsObject:@(TR_PRI_LOW)] == NO;
+        self.mediumPriorityView.hidden = [priorities containsObject:@(TR_PRI_NORMAL)] == NO;
+        self.highPriorityView.hidden = [priorities containsObject:@(TR_PRI_HIGH)] == NO;
+    }
 #endif
 }
 
@@ -344,7 +418,15 @@
 - (void)setBackgroundStyle:(NSBackgroundStyle)backgroundStyle
 {
     [super setBackgroundStyle:backgroundStyle];
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
     [self updateDisplay];
+#else
+    NSColor* priorityColor = backgroundStyle == NSBackgroundStyleEmphasized ? NSColor.whiteColor : NSColor.darkGrayColor;
+    self.lowPriorityView.contentTintColor = priorityColor;
+    self.mediumPriorityView.contentTintColor = priorityColor;
+    self.highPriorityView.contentTintColor = priorityColor;
+#endif
 }
 
 - (void)updateTrackingAreas

@@ -31,8 +31,6 @@ else()
     find_program(ACTOOL_EXECUTABLE actool REQUIRED)
 endif()
 
-set(TR_OBJC_WEAK_PROPERTY weak)
-set(TR_OBJC_WEAK_REF __weak)
 set(TR_MACOS_OBJC_ARC_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:-fobjc-arc>")
 set(TR_MACOS_OBJC_WEAK_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:-fobjc-weak>")
 set(TR_MACOS_ARCLITE_LINK_OPTIONS)
@@ -67,10 +65,6 @@ if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
         list(APPEND TR_MACOS_ARCLITE_LINK_OPTIONS "$<$<LINK_LANGUAGE:C,CXX>:-Wl,-U,${TR_MACOS_ARCLITE_SYMBOL}>")
     endforeach()
 endif()
-
-add_compile_definitions(
-    TR_OBJC_WEAK=${TR_OBJC_WEAK_PROPERTY}
-    TR_OBJC_WEAK_REF=${TR_OBJC_WEAK_REF})
 
 set(MAC_BUNDLE_NAME Transmission)
 

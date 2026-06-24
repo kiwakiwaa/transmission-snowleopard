@@ -18,9 +18,9 @@ static NSTimeInterval const kCheckFireInterval = 3.0;
 @interface PortChecker ()
 
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_8
-@property(nonatomic) NSObject<PortCheckerDelegate>* fDelegate;
+@property(nonatomic) id<PortCheckerDelegate> fDelegate;
 #else
-@property(nonatomic, TR_OBJC_WEAK) NSObject<PortCheckerDelegate>* fDelegate;
+@property(nonatomic, weak) id<PortCheckerDelegate> fDelegate;
 #endif
 @property(nonatomic) PortStatus fStatus;
 
@@ -45,7 +45,7 @@ static NSTimeInterval const kCheckFireInterval = 3.0;
 TR_LEGACY_WEAK_REFERENCE_ACCESSORS(NSObject<PortCheckerDelegate>, fDelegate, setFDelegate, _delegateWeakReference)
 #endif
 
-- (instancetype)initForPort:(NSInteger)portNumber delay:(BOOL)delay withDelegate:(NSObject<PortCheckerDelegate>*)delegate
+- (instancetype)initForPort:(NSInteger)portNumber delay:(BOOL)delay withDelegate:(id<PortCheckerDelegate>)delegate
 {
     if ((self = [super init]))
     {
@@ -148,8 +148,10 @@ TR_LEGACY_WEAK_REFERENCE_ACCESSORS(NSObject<PortCheckerDelegate>, fDelegate, set
 {
     self.fStatus = status;
 
-    NSObject<PortCheckerDelegate>* delegate = self.fDelegate;
-    [delegate performSelectorOnMainThread:@selector(portCheckerDidFinishProbing:) withObject:self waitUntilDone:NO];
+    __auto_type delegate = self.fDelegate;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [delegate portCheckerDidFinishProbing:self];
+    });
 }
 
 @end

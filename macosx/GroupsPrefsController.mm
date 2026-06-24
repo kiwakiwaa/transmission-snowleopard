@@ -40,8 +40,8 @@ typedef NS_ENUM(NSInteger, SegmentTag) {
 @property(nonatomic) IBOutlet NSPopUpButton* fAnnouncedClientIdentityPopUp;
 
 @property(nonatomic) IBOutlet NSWindow* groupRulesSheetWindow;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSPredicateEditor* ruleEditor;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSLayoutConstraint* ruleEditorHeightConstraint;
+@property(nonatomic, weak) IBOutlet NSPredicateEditor* ruleEditor;
+@property(nonatomic, weak) IBOutlet NSLayoutConstraint* ruleEditorHeightConstraint;
 
 @end
 

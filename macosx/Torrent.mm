@@ -2183,7 +2183,7 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
         NSString* oldName = oldPath.lastPathComponent;
 
         using UpdateNodeAndChildrenForRename = void (^)(FileListNode*);
-        __block TR_OBJC_WEAK_REF UpdateNodeAndChildrenForRename weakUpdateNodeAndChildrenForRename;
+        __block __weak UpdateNodeAndChildrenForRename weakUpdateNodeAndChildrenForRename;
         UpdateNodeAndChildrenForRename updateNodeAndChildrenForRename;
         weakUpdateNodeAndChildrenForRename = updateNodeAndChildrenForRename = ^(FileListNode* node) {
             [node updateFromOldName:oldName toNewName:newName inPath:path];

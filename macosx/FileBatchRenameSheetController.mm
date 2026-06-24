@@ -26,61 +26,61 @@ typedef NS_ENUM(NSInteger, BatchRenameRulePopupTag) {
 
 @interface FileBatchRenameSheetController ()<NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate, NSControlTextEditingDelegate>
 
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* ruleLabel;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* searchLabel;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* replacementLabel;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* textLabel;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* dateFormatLabel;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* dateLocationLabel;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* sequenceTextLabel;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* sequenceLocationLabel;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* sequenceDigitsLabel;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* sequenceStartLabel;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* characterModeLabel;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* characterLocationLabel;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* characterCountLabel;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* regexPatternLabel;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* regexReplacementLabel;
+@property(nonatomic, weak) IBOutlet NSTextField* ruleLabel;
+@property(nonatomic, weak) IBOutlet NSTextField* searchLabel;
+@property(nonatomic, weak) IBOutlet NSTextField* replacementLabel;
+@property(nonatomic, weak) IBOutlet NSTextField* textLabel;
+@property(nonatomic, weak) IBOutlet NSTextField* dateFormatLabel;
+@property(nonatomic, weak) IBOutlet NSTextField* dateLocationLabel;
+@property(nonatomic, weak) IBOutlet NSTextField* sequenceTextLabel;
+@property(nonatomic, weak) IBOutlet NSTextField* sequenceLocationLabel;
+@property(nonatomic, weak) IBOutlet NSTextField* sequenceDigitsLabel;
+@property(nonatomic, weak) IBOutlet NSTextField* sequenceStartLabel;
+@property(nonatomic, weak) IBOutlet NSTextField* characterModeLabel;
+@property(nonatomic, weak) IBOutlet NSTextField* characterLocationLabel;
+@property(nonatomic, weak) IBOutlet NSTextField* characterCountLabel;
+@property(nonatomic, weak) IBOutlet NSTextField* regexPatternLabel;
+@property(nonatomic, weak) IBOutlet NSTextField* regexReplacementLabel;
 
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSPopUpButton* rulePopup;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSView* replaceRuleView;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSView* textRuleView;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSView* dateRuleView;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSView* sequenceRuleView;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSView* characterRemovalRuleView;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSView* regularExpressionRuleView;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSView* changeCaseRuleView;
+@property(nonatomic, weak) IBOutlet NSPopUpButton* rulePopup;
+@property(nonatomic, weak) IBOutlet NSView* replaceRuleView;
+@property(nonatomic, weak) IBOutlet NSView* textRuleView;
+@property(nonatomic, weak) IBOutlet NSView* dateRuleView;
+@property(nonatomic, weak) IBOutlet NSView* sequenceRuleView;
+@property(nonatomic, weak) IBOutlet NSView* characterRemovalRuleView;
+@property(nonatomic, weak) IBOutlet NSView* regularExpressionRuleView;
+@property(nonatomic, weak) IBOutlet NSView* changeCaseRuleView;
 
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSButton* renameButton;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSButton* cancelButton;
+@property(nonatomic, weak) IBOutlet NSButton* renameButton;
+@property(nonatomic, weak) IBOutlet NSButton* cancelButton;
 
 @property(nonatomic) FileBatchRenameSession* session;
 @property(nonatomic, copy) void (^completionHandler)(BOOL didRename, NSArray* operations);
 @property(nonatomic, copy) NSArray* completedOperations;
 
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSPopUpButton* replaceModePopup;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSPopUpButton* dateTextPlacementPopup;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSPopUpButton* sequenceTextPlacementPopup;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSPopUpButton* characterRemovalModePopup;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* searchField;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* replacementField;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* customTextField;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* sequenceTextField;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* regexPatternField;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* regexReplacementField;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* dateFormatField;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* sequenceStartField;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* sequenceDigitsField;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* characterLocationField;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* characterCountField;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSStepper* sequenceStartStepper;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSStepper* sequenceDigitsStepper;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSStepper* characterLocationStepper;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSStepper* characterCountStepper;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSSegmentedControl* caseSegmentedControl;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSScrollView* tableScrollView;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTableView* tableView;
-@property(nonatomic, TR_OBJC_WEAK) IBOutlet NSTextField* statusField;
+@property(nonatomic, weak) IBOutlet NSPopUpButton* replaceModePopup;
+@property(nonatomic, weak) IBOutlet NSPopUpButton* dateTextPlacementPopup;
+@property(nonatomic, weak) IBOutlet NSPopUpButton* sequenceTextPlacementPopup;
+@property(nonatomic, weak) IBOutlet NSPopUpButton* characterRemovalModePopup;
+@property(nonatomic, weak) IBOutlet NSTextField* searchField;
+@property(nonatomic, weak) IBOutlet NSTextField* replacementField;
+@property(nonatomic, weak) IBOutlet NSTextField* customTextField;
+@property(nonatomic, weak) IBOutlet NSTextField* sequenceTextField;
+@property(nonatomic, weak) IBOutlet NSTextField* regexPatternField;
+@property(nonatomic, weak) IBOutlet NSTextField* regexReplacementField;
+@property(nonatomic, weak) IBOutlet NSTextField* dateFormatField;
+@property(nonatomic, weak) IBOutlet NSTextField* sequenceStartField;
+@property(nonatomic, weak) IBOutlet NSTextField* sequenceDigitsField;
+@property(nonatomic, weak) IBOutlet NSTextField* characterLocationField;
+@property(nonatomic, weak) IBOutlet NSTextField* characterCountField;
+@property(nonatomic, weak) IBOutlet NSStepper* sequenceStartStepper;
+@property(nonatomic, weak) IBOutlet NSStepper* sequenceDigitsStepper;
+@property(nonatomic, weak) IBOutlet NSStepper* characterLocationStepper;
+@property(nonatomic, weak) IBOutlet NSStepper* characterCountStepper;
+@property(nonatomic, weak) IBOutlet NSSegmentedControl* caseSegmentedControl;
+@property(nonatomic, weak) IBOutlet NSScrollView* tableScrollView;
+@property(nonatomic, weak) IBOutlet NSTableView* tableView;
+@property(nonatomic, weak) IBOutlet NSTextField* statusField;
 
 @end
 

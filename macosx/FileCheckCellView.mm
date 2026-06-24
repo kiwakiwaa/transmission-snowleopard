@@ -12,7 +12,7 @@
 #import "Torrent.h"
 
 @interface FileCheckCellView ()
-@property(nonatomic, TR_OBJC_WEAK) NSButton* checkButton;
+@property(nonatomic, weak) NSButton* checkButton;
 @end
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9

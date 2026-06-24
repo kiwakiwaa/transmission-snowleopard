@@ -36,7 +36,7 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
 @property(nonatomic) NSMutableArray* fFileList;
 
 @property(nonatomic) IBOutlet FileOutlineView* fOutline;
-@property(nonatomic, TR_OBJC_WEAK) NSUndoManager* batchRenameUndoManager;
+@property(nonatomic, weak) NSUndoManager* batchRenameUndoManager;
 
 @property(nonatomic, readonly) NSMenu* menu;
 
@@ -908,7 +908,7 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
     __block NSUInteger retIndex = NSNotFound;
 
     using FindFileNode = void (^)(FileListNode*, NSArray*, NSIndexSet*, FileListNode*);
-    __block TR_OBJC_WEAK_REF FindFileNode weakFindFileNode;
+    __block __weak FindFileNode weakFindFileNode;
     FindFileNode findFileNode;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wshadow"

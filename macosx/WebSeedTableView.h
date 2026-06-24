@@ -6,7 +6,7 @@
 
 @interface WebSeedTableView : NSTableView<NSMenuItemValidation>
 
-@property(nonatomic, TR_OBJC_WEAK) NSArray* webSeeds;
+@property(nonatomic, weak) NSArray* webSeeds;
 
 - (void)copy:(id)sender;
 
