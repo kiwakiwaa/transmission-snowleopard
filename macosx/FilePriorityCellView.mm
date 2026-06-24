@@ -24,7 +24,6 @@
 @property(nonatomic, strong) NSImageView* highPriorityView;
 #endif
 @property(nonatomic, strong) NSTrackingArea* trackingArea;
-@property(nonatomic, strong) NSArray* priorityIconConstraints;
 @end
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
@@ -135,31 +134,80 @@
     NSStackView* stackView = [[NSStackView alloc] init];
     stackView.spacing = -TRFileOutlinePriorityImageOverlap();
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_11
+    [stackView setViews:@[ lowPriorityView, mediumPriorityView, highPriorityView ] inGravity:NSStackViewGravityCenter];
+#else
     [stackView addArrangedSubview:lowPriorityView];
     [stackView addArrangedSubview:mediumPriorityView];
     [stackView addArrangedSubview:highPriorityView];
+#endif
 
     self.stackView = stackView;
     self.lowPriorityView = lowPriorityView;
     self.mediumPriorityView = mediumPriorityView;
     self.highPriorityView = highPriorityView;
 
-    [self.iconsContainerView addSubview:stackView];
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_11
+    for (NSImageView* priorityView in @[ lowPriorityView, mediumPriorityView, highPriorityView ])
+    {
+        priorityView.translatesAutoresizingMaskIntoConstraints = NO;
+        TRActivateConstraints(priorityView,
+            @[
+                TRMakeLayoutConstraint(
+                    priorityView,
+                    NSLayoutAttributeWidth,
+                    NSLayoutRelationEqual,
+                    nil,
+                    NSLayoutAttributeNotAnAttribute,
+                    priorityView.image.size.width),
+                TRMakeLayoutConstraint(
+                    priorityView,
+                    NSLayoutAttributeHeight,
+                    NSLayoutRelationEqual,
+                    nil,
+                    NSLayoutAttributeNotAnAttribute,
+                    priorityView.image.size.height),
+            ]);
+    }
+#endif
 
-    __auto_type view = stackView;
-    __auto_type superview = stackView.superview;
-    view.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.iconsContainerView addSubview:stackView];
+    stackView.translatesAutoresizingMaskIntoConstraints = NO;
 
     CGFloat height = lowPriority.size.height;
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_11
+    TRActivateConstraints(self.iconsContainerView,
+        @[
+            TRMakeLayoutConstraint(stackView, NSLayoutAttributeLeading, NSLayoutRelationEqual, self.iconsContainerView, NSLayoutAttributeLeading, 0.0),
+            TRMakeLayoutConstraint(stackView, NSLayoutAttributeTrailing, NSLayoutRelationEqual, self.iconsContainerView, NSLayoutAttributeTrailing, 0.0),
+            TRMakeLayoutConstraint(stackView, NSLayoutAttributeTop, NSLayoutRelationEqual, self.iconsContainerView, NSLayoutAttributeTop, 0.0),
+            TRMakeLayoutConstraint(stackView, NSLayoutAttributeBottom, NSLayoutRelationEqual, self.iconsContainerView, NSLayoutAttributeBottom, 0.0),
+            TRMakeLayoutConstraint(stackView, NSLayoutAttributeHeight, NSLayoutRelationEqual, nil, NSLayoutAttributeNotAnAttribute, height),
+        ]);
+#else
+    __auto_type superview = stackView.superview;
     [NSLayoutConstraint activateConstraints:@[
-        [view.leadingAnchor constraintEqualToAnchor:superview.leadingAnchor],
-        [view.trailingAnchor constraintEqualToAnchor:superview.trailingAnchor],
-        [view.topAnchor constraintEqualToAnchor:superview.topAnchor],
-        [view.bottomAnchor constraintEqualToAnchor:superview.bottomAnchor],
-        [view.heightAnchor constraintEqualToConstant:height]
+        [stackView.leadingAnchor constraintEqualToAnchor:superview.leadingAnchor],
+        [stackView.trailingAnchor constraintEqualToAnchor:superview.trailingAnchor],
+        [stackView.topAnchor constraintEqualToAnchor:superview.topAnchor],
+        [stackView.bottomAnchor constraintEqualToAnchor:superview.bottomAnchor],
+        [stackView.heightAnchor constraintEqualToConstant:height]
     ]];
+#endif
 }
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_11
+- (void)setPriorityIconViews:(NSArray*)views
+{
+    [self.stackView setViews:views inGravity:NSStackViewGravityCenter];
+}
+#else
+- (void)setPriorityIconView:(NSImageView*)view visible:(BOOL)visible
+{
+    view.hidden = !visible;
+}
+#endif
 #endif
 
 - (void)setNode:(FileListNode*)node
@@ -269,86 +317,63 @@
         [self.iconsContainerView addSubview:imageView];
         x += image.size.width - imageOverlap;
     }
-#elif TR_MACOS_DEPLOYMENT_BEFORE_10_14
-    // Remove all existing image views
-    TRDeactivateConstraints(self.iconsContainerView, self.priorityIconConstraints);
-    self.priorityIconConstraints = @[];
-    for (NSView* subview in self.iconsContainerView.subviews)
-    {
-        [subview removeFromSuperview];
-    }
-
-    NSArray* images = TRFileOutlinePriorityImages(priorities, self.backgroundStyle);
-    CGFloat const imageOverlap = TRFileOutlinePriorityImageOverlap();
-
-    NSView* previousView = nil;
-    NSMutableArray* constraints = [NSMutableArray array];
-
-    for (NSImage* image in images)
-    {
-        NSImageView* imageView = [[NSImageView alloc] initWithFrame:NSZeroRect];
-        imageView.translatesAutoresizingMaskIntoConstraints = NO;
-        imageView.image = image;
-        [self.iconsContainerView addSubview:imageView];
-
-        NSSize const imageSize = image.size;
-
-        [constraints addObjectsFromArray:@[
-            TRMakeLayoutConstraint(imageView, NSLayoutAttributeWidth, NSLayoutRelationEqual, nil, NSLayoutAttributeNotAnAttribute, imageSize.width),
-            TRMakeLayoutConstraint(imageView, NSLayoutAttributeHeight, NSLayoutRelationEqual, nil, NSLayoutAttributeNotAnAttribute, imageSize.height),
-            TRMakeLayoutConstraint(imageView, NSLayoutAttributeCenterY, NSLayoutRelationEqual, self.iconsContainerView, NSLayoutAttributeCenterY, 0.0),
-        ]];
-
-        if (previousView == nil)
-        {
-            [constraints addObject:TRMakeLayoutConstraint(
-                                       imageView,
-                                       NSLayoutAttributeLeading,
-                                       NSLayoutRelationEqual,
-                                       self.iconsContainerView,
-                                       NSLayoutAttributeLeading,
-                                       0.0)];
-        }
-        else
-        {
-            [constraints addObject:TRMakeLayoutConstraint(
-                                       imageView,
-                                       NSLayoutAttributeLeading,
-                                       NSLayoutRelationEqual,
-                                       previousView,
-                                       NSLayoutAttributeTrailing,
-                                       -imageOverlap)];
-        }
-
-        previousView = imageView;
-    }
-
-    if (previousView)
-    {
-        [constraints addObject:TRMakeLayoutConstraint(
-                                   previousView,
-                                   NSLayoutAttributeTrailing,
-                                   NSLayoutRelationEqual,
-                                   self.iconsContainerView,
-                                   NSLayoutAttributeTrailing,
-                                   0.0)];
-    }
-
-    self.priorityIconConstraints = constraints;
-    TRActivateConstraints(self.iconsContainerView, self.priorityIconConstraints);
 #else
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+    NSArray* images = TRFileOutlinePriorityImages(priorities, self.backgroundStyle);
+    NSUInteger imageIndex = 0;
+#endif
     NSUInteger const count = priorities.count;
     if (count == 0)
     {
-        self.lowPriorityView.hidden = YES;
-        self.mediumPriorityView.hidden = NO;
-        self.highPriorityView.hidden = YES;
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+        self.mediumPriorityView.image = images.count > 0 ? images[imageIndex] : nil;
+#endif
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_11
+        [self setPriorityIconViews:@[ self.mediumPriorityView ]];
+#else
+        [self setPriorityIconView:self.lowPriorityView visible:NO];
+        [self setPriorityIconView:self.mediumPriorityView visible:YES];
+        [self setPriorityIconView:self.highPriorityView visible:NO];
+#endif
     }
     else
     {
-        self.lowPriorityView.hidden = [priorities containsObject:@(TR_PRI_LOW)] == NO;
-        self.mediumPriorityView.hidden = [priorities containsObject:@(TR_PRI_NORMAL)] == NO;
-        self.highPriorityView.hidden = [priorities containsObject:@(TR_PRI_HIGH)] == NO;
+        BOOL const hasLowPriority = [priorities containsObject:@(TR_PRI_LOW)];
+        BOOL const hasMediumPriority = [priorities containsObject:@(TR_PRI_NORMAL)];
+        BOOL const hasHighPriority = [priorities containsObject:@(TR_PRI_HIGH)];
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_11
+        NSMutableArray* visiblePriorityViews = [NSMutableArray arrayWithCapacity:count];
+#endif
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_14
+        if (hasLowPriority)
+        {
+            self.lowPriorityView.image = images[imageIndex++];
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_11
+            [visiblePriorityViews addObject:self.lowPriorityView];
+#endif
+        }
+        if (hasMediumPriority)
+        {
+            self.mediumPriorityView.image = images[imageIndex++];
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_11
+            [visiblePriorityViews addObject:self.mediumPriorityView];
+#endif
+        }
+        if (hasHighPriority)
+        {
+            self.highPriorityView.image = images[imageIndex++];
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_11
+            [visiblePriorityViews addObject:self.highPriorityView];
+#endif
+        }
+#endif
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_11
+        [self setPriorityIconViews:visiblePriorityViews];
+#else
+        [self setPriorityIconView:self.lowPriorityView visible:hasLowPriority];
+        [self setPriorityIconView:self.mediumPriorityView visible:hasMediumPriority];
+        [self setPriorityIconView:self.highPriorityView visible:hasHighPriority];
+#endif
     }
 #endif
 }
