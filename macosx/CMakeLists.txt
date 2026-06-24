@@ -329,6 +329,7 @@ target_sources(${TR_NAME}-mac
         ShareToolbarItem.mm
         ShareTorrentFileHelper.h
         ShareTorrentFileHelper.mm
+        SparkleCompatibility.h
         SmallTorrentCell.h
         SmallTorrentCell.mm
         StatsWindowController.h

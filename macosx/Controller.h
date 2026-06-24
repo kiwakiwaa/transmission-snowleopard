@@ -9,11 +9,16 @@
 #define TR_ENABLE_SPARKLE 1
 #endif
 
+#include <libtransmission/macos-version.h>
+
 #if TR_ENABLE_SPARKLE
+#if TR_MACOS_SDK_BEFORE_10_11
+#import "SparkleCompatibility.h"
+#else
 #import <Sparkle/SUUpdaterDelegate.h>
 #endif
+#endif
 
-#include <libtransmission/macos-version.h>
 #include <libtransmission/transmission.h>
 
 #import "VDKQueue.h"

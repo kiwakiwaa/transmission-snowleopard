@@ -6,14 +6,16 @@
 #define TR_ENABLE_SPARKLE 1
 #endif
 
+#include <libtransmission/macos-version.h>
+
 #if __has_feature(modules)
 @import Carbon;
-#if TR_ENABLE_SPARKLE
+#if TR_ENABLE_SPARKLE && !TR_MACOS_SDK_BEFORE_10_11
 @import Sparkle;
 #endif
 #else
 #import <Carbon/Carbon.h>
-#if TR_ENABLE_SPARKLE
+#if TR_ENABLE_SPARKLE && !TR_MACOS_SDK_BEFORE_10_11
 #import <Sparkle/Sparkle.h>
 #endif
 #endif

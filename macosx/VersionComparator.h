@@ -8,8 +8,14 @@
 #define TR_ENABLE_SPARKLE 1
 #endif
 
+#include <libtransmission/macos-version.h>
+
 #if TR_ENABLE_SPARKLE
+#if TR_MACOS_SDK_BEFORE_10_11
+#import "SparkleCompatibility.h"
+#else
 #import <Sparkle/SUVersionComparisonProtocol.h>
+#endif
 #else
 @protocol SUVersionComparison<NSObject>
 - (NSComparisonResult)compareVersion:(NSString*)versionA toVersion:(NSString*)versionB;
