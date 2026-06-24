@@ -37,6 +37,7 @@ static CGFloat const kGroupDisclosureWidth = 18.0;
 @implementation LegacyTorrentTableCell
 
 static CGFloat const kLegacyGroupStatusWidth = 170.0;
+static CGFloat const kLegacySmallStatusWidth = 130.0;
 
 - (instancetype)init
 {
@@ -62,6 +63,9 @@ static CGFloat const kLegacyGroupStatusWidth = 170.0;
     id item = self.objectValue;
     NSInteger row = [(NSTableView*)controlView rowAtPoint:NSMakePoint(NSMinX(cellFrame) + 1.0, NSMidY(cellFrame))];
     BOOL selected = row >= 0 && [(NSTableView*)controlView isRowSelected:row];
+
+    [NSGraphicsContext saveGraphicsState];
+    NSRectClip(cellFrame);
 
     if (selected)
     {
@@ -93,89 +97,158 @@ static CGFloat const kLegacyGroupStatusWidth = 170.0;
     if ([item isKindOfClass:[Torrent class]])
     {
         Torrent* torrent = (Torrent*)item;
-        NSInteger const groupValue = torrent.groupValue;
-        if (groupValue != -1 && ![NSUserDefaults.standardUserDefaults boolForKey:@"SortByGroup"])
+        BOOL const small = [NSUserDefaults.standardUserDefaults boolForKey:@"SmallView"];
+        if (small)
         {
-            [[NSImage discIconWithColor:[GroupsController.groups colorForIndex:groupValue]
-                            insetFactor:0] drawInRect:NSMakeRect(NSMinX(cellFrame) + 2.0, NSMinY(cellFrame) + 26.0, 10.0, 10.0)
-                                             fromRect:NSZeroRect
-                                            operation:NSCompositingOperationSourceOver
-                                             fraction:1.0
-                                       respectFlipped:YES
-                                                hints:nil];
-        }
-
-        NSImage* icon = torrent.anyErrorOrWarning ? [NSImage imageNamed:NSImageNameCaution] : torrent.icon;
-        [icon drawInRect:NSMakeRect(NSMinX(cellFrame) + 13.0, NSMinY(cellFrame) + 13.0, 36.0, 36.0) fromRect:NSZeroRect
-                 operation:NSCompositingOperationSourceOver
-                  fraction:1.0
-            respectFlipped:YES
-                     hints:nil];
-
-        CGFloat const left = NSMinX(cellFrame) + 65.0;
-        CGFloat const width = MAX(80.0, NSWidth(cellFrame) - 90.0);
-        [torrent.name drawInRect:NSMakeRect(left, NSMinY(cellFrame) + 3.0, width, 16.0) withAttributes:titleAttrs];
-        [torrent.progressString drawInRect:NSMakeRect(left - 2.0, NSMinY(cellFrame) + 21.0, width + 4.0, 13.0)
-                            withAttributes:detailAttrs];
-        [ProgressBarView.sharedInstance drawBarInRect:NSMakeRect(left, NSMinY(cellFrame) + 36.0, width, 14.0) forTableView:self.tableView
-                                          withTorrent:torrent];
-        [torrent.statusString drawInRect:NSMakeRect(left - 2.0, NSMinY(cellFrame) + 50.0, width + 4.0, 13.0) withAttributes:detailAttrs];
-    }
-    else if ([item isKindOfClass:[TorrentGroup class]])
-    {
-        TorrentGroup* group = (TorrentGroup*)item;
-        NSInteger groupIndex = group.groupIndex;
-        BOOL expanded = self.tableView == nil || [self.tableView isItemExpanded:group];
-
-        [[NSColor colorWithCalibratedWhite:selected ? 1.0 : 0.35 alpha:1.0] setFill];
-        NSBezierPath* disclosure = [NSBezierPath bezierPath];
-        CGFloat midY = NSMidY(cellFrame);
-        CGFloat minX = NSMinX(cellFrame) + 7.0;
-        if (expanded)
-        {
-            [disclosure moveToPoint:NSMakePoint(minX, midY - 3.0)];
-            [disclosure lineToPoint:NSMakePoint(minX + 8.0, midY - 3.0)];
-            [disclosure lineToPoint:NSMakePoint(minX + 4.0, midY + 3.0)];
+            [self drawSmallTorrent:torrent inFrame:cellFrame selected:selected titleAttributes:titleAttrs detailAttributes:detailAttrs];
         }
         else
         {
-            [disclosure moveToPoint:NSMakePoint(minX + 2.0, midY - 5.0)];
-            [disclosure lineToPoint:NSMakePoint(minX + 2.0, midY + 5.0)];
-            [disclosure lineToPoint:NSMakePoint(minX + 8.0, midY)];
+            [self drawRegularTorrent:torrent inFrame:cellFrame titleAttributes:titleAttrs detailAttributes:detailAttrs];
         }
-        [disclosure closePath];
-        [disclosure fill];
-
-        NSColor* groupColor = groupIndex != -1 ? [GroupsController.groups colorForIndex:groupIndex] :
-                                                 [NSColor colorWithCalibratedWhite:1.0 alpha:0.0];
-        [[NSImage discIconWithColor:groupColor insetFactor:0]
-                drawInRect:NSMakeRect(NSMinX(cellFrame) + kGroupDisclosureWidth + 3.0, NSMinY(cellFrame) + 3.0, 12.0, 12.0)
-                  fromRect:NSZeroRect
-                 operation:NSCompositingOperationSourceOver
-                  fraction:1.0
-            respectFlipped:YES
-                     hints:nil];
-
-        NSString* groupName = groupIndex != -1 ? [GroupsController.groups nameForIndex:groupIndex] :
-                                                 NSLocalizedString(@"No Group", "Group table row");
-        NSString* title = [NSString localizedStringWithFormat:@"%@ (%lu)", groupName, group.torrents.count];
-        NSDictionary* groupAttrs = @{
-            NSFontAttributeName : [NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]],
-            NSForegroundColorAttributeName : selected ? NSColor.whiteColor : NSColor.disabledControlTextColor,
-        };
-        [title drawInRect:NSMakeRect(
-                              NSMinX(cellFrame) + kGroupDisclosureWidth + 20.0,
-                              NSMinY(cellFrame) + 2.0,
-                              MAX(80.0, NSWidth(cellFrame) - kLegacyGroupStatusWidth - 45.0),
-                              14.0)
-            withAttributes:groupAttrs];
-
-        BOOL displayGroupRowRatio = [NSUserDefaults.standardUserDefaults boolForKey:@"DisplayGroupRowRatio"];
-        NSString* rightText = displayGroupRowRatio ? [NSString stringForRatio:group.ratio] : [NSString stringForSpeed:group.uploadRate];
-        [[NSString stringForSpeed:group.downloadRate] drawInRect:NSMakeRect(NSMaxX(cellFrame) - 165.0, NSMinY(cellFrame) + 2.0, 78.0, 14.0)
-                                                  withAttributes:detailAttrs];
-        [rightText drawInRect:NSMakeRect(NSMaxX(cellFrame) - 82.0, NSMinY(cellFrame) + 2.0, 76.0, 14.0) withAttributes:detailAttrs];
     }
+    else if ([item isKindOfClass:[TorrentGroup class]])
+    {
+        [self drawGroup:(TorrentGroup*)item inFrame:cellFrame selected:selected detailAttributes:detailAttrs];
+    }
+
+    [NSGraphicsContext restoreGraphicsState];
+}
+
+- (void)drawRegularTorrent:(Torrent*)torrent
+                   inFrame:(NSRect)cellFrame
+           titleAttributes:(NSDictionary*)titleAttrs
+          detailAttributes:(NSDictionary*)detailAttrs
+{
+    NSInteger const groupValue = torrent.groupValue;
+    if (groupValue != -1 && ![NSUserDefaults.standardUserDefaults boolForKey:@"SortByGroup"])
+    {
+        [[NSImage discIconWithColor:[GroupsController.groups colorForIndex:groupValue]
+                        insetFactor:0] drawInRect:NSMakeRect(NSMinX(cellFrame) + 2.0, NSMinY(cellFrame) + 26.0, 10.0, 10.0)
+                                         fromRect:NSZeroRect
+                                        operation:NSCompositingOperationSourceOver
+                                         fraction:1.0
+                                   respectFlipped:YES
+                                            hints:nil];
+    }
+
+    NSImage* icon = torrent.anyErrorOrWarning ? [NSImage imageNamed:NSImageNameCaution] : torrent.icon;
+    [icon drawInRect:NSMakeRect(NSMinX(cellFrame) + 13.0, NSMinY(cellFrame) + 13.0, 36.0, 36.0) fromRect:NSZeroRect
+             operation:NSCompositingOperationSourceOver
+              fraction:1.0
+        respectFlipped:YES
+                 hints:nil];
+
+    CGFloat const left = NSMinX(cellFrame) + 65.0;
+    CGFloat const width = MAX(80.0, NSWidth(cellFrame) - 90.0);
+    [torrent.name drawInRect:NSMakeRect(left, NSMinY(cellFrame) + 3.0, width, 16.0) withAttributes:titleAttrs];
+    [torrent.progressString drawInRect:NSMakeRect(left - 2.0, NSMinY(cellFrame) + 21.0, width + 4.0, 13.0) withAttributes:detailAttrs];
+    [ProgressBarView.sharedInstance drawBarInRect:NSMakeRect(left, NSMinY(cellFrame) + 36.0, width, 14.0) forTableView:self.tableView
+                                      withTorrent:torrent];
+    [torrent.statusString drawInRect:NSMakeRect(left - 2.0, NSMinY(cellFrame) + 50.0, width + 4.0, 13.0) withAttributes:detailAttrs];
+}
+
+- (void)drawSmallTorrent:(Torrent*)torrent
+                 inFrame:(NSRect)cellFrame
+                selected:(BOOL)selected
+         titleAttributes:(NSDictionary*)titleAttrs
+        detailAttributes:(NSDictionary*)detailAttrs
+{
+    CGFloat const centerY = NSMidY(cellFrame);
+    NSInteger const groupValue = torrent.groupValue;
+    if (groupValue != -1 && ![NSUserDefaults.standardUserDefaults boolForKey:@"SortByGroup"])
+    {
+        [[NSImage discIconWithColor:[GroupsController.groups colorForIndex:groupValue]
+                        insetFactor:0] drawInRect:NSMakeRect(NSMinX(cellFrame), floor(centerY - 3.0), 6.0, 6.0)
+                                         fromRect:NSZeroRect
+                                        operation:NSCompositingOperationSourceOver
+                                         fraction:1.0
+                                   respectFlipped:YES
+                                            hints:nil];
+    }
+
+    NSImage* icon = torrent.anyErrorOrWarning ? [NSImage imageNamed:NSImageNameCaution] : torrent.icon;
+    [icon drawInRect:NSMakeRect(NSMinX(cellFrame) + 14.0, floor(centerY - 8.0), 16.0, 16.0) fromRect:NSZeroRect
+             operation:NSCompositingOperationSourceOver
+              fraction:1.0
+        respectFlipped:YES
+                 hints:nil];
+
+    CGFloat const left = NSMinX(cellFrame) + 45.0;
+    CGFloat const right = NSMaxX(cellFrame) - 8.0;
+    CGFloat const contentWidth = MAX(40.0, right - left);
+    [ProgressBarView.sharedInstance drawBarInRect:NSMakeRect(left, floor(centerY - 9.0), contentWidth, 18.0) forTableView:self.tableView
+                                      withTorrent:torrent];
+
+    CGFloat const stackWidth = MAX(40.0, MIN(240.0, contentWidth - kLegacySmallStatusWidth));
+    [torrent.name drawInRect:NSMakeRect(left, floor(centerY - 7.5), stackWidth, 15.0) withAttributes:titleAttrs];
+
+    NSString* status = [NSUserDefaults.standardUserDefaults boolForKey:@"DisplaySmallStatusRegular"] ? torrent.shortStatusString :
+                                                                                                       torrent.remainingTimeString;
+    NSMutableDictionary* rightAttrs = [detailAttrs mutableCopy];
+    NSMutableParagraphStyle* paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+    paragraphStyle.alignment = NSRightTextAlignment;
+    [rightAttrs setObject:paragraphStyle forKey:NSParagraphStyleAttributeName];
+    [rightAttrs setObject:(selected ? NSColor.whiteColor : NSColor.controlTextColor) forKey:NSForegroundColorAttributeName];
+
+    CGFloat const statusLeft = NSMaxX(cellFrame) - MAX(kLegacySmallStatusWidth, right - NSMaxX(NSMakeRect(left, 0.0, stackWidth, 0.0)) - 4.0) - 8.0;
+    CGFloat const statusWidth = MAX(40.0, right - statusLeft);
+    [status drawInRect:NSMakeRect(statusLeft, floor(centerY - 7.0), statusWidth, 14.0) withAttributes:rightAttrs];
+}
+
+- (void)drawGroup:(TorrentGroup*)group inFrame:(NSRect)cellFrame selected:(BOOL)selected detailAttributes:(NSDictionary*)detailAttrs
+{
+    NSInteger groupIndex = group.groupIndex;
+    BOOL expanded = self.tableView == nil || [self.tableView isItemExpanded:group];
+
+    [[NSColor colorWithCalibratedWhite:selected ? 1.0 : 0.35 alpha:1.0] setFill];
+    NSBezierPath* disclosure = [NSBezierPath bezierPath];
+    CGFloat midY = NSMidY(cellFrame);
+    CGFloat minX = NSMinX(cellFrame) + 7.0;
+    if (expanded)
+    {
+        [disclosure moveToPoint:NSMakePoint(minX, midY - 3.0)];
+        [disclosure lineToPoint:NSMakePoint(minX + 8.0, midY - 3.0)];
+        [disclosure lineToPoint:NSMakePoint(minX + 4.0, midY + 3.0)];
+    }
+    else
+    {
+        [disclosure moveToPoint:NSMakePoint(minX + 2.0, midY - 5.0)];
+        [disclosure lineToPoint:NSMakePoint(minX + 2.0, midY + 5.0)];
+        [disclosure lineToPoint:NSMakePoint(minX + 8.0, midY)];
+    }
+    [disclosure closePath];
+    [disclosure fill];
+
+    NSColor* groupColor = groupIndex != -1 ? [GroupsController.groups colorForIndex:groupIndex] :
+                                             [NSColor colorWithCalibratedWhite:1.0 alpha:0.0];
+    [[NSImage discIconWithColor:groupColor insetFactor:0]
+            drawInRect:NSMakeRect(NSMinX(cellFrame) + kGroupDisclosureWidth + 3.0, NSMinY(cellFrame) + 3.0, 12.0, 12.0)
+              fromRect:NSZeroRect
+             operation:NSCompositingOperationSourceOver
+              fraction:1.0
+        respectFlipped:YES
+                 hints:nil];
+
+    NSString* groupName = groupIndex != -1 ? [GroupsController.groups nameForIndex:groupIndex] :
+                                             NSLocalizedString(@"No Group", "Group table row");
+    NSString* title = [NSString localizedStringWithFormat:@"%@ (%lu)", groupName, group.torrents.count];
+    NSDictionary* groupAttrs = @{
+        NSFontAttributeName : [NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]],
+        NSForegroundColorAttributeName : selected ? NSColor.whiteColor : NSColor.disabledControlTextColor,
+    };
+    [title drawInRect:NSMakeRect(
+                          NSMinX(cellFrame) + kGroupDisclosureWidth + 20.0,
+                          NSMinY(cellFrame) + 2.0,
+                          MAX(80.0, NSWidth(cellFrame) - kLegacyGroupStatusWidth - 45.0),
+                          14.0)
+        withAttributes:groupAttrs];
+
+    BOOL displayGroupRowRatio = [NSUserDefaults.standardUserDefaults boolForKey:@"DisplayGroupRowRatio"];
+    NSString* rightText = displayGroupRowRatio ? [NSString stringForRatio:group.ratio] : [NSString stringForSpeed:group.uploadRate];
+    [[NSString stringForSpeed:group.downloadRate] drawInRect:NSMakeRect(NSMaxX(cellFrame) - 165.0, NSMinY(cellFrame) + 2.0, 78.0, 14.0)
+                                              withAttributes:detailAttrs];
+    [rightText drawInRect:NSMakeRect(NSMaxX(cellFrame) - 82.0, NSMinY(cellFrame) + 2.0, 76.0, 14.0) withAttributes:detailAttrs];
 }
 
 @end
@@ -887,6 +960,10 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 {
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
     NSRect rowRect = [self rectOfRow:row];
+    if ([self.fDefaults boolForKey:@"SmallView"])
+    {
+        return NSMakeRect(NSMinX(rowRect) + 14.0, floor(NSMidY(rowRect) - 8.0), 16.0, 16.0);
+    }
     return NSMakeRect(NSMinX(rowRect) + 13.0, NSMinY(rowRect) + 13.0, 36.0, 36.0);
 #else
     BOOL minimal = [self.fDefaults boolForKey:@"SmallView"];
