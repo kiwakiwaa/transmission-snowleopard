@@ -7,8 +7,10 @@
 #import "Torrent.h"
 #import "FileListNode.h"
 #import "FileOutlineView.h"
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_8
+#import "BaseFileNameCellView.h"
+#endif
 #import "FileOutlineItemDisplay.h"
-#import "FileNameCellView.h"
 #import "FilePriorityCell.h"
 #import "FilePriorityCellView.h"
 #import "FileCheckCellView.h"
@@ -30,6 +32,18 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
     FilePriorityMenuTagNormal,
     FilePriorityMenuTagLow
 };
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
+static NSString* TRFileOutlinePathTooltip(FileListNode* node)
+{
+    NSString* path = [node.torrent fileLocation:node];
+    if (!path)
+    {
+        path = [node.path stringByAppendingPathComponent:node.name];
+    }
+    return path;
+}
+#endif
 
 @interface FileOutlineController ()<NSOutlineViewDelegate, NSOutlineViewDataSource, NSMenuItemValidation>
 
@@ -344,6 +358,7 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
 
 #pragma mark - NSOutlineViewDelegate
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_8
 - (NSView*)outlineView:(NSOutlineView*)outlineView viewForTableColumn:(NSTableColumn*)tableColumn item:(id)item
 {
     NSString* identifier = tableColumn.identifier;
@@ -351,11 +366,25 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
 
     if ([identifier isEqualToString:@"Name"])
     {
-        FileNameCellView* cellView = [outlineView makeViewWithIdentifier:@"NameCell" owner:self];
-        if (!cellView)
+        BaseFileNameCellView* cellView = nil;
+
+        if (node.isFolder)
         {
-            cellView = [[FileNameCellView alloc] initWithFrame:NSZeroRect];
-            cellView.identifier = @"NameCell";
+            cellView = [outlineView makeViewWithIdentifier:@"OnlyFolderCell" owner:self];
+            if (!cellView)
+            {
+                cellView = [[FolderNameCellView alloc] initWithFrame:NSZeroRect];
+                cellView.identifier = @"OnlyFolderCell";
+            }
+        }
+        else
+        {
+            cellView = [outlineView makeViewWithIdentifier:@"OnlyFileCell" owner:self];
+            if (!cellView)
+            {
+                cellView = [[FileNameCellView alloc] initWithFrame:NSZeroRect];
+                cellView.identifier = @"OnlyFileCell";
+            }
         }
         cellView.node = node;
 
@@ -388,6 +417,7 @@ typedef NS_ENUM(NSUInteger, FilePriorityMenuTag) { //
 
     return nil;
 }
+#endif
 
 - (NSString*)outlineView:(NSOutlineView*)outlineView typeSelectStringForTableColumn:(NSTableColumn*)tableColumn item:(id)item
 {

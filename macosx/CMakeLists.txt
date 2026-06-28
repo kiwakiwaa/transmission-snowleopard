@@ -207,8 +207,6 @@ target_sources(${TR_NAME}-mac
         FileDescriptorLimit.mm
         FileNameCell.h
         FileNameCell.mm
-        FileNameCellView.h
-        FileNameCellView.mm
         FileOutlineItemDisplay.h
         FileOutlineItemDisplay.mm
         FileOutlineController.h
@@ -368,6 +366,11 @@ if(TR_MACOS_DEPLOYMENT_BEFORE_10_8)
         PRIVATE
             PLWeakCompatibilityCore.h
             PLWeakCompatibilityCore.mm)
+else()
+    target_sources(${TR_NAME}-mac
+        PRIVATE
+            BaseFileNameCellView.h
+            BaseFileNameCellView.mm)
 endif()
 
 if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)

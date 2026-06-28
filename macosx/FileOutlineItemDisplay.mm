@@ -6,106 +6,9 @@
 
 #include <libtransmission/transmission.h>
 
-#import "FileListNode.h"
 #import "NSImageAdditions.h"
-#import "NSStringAdditions.h"
-#import "Torrent.h"
 
-static CGFloat const kPaddingHorizontal = 2.0;
-static CGFloat const kImageFolderSize = 16.0;
-static CGFloat const kImageIconSize = 32.0;
-static CGFloat const kPaddingBetweenImageAndTitle = 4.0;
-static CGFloat const kPaddingAboveTitleFile = 2.0;
-static CGFloat const kPaddingBelowStatusFile = 2.0;
-static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
 static CGFloat const kImageOverlap = 1.0;
-
-CGFloat TRFileOutlineIconSize(FileListNode* node)
-{
-    return node.isFolder ? kImageFolderSize : kImageIconSize;
-}
-
-NSRect TRFileOutlineIconRect(FileListNode* node, NSRect bounds)
-{
-    CGFloat const imageSize = TRFileOutlineIconSize(node);
-    CGFloat const iconSlot = kImageIconSize;
-    CGFloat const iconX = NSMinX(bounds) + kPaddingHorizontal + (iconSlot - imageSize) / 2.0;
-    CGFloat const iconY = NSMidY(bounds) - imageSize / 2.0;
-
-    return NSMakeRect(iconX, iconY, imageSize, imageSize);
-}
-
-CGFloat TRFileOutlineTextOriginX(FileListNode* node, NSRect bounds)
-{
-    (void)node;
-    return NSMinX(bounds) + kPaddingHorizontal + kImageIconSize + kPaddingBetweenImageAndTitle;
-}
-
-NSRect TRFileOutlineTitleRect(FileListNode* node, NSAttributedString* title, NSRect bounds)
-{
-    NSSize const titleSize = title.size;
-    CGFloat const textX = TRFileOutlineTextOriginX(node, bounds);
-
-    NSRect result;
-    if (!node.isFolder)
-    {
-        result.origin.x = textX;
-        result.origin.y = NSMinY(bounds) + kPaddingAboveTitleFile;
-        result.size.width = MAX(0.0, NSMaxX(bounds) - textX);
-    }
-    else
-    {
-        result.origin.x = textX;
-        result.origin.y = NSMidY(bounds) - titleSize.height * 0.5;
-        result.size.width = MIN(titleSize.width, MAX(0.0, NSMaxX(bounds) - textX));
-    }
-    result.size.height = titleSize.height;
-
-    return result;
-}
-
-NSRect TRFileOutlineStatusRect(FileListNode* node, NSAttributedString* status, NSRect titleRect, NSRect bounds)
-{
-    NSSize const statusSize = status.size;
-
-    NSRect result;
-    if (!node.isFolder)
-    {
-        result.origin.x = NSMinX(titleRect);
-        result.origin.y = NSMaxY(bounds) - kPaddingBelowStatusFile - statusSize.height;
-        result.size.width = NSWidth(titleRect);
-    }
-    else
-    {
-        result.origin.x = NSMaxX(titleRect) + kPaddingBetweenNameAndFolderStatus;
-        result.origin.y = NSMaxY(titleRect) - statusSize.height - 1.0;
-        result.size.width = MAX(0.0, NSMaxX(bounds) - NSMinX(result));
-    }
-    result.size.height = statusSize.height;
-
-    return result;
-}
-
-NSString* TRFileOutlineStatusString(FileListNode* node)
-{
-    Torrent* torrent = node.torrent;
-    CGFloat const progress = [torrent fileProgress:node];
-    NSString* percentString = [NSString percentString:progress longDecimals:YES];
-
-    return [NSString stringWithFormat:NSLocalizedString(@"%@ of %@", "Inspector -> Files tab -> file status string"),
-                                      percentString,
-                                      [NSString stringForFileSize:node.size]];
-}
-
-NSString* TRFileOutlinePathTooltip(FileListNode* node)
-{
-    NSString* path = [node.torrent fileLocation:node];
-    if (!path)
-    {
-        path = [node.path stringByAppendingPathComponent:node.name];
-    }
-    return path;
-}
 
 NSString* TRFileOutlineCheckTooltip(NSControlStateValue state)
 {
@@ -143,38 +46,6 @@ NSString* TRFileOutlinePriorityTooltip(NSSet* priorities)
     default:
         return NSLocalizedString(@"Multiple Priorities", "files tab -> tooltip");
     }
-}
-
-NSColor* TRFileOutlineTitleColor(FileListNode* node, NSBackgroundStyle backgroundStyle)
-{
-    if (backgroundStyle == NSBackgroundStyleEmphasized)
-    {
-        return NSColor.whiteColor;
-    }
-    if ([node.torrent checkForFiles:node.indexes] == NSControlStateValueOff)
-    {
-        return NSColor.disabledControlTextColor;
-    }
-
-    return NSColor.controlTextColor;
-}
-
-NSColor* TRFileOutlineStatusColor(FileListNode* node, NSBackgroundStyle backgroundStyle)
-{
-    if (backgroundStyle == NSBackgroundStyleEmphasized)
-    {
-        return NSColor.whiteColor;
-    }
-    if ([node.torrent checkForFiles:node.indexes] == NSControlStateValueOff)
-    {
-        return NSColor.disabledControlTextColor;
-    }
-
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_10
-    return NSColor.disabledControlTextColor;
-#else
-    return NSColor.secondaryLabelColor;
-#endif
 }
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_10

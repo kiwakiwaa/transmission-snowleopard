@@ -5,8 +5,10 @@
 #import "InfoWindowController.h"
 #import "CocoaCompatibility.h"
 #import "FileListNode.h"
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_8
+#import "BaseFileNameCellView.h"
+#endif
 #import "FileNameCell.h"
-#import "FileNameCellView.h"
 #import "FileOutlineView.h"
 #import "FilePriorityCell.h"
 #import "FilePriorityCellView.h"
@@ -84,12 +86,12 @@
     return iconRect;
 #else
     NSView* view = [self viewAtColumn:[self columnWithIdentifier:@"Name"] row:row makeIfNecessary:NO];
-    if (![view isKindOfClass:[FileNameCellView class]])
+    if (![view isKindOfClass:[BaseFileNameCellView class]])
     {
         return NSZeroRect;
     }
 
-    FileNameCellView* cellView = (FileNameCellView*)view;
+    BaseFileNameCellView* cellView = (BaseFileNameCellView*)view;
     NSImageView* iconView = [cellView valueForKey:@"iconView"];
     if (!iconView)
     {
