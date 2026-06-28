@@ -98,6 +98,11 @@ typedef NS_ENUM(NSUInteger, PopupPriority) {
     }
 }
 
+- (void)dealloc
+{
+    [NSNotificationCenter.defaultCenter removeObserver:self name:@"UpdateGroups" object:nil];
+}
+
 - (void)windowDidLoad
 {
     //if there is no destination, prompt for one right away

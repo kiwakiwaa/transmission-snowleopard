@@ -312,6 +312,8 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
 
 - (void)dealloc
 {
+    [NSNotificationCenter.defaultCenter removeObserver:self name:@"TorrentFileCheckChange" object:self.torrent];
+    [NSNotificationCenter.defaultCenter removeObserver:self name:@"UpdateGroups" object:nil];
     [_fTimer invalidate];
 }
 

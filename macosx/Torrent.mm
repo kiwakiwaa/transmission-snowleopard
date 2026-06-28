@@ -215,8 +215,17 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
     //allow the file to be indexed by Time Machine
     [self setTimeMachineExclude:NO];
 
+    [NSNotificationCenter.defaultCenter removeObserver:self name:@"GroupValueRemoved" object:nil];
+    [NSNotificationCenter.defaultCenter removeObserver:self name:@"UpdateGroups" object:nil];
+
     tr_torrentRemove(self.fHandle, trashFiles, trashDataFile);
     _fHandle = nullptr;
+}
+
+- (void)dealloc
+{
+    [NSNotificationCenter.defaultCenter removeObserver:self name:@"GroupValueRemoved" object:nil];
+    [NSNotificationCenter.defaultCenter removeObserver:self name:@"UpdateGroups" object:nil];
 }
 
 - (void)changeDownloadFolderBeforeUsing:(NSString*)folder determinationType:(TorrentDeterminationType)determinationType
