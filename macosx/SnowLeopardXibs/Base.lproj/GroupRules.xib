@@ -1154,7 +1154,7 @@
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
-						<string key="label">fGroupRulesSheetWindow</string>
+						<string key="label">groupRulesSheetWindow</string>
 						<reference key="source" ref="1001"/>
 						<reference key="destination" ref="154698973"/>
 					</object>
@@ -1162,7 +1162,7 @@
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
-						<string key="label">fRuleEditor</string>
+						<string key="label">ruleEditor</string>
 						<reference key="source" ref="1001"/>
 						<reference key="destination" ref="24364628"/>
 					</object>
@@ -1560,8 +1560,8 @@
 						<string key="fAutoAssignRulesEnableCheck">NSButton</string>
 						<string key="fCustomLocationEnableCheck">NSButton</string>
 						<string key="fCustomLocationPopUp">NSPopUpButton</string>
-						<string key="fGroupRulesSheetWindow">NSWindow</string>
-						<string key="fRuleEditor">NSPredicateEditor</string>
+						<string key="groupRulesSheetWindow">NSWindow</string>
+						<string key="ruleEditor">NSPredicateEditor</string>
 						<string key="fSelectedColorNameField">NSTextField</string>
 						<string key="fSelectedColorView">NSColorWell</string>
 						<string key="fTableView">NSTableView</string>
@@ -1587,12 +1587,12 @@
 							<string key="name">fCustomLocationPopUp</string>
 							<string key="candidateClassName">NSPopUpButton</string>
 						</object>
-						<object class="IBToOneOutletInfo" key="fGroupRulesSheetWindow">
-							<string key="name">fGroupRulesSheetWindow</string>
+						<object class="IBToOneOutletInfo" key="groupRulesSheetWindow">
+							<string key="name">groupRulesSheetWindow</string>
 							<string key="candidateClassName">NSWindow</string>
 						</object>
-						<object class="IBToOneOutletInfo" key="fRuleEditor">
-							<string key="name">fRuleEditor</string>
+						<object class="IBToOneOutletInfo" key="ruleEditor">
+							<string key="name">ruleEditor</string>
 							<string key="candidateClassName">NSPredicateEditor</string>
 						</object>
 						<object class="IBToOneOutletInfo" key="fSelectedColorNameField">

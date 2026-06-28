@@ -11098,8 +11098,8 @@ AAABAAAAAQ</bytes>
 						<string key="fAutoAssignRulesEnableCheck">NSButton</string>
 						<string key="fCustomLocationEnableCheck">NSButton</string>
 						<string key="fCustomLocationPopUp">NSPopUpButton</string>
-						<string key="fGroupRulesSheetWindow">NSWindow</string>
-						<string key="fRuleEditor">NSPredicateEditor</string>
+						<string key="groupRulesSheetWindow">NSWindow</string>
+						<string key="ruleEditor">NSPredicateEditor</string>
 						<string key="fSelectedColorNameField">NSTextField</string>
 						<string key="fSelectedColorView">NSColorWell</string>
 						<string key="fTableView">NSTableView</string>
@@ -11129,12 +11129,12 @@ AAABAAAAAQ</bytes>
 							<string key="name">fCustomLocationPopUp</string>
 							<string key="candidateClassName">NSPopUpButton</string>
 						</object>
-						<object class="IBToOneOutletInfo" key="fGroupRulesSheetWindow">
-							<string key="name">fGroupRulesSheetWindow</string>
+						<object class="IBToOneOutletInfo" key="groupRulesSheetWindow">
+							<string key="name">groupRulesSheetWindow</string>
 							<string key="candidateClassName">NSWindow</string>
 						</object>
-						<object class="IBToOneOutletInfo" key="fRuleEditor">
-							<string key="name">fRuleEditor</string>
+						<object class="IBToOneOutletInfo" key="ruleEditor">
+							<string key="name">ruleEditor</string>
 							<string key="candidateClassName">NSPredicateEditor</string>
 						</object>
 						<object class="IBToOneOutletInfo" key="fSelectedColorNameField">
