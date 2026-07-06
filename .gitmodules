@@ -64,3 +64,6 @@
 [submodule "third-party/sigslot"]
 	path = third-party/sigslot
 	url = https://github.com/transmission/sigslot
+[submodule "third-party/libarc_support"]
+	path = third-party/libarc_support
+	url = https://github.com/kiwakiwaa/libarc_support.git
