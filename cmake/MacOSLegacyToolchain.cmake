@@ -220,38 +220,6 @@ if(_tr_macos_llvm_libexec_dirs)
     list(REMOVE_DUPLICATES _tr_macos_llvm_libexec_dirs)
 endif()
 
-if(CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.7)
-    set(_tr_macos_arclite_candidates)
-
-    foreach(_tr_macos_llvm_libexec_dir IN LISTS _tr_macos_llvm_libexec_dirs)
-        list(APPEND _tr_macos_arclite_candidates
-            "${_tr_macos_llvm_libexec_dir}/lib/arc/libarclite_macosx.a")
-    endforeach()
-
-    list(APPEND _tr_macos_arclite_candidates
-        "/Developer/usr/lib/arc/libarclite_macosx.a")
-    list(REMOVE_DUPLICATES _tr_macos_arclite_candidates)
-
-    set(_tr_macos_arclite_found OFF)
-    foreach(_tr_macos_arclite_candidate IN LISTS _tr_macos_arclite_candidates)
-        if(EXISTS "${_tr_macos_arclite_candidate}")
-            set(_tr_macos_arclite_found ON)
-            set(TR_MACOS_ARCLITE_LIBRARY "${_tr_macos_arclite_candidate}"
-                CACHE FILEPATH "ARC-lite runtime archive for macOS 10.6 compatibility builds" FORCE)
-            break()
-        endif()
-    endforeach()
-
-    if(NOT _tr_macos_arclite_found)
-        string(REPLACE ";" "\n  " _tr_macos_arclite_expected "${_tr_macos_arclite_candidates}")
-        message(FATAL_ERROR
-            "Objective-C ARC targeting Mac OS X 10.6 requires libarclite_macosx.a, "
-            "but it was not found for the active compiler (${CMAKE_C_COMPILER}).\n"
-            "Install the Xcode 4.6.1 Mac ARC-lite archive at one of:\n"
-            "  ${_tr_macos_arclite_expected}")
-    endif()
-endif()
-
 if(CMAKE_GENERATOR MATCHES "Ninja" AND NOT CMAKE_MAKE_PROGRAM)
     find_program(TR_MACOS_NINJA
         NAMES ninja
@@ -292,12 +260,62 @@ if(CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.7)
     endif()
 endif()
 
-foreach(_tr_macos_llvm_libexec_dir IN LISTS _tr_macos_llvm_libexec_dirs)
+set(_tr_macos_libcxx_candidate_dirs ${_tr_macos_llvm_libexec_dirs})
+foreach(_tr_macos_prefix IN LISTS _tr_macos_llvm_prefixes)
+    file(GLOB _tr_macos_prefix_libcxx_libexec_dirs
+        LIST_DIRECTORIES true
+        "${_tr_macos_prefix}/libexec/llvm-*")
+    list(APPEND _tr_macos_libcxx_candidate_dirs ${_tr_macos_prefix_libcxx_libexec_dirs})
+endforeach()
+if(_tr_macos_libcxx_candidate_dirs)
+    list(REMOVE_DUPLICATES _tr_macos_libcxx_candidate_dirs)
+endif()
+
+set(_tr_macos_required_libcxx_arches)
+if(CMAKE_OSX_ARCHITECTURES)
+    list(APPEND _tr_macos_required_libcxx_arches ${CMAKE_OSX_ARCHITECTURES})
+endif()
+
+find_program(TR_MACOS_LIPO
+    NAMES lipo
+    PATHS ${_tr_macos_tool_paths} /usr/bin)
+
+foreach(_tr_macos_llvm_libexec_dir IN LISTS _tr_macos_libcxx_candidate_dirs)
     set(_tr_macos_libcxx_dir "${_tr_macos_llvm_libexec_dir}/lib/libc++")
+    if(NOT EXISTS "${_tr_macos_libcxx_dir}/libc++.dylib"
+            AND EXISTS "${_tr_macos_llvm_libexec_dir}/lib/libc++.dylib")
+        set(_tr_macos_libcxx_dir "${_tr_macos_llvm_libexec_dir}/lib")
+    endif()
     if(EXISTS "${_tr_macos_libcxx_dir}/libc++.dylib")
+        set(_tr_macos_libcxx_usable ON)
+        if(TR_MACOS_LIPO AND _tr_macos_required_libcxx_arches)
+            foreach(_tr_macos_required_libcxx_arch IN LISTS _tr_macos_required_libcxx_arches)
+                foreach(_tr_macos_libcxx_file IN ITEMS
+                        "${_tr_macos_libcxx_dir}/libc++.dylib"
+                        "${_tr_macos_libcxx_dir}/libc++abi.dylib"
+                        "${_tr_macos_libcxx_dir}/libunwind.dylib")
+                    if(EXISTS "${_tr_macos_libcxx_file}")
+                        execute_process(
+                            COMMAND "${TR_MACOS_LIPO}" "${_tr_macos_libcxx_file}" -verify_arch "${_tr_macos_required_libcxx_arch}"
+                            RESULT_VARIABLE _tr_macos_libcxx_arch_result
+                            OUTPUT_QUIET
+                            ERROR_QUIET)
+                        if(NOT _tr_macos_libcxx_arch_result EQUAL 0)
+                            set(_tr_macos_libcxx_usable OFF)
+                        endif()
+                    endif()
+                endforeach()
+            endforeach()
+        endif()
+        if(NOT _tr_macos_libcxx_usable)
+            continue()
+        endif()
+
         set(_tr_macos_libcxx_stdlib_flag "-stdlib=libc++")
         set(_tr_macos_libcxx_link_flags "-L${_tr_macos_libcxx_dir} -Wl,-rpath,${_tr_macos_libcxx_dir}")
         set(_tr_macos_libcxx_companion_libraries)
+        set(TR_MACOS_LIBCXX_RUNTIME_DIR "${_tr_macos_libcxx_dir}"
+            CACHE PATH "libc++ runtime directory for macOS compatibility bundle fixups" FORCE)
 
         if(EXISTS "${_tr_macos_libcxx_dir}/libc++abi.dylib")
             list(APPEND _tr_macos_libcxx_companion_libraries "-lc++abi")

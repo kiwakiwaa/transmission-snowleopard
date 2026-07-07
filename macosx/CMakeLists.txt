@@ -33,40 +33,29 @@ endif()
 
 set(TR_MACOS_OBJC_ARC_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:-fobjc-arc>")
 set(TR_MACOS_OBJC_WEAK_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:-fobjc-weak>")
-set(TR_MACOS_ARCLITE_LINK_OPTIONS)
+set(TR_MACOS_OBJC_RUNTIME_COMPILE_OPTIONS)
+set(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME OFF)
 if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
     set(TR_MACOS_OBJC_WEAK_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:SHELL:-Xclang -fobjc-runtime-has-weak>")
 
-    if(NOT TR_MACOS_ARCLITE_LIBRARY OR NOT EXISTS "${TR_MACOS_ARCLITE_LIBRARY}")
-        message(FATAL_ERROR "Snow Leopard ARC builds require libarclite_macosx.a, but TR_MACOS_ARCLITE_LIBRARY is not set")
+    if(NOT TARGET libarc_support::runtime)
+        message(FATAL_ERROR "macOS 10.6 ARC builds require third-party/libarc_support")
     endif()
+    set(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME ON)
 
-    list(APPEND TR_MACOS_ARCLITE_LINK_OPTIONS "$<$<LINK_LANGUAGE:C,CXX>:-Wl,-force_load,${TR_MACOS_ARCLITE_LIBRARY}>")
-
-    # ARC-lite patches these lazy runtime/class references on 10.6 at load time.
-    foreach(TR_MACOS_ARCLITE_SYMBOL IN ITEMS
-            _objc_retain
-            _objc_release
-            _objc_autorelease
-            _objc_retainAutorelease
-            _objc_retainAutoreleaseReturnValue
-            _objc_retainAutoreleasedReturnValue
-            _objc_unsafeClaimAutoreleasedReturnValue
-            _objc_autoreleaseReturnValue
-            _objc_storeStrong
-            _objc_retainBlock
-            _objc_autoreleasePoolPush
-            _objc_autoreleasePoolPop
-            _objc_alloc
-            _objc_allocWithZone
-            _objc_alloc_init
-            _OBJC_CLASS_$_NSOrderedSet
-            _OBJC_CLASS_$_NSMutableOrderedSet)
-        list(APPEND TR_MACOS_ARCLITE_LINK_OPTIONS "$<$<LINK_LANGUAGE:C,CXX>:-Wl,-U,${TR_MACOS_ARCLITE_SYMBOL}>")
-    endforeach()
+    if(TR_MACOS_OBJC_FRAGILE_RUNTIME)
+        list(LENGTH CMAKE_OSX_ARCHITECTURES TR_MACOS_ARCH_COUNT)
+        if(TR_MACOS_ARCH_COUNT EQUAL 1)
+            list(APPEND TR_MACOS_OBJC_RUNTIME_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:-fobjc-runtime=macosx-fragile-10.7>")
+        else()
+            list(APPEND TR_MACOS_OBJC_RUNTIME_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:SHELL:-Xarch_i386 -fobjc-runtime=macosx-fragile-10.7>")
+        endif()
+    endif()
 endif()
 
 set(MAC_BUNDLE_NAME Transmission)
+
+add_compile_definitions(TR_MACOS_OBJC_FRAGILE_RUNTIME=$<BOOL:${TR_MACOS_OBJC_FRAGILE_RUNTIME}>)
 
 add_compile_options(
     $<$<COMPILE_LANGUAGE:C>:-fmodules>
@@ -76,6 +65,11 @@ add_compile_options(
 
     # equivalent of XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES for this directory
     ${TR_MACOS_OBJC_ARC_COMPILE_OPTIONS}
+
+    # Keep Snow i386 on the ObjC1 runtime while allowing ARC code generation.
+    ${TR_MACOS_OBJC_RUNTIME_COMPILE_OPTIONS}
+
+    $<$<AND:$<BOOL:${TR_MACOS_OBJC_FRAGILE_RUNTIME}>,$<COMPILE_LANGUAGE:C,CXX>>:-Werror=objc-property-implementation>
 
     # equivalent of XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_WEAK YES for this directory
     ${TR_MACOS_OBJC_WEAK_COMPILE_OPTIONS}
@@ -88,8 +82,7 @@ add_compile_options(
 
 add_link_options(
     # equivalent of XCODE_ATTRIBUTE_DEAD_CODE_STRIPPING YES for this directory
-    $<$<LINK_LANGUAGE:C,CXX>:-dead_strip>
-    ${TR_MACOS_ARCLITE_LINK_OPTIONS})
+    $<$<LINK_LANGUAGE:C,CXX>:-dead_strip>)
 
 if(NOT TR_MACOS_DEPLOYMENT_BEFORE_12_0)
     add_subdirectory(QuickLookExtension)
@@ -361,9 +354,17 @@ target_sources(${TR_NAME}-mac
         WebSeedTableView.h
         WebSeedTableView.mm)
 
-if(TR_MACOS_DEPLOYMENT_BEFORE_10_8)
+if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
     target_sources(${TR_NAME}-mac
         PRIVATE
+            BaseFileNameCellView.h
+            BaseFileNameCellView.mm
+            LegacyPopover.mm)
+elseif(TR_MACOS_DEPLOYMENT_BEFORE_10_8)
+    target_sources(${TR_NAME}-mac
+        PRIVATE
+            LegacyWeakReference.h
+            LegacyWeakReference.mm
             PLWeakCompatibilityCore.h
             PLWeakCompatibilityCore.mm)
 else()
@@ -371,19 +372,6 @@ else()
         PRIVATE
             BaseFileNameCellView.h
             BaseFileNameCellView.mm)
-endif()
-
-if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
-    target_sources(${TR_NAME}-mac
-        PRIVATE
-            LegacyPopover.mm
-            PLWeakCompatibilityStubs.h
-            PLWeakCompatibilityStubs.mm)
-elseif(TR_MACOS_DEPLOYMENT_BEFORE_10_8)
-    target_sources(${TR_NAME}-mac
-        PRIVATE
-            LegacyWeakReference.h
-            LegacyWeakReference.mm)
 endif()
 
 if(TR_MACOS_USES_MAVERICKS_STACK_XIBS)
@@ -837,6 +825,9 @@ target_link_libraries(${TR_NAME}-mac
 if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
     target_link_libraries(${TR_NAME}-mac PRIVATE "-licucore")
 endif()
+if(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME)
+    target_link_libraries(${TR_NAME}-mac PRIVATE libarc_support::runtime)
+endif()
 
 if(NOT TR_MACOS_TARGET_BEFORE_11_0)
     target_link_libraries(${TR_NAME}-mac PRIVATE "-weak_framework UniformTypeIdentifiers")
@@ -860,6 +851,21 @@ if(TR_ENABLE_SPARKLE AND NOT CMAKE_GENERATOR STREQUAL Xcode)
         COMMAND ${CMAKE_COMMAND} -E rm -rf "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/Frameworks/Sparkle.framework"
         COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/Frameworks"
         COMMAND /usr/bin/ditto "${SPARKLE_FRAMEWORK}" "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/Frameworks/Sparkle.framework")
+endif()
+
+if(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME AND NOT CMAKE_GENERATOR STREQUAL Xcode)
+    find_program(TR_INSTALL_NAME_TOOL
+        NAMES install_name_tool
+        PATHS /opt/local/bin /usr/bin
+        NO_DEFAULT_PATH
+        REQUIRED)
+    add_custom_command(
+        TARGET ${TR_NAME}-mac
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/Frameworks"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:_libarc_support_runtime>" "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/Frameworks/"
+        COMMAND "${TR_INSTALL_NAME_TOOL}" -change libarc_support.dylib "@executable_path/../Frameworks/libarc_support.dylib" "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/MacOS/${MAC_BUNDLE_NAME}"
+        VERBATIM)
 endif()
 
 if(NOT CMAKE_GENERATOR STREQUAL Xcode AND NOT TR_MACOS_DEPLOYMENT_BEFORE_10_7)

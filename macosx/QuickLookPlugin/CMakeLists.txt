@@ -96,6 +96,25 @@ target_link_libraries(${TR_NAME}-mac-ql
         "-framework AppKit"
         "-framework QuickLook")
 
+if(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME)
+    target_link_libraries(${TR_NAME}-mac-ql
+        PRIVATE
+            libarc_support::runtime)
+
+    if(NOT CMAKE_GENERATOR STREQUAL Xcode)
+        find_program(TR_INSTALL_NAME_TOOL
+            NAMES install_name_tool
+            PATHS /opt/local/bin /usr/bin
+            NO_DEFAULT_PATH
+            REQUIRED)
+        add_custom_command(
+            TARGET ${TR_NAME}-mac-ql
+            POST_BUILD
+            COMMAND "${TR_INSTALL_NAME_TOOL}" -change libarc_support.dylib "@loader_path/../../../../../Frameworks/libarc_support.dylib" "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac-ql>/Contents/MacOS/${MAC_QL_BUNDLE_NAME}"
+            VERBATIM)
+    endif()
+endif()
+
 install(
     TARGETS ${TR_NAME}-mac-ql
     DESTINATION Applications/${MAC_BUNDLE_NAME}.app/Contents/Library/QuickLook)
