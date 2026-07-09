@@ -101,7 +101,7 @@ if(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME)
         PRIVATE
             libarc_support::runtime)
 
-    if(NOT CMAKE_GENERATOR STREQUAL Xcode)
+    if(NOT CMAKE_GENERATOR STREQUAL Xcode AND NOT TR_MACOS_BUNDLE_COMPATIBILITY_DEPENDENCIES)
         find_program(TR_INSTALL_NAME_TOOL
             NAMES install_name_tool
             PATHS /opt/local/bin /usr/bin
@@ -115,6 +115,20 @@ if(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME)
     endif()
 endif()
 
+if(TR_MACOS_BUNDLE_COMPATIBILITY_DEPENDENCIES AND NOT CMAKE_GENERATOR STREQUAL Xcode)
+    add_custom_command(
+        TARGET ${TR_NAME}-mac-ql
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND}
+            "-DTR_CMAKE_MODULE_PATH=${PROJECT_SOURCE_DIR}/cmake"
+            "-DTR_BUNDLE_DIR=$<TARGET_BUNDLE_DIR:${TR_NAME}-mac-ql>"
+            "-DTR_BUNDLE_ITEMS=Contents/MacOS/${MAC_QL_BUNDLE_NAME}"
+            "-DTR_DEP_LINK_PREFIX=@loader_path/../Frameworks"
+            "-DTR_DEP_DIRS=${TR_MACOS_COMPATIBILITY_BUNDLE_DEP_DIRS}"
+            -P "${PROJECT_SOURCE_DIR}/cmake/FixupMacOSBundle.cmake"
+        VERBATIM)
+endif()
+
 install(
     TARGETS ${TR_NAME}-mac-ql
     DESTINATION Applications/${MAC_BUNDLE_NAME}.app/Contents/Library/QuickLook)
@@ -125,4 +139,4 @@ install(CODE
     include(GetPrerequisites)
     tr_fixup_bundle_item(
         \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/Applications/${MAC_BUNDLE_NAME}.app\"
-        \"Contents/Library/QuickLook/${MAC_QL_BUNDLE_NAME}.qlgenerator/Contents/MacOS/${MAC_QL_BUNDLE_NAME}\" \"\")")
+        \"Contents/Library/QuickLook/${MAC_QL_BUNDLE_NAME}.qlgenerator/Contents/MacOS/${MAC_QL_BUNDLE_NAME}\" \"${TR_MACOS_COMPATIBILITY_INSTALL_BUNDLE_DEP_DIRS}\")")

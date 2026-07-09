@@ -116,4 +116,4 @@ install(CODE
     include(GetPrerequisites)
     tr_fixup_bundle_item(
         \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/Applications/${MAC_BUNDLE_NAME}.app\"
-        \"Contents/PlugIns/${MAC_QL_BUNDLE_NAME}.appex/Contents/MacOS/${MAC_QL_BUNDLE_NAME}\" \"\")")
+        \"Contents/PlugIns/${MAC_QL_BUNDLE_NAME}.appex/Contents/MacOS/${MAC_QL_BUNDLE_NAME}\" \"${TR_MACOS_COMPATIBILITY_INSTALL_BUNDLE_DEP_DIRS}\")")

@@ -375,6 +375,47 @@ function(tr_select_library LIBNAMES FUNCNAME DIRS OVAR)
     set(${OVAR} "${LIBNAME}" PARENT_SCOPE)
 endfunction()
 
+function(_tr_bundle_dependency_prefix ITEM OUT_VAR)
+    if(TR_FIXUP_BUNDLE_DEP_LINK_PREFIX AND NOT ITEM MATCHES "^Contents/Frameworks/")
+        set(${OUT_VAR} "${TR_FIXUP_BUNDLE_DEP_LINK_PREFIX}" PARENT_SCOPE)
+    elseif(ITEM MATCHES "^Contents/Frameworks/")
+        set(${OUT_VAR} "@loader_path" PARENT_SCOPE)
+    elseif(ITEM MATCHES "^Contents/MacOS/")
+        set(${OUT_VAR} "@executable_path/../Frameworks" PARENT_SCOPE)
+    elseif(ITEM MATCHES "^Contents/Library/QuickLook/.+[.]qlgenerator/Contents/MacOS/")
+        set(${OUT_VAR} "@loader_path/../../../../../Frameworks" PARENT_SCOPE)
+    elseif(ITEM MATCHES "^Contents/PlugIns/.+[.]appex/Contents/MacOS/")
+        set(${OUT_VAR} "@loader_path/../../../../Frameworks" PARENT_SCOPE)
+    else()
+        set(${OUT_VAR} "@rpath" PARENT_SCOPE)
+    endif()
+endfunction()
+
+function(_tr_bundle_delete_external_rpaths ITEM_FULL_PATH)
+    execute_process(
+        COMMAND otool -l "${ITEM_FULL_PATH}"
+        OUTPUT_VARIABLE ITEM_LOAD_COMMANDS
+        RESULT_VARIABLE ITEM_LOAD_COMMANDS_RESULT
+        ERROR_QUIET)
+    if(NOT ITEM_LOAD_COMMANDS_RESULT EQUAL 0)
+        return()
+    endif()
+
+    string(REPLACE "\n" ";" ITEM_LOAD_COMMAND_LINES "${ITEM_LOAD_COMMANDS}")
+    set(ITEM_NEXT_RPATH OFF)
+    foreach(ITEM_LOAD_COMMAND_LINE IN LISTS ITEM_LOAD_COMMAND_LINES)
+        if(ITEM_LOAD_COMMAND_LINE MATCHES "^[ \t]*cmd LC_RPATH$")
+            set(ITEM_NEXT_RPATH ON)
+        elseif(ITEM_NEXT_RPATH AND ITEM_LOAD_COMMAND_LINE MATCHES "^[ \t]*path ([^ ]+) ")
+            set(ITEM_NEXT_RPATH OFF)
+            set(ITEM_RPATH "${CMAKE_MATCH_1}")
+            if(ITEM_RPATH MATCHES "^/" AND NOT ITEM_RPATH MATCHES "^(/System/|/usr/lib/)")
+                execute_process(COMMAND install_name_tool -delete_rpath "${ITEM_RPATH}" "${ITEM_FULL_PATH}")
+            endif()
+        endif()
+    endforeach()
+endfunction()
+
 function(tr_fixup_bundle_item BUNDLE_DIR BUNDLE_ITEMS DEP_DIRS)
     while(BUNDLE_ITEMS)
         list(GET BUNDLE_ITEMS 0 ITEM)
@@ -382,17 +423,38 @@ function(tr_fixup_bundle_item BUNDLE_DIR BUNDLE_ITEMS DEP_DIRS)
 
         set(ITEM_FULL_BUNDLE_PATH "${BUNDLE_DIR}/${ITEM}")
         get_filename_component(ITEM_FULL_BUNDLE_DIR "${ITEM_FULL_BUNDLE_PATH}" PATH)
+        _tr_bundle_dependency_prefix("${ITEM}" ITEM_DEP_PREFIX)
+
+        unset(ITEM_RPATHS)
+        get_item_rpaths("${ITEM_FULL_BUNDLE_PATH}" ITEM_RPATHS)
 
         unset(ITEM_DEPS)
-        get_prerequisites("${ITEM_FULL_BUNDLE_PATH}" ITEM_DEPS 1 0 "${ITEM_FULL_BUNDLE_PATH}" "${DEP_DIRS}")
+        get_prerequisites(
+            "${ITEM_FULL_BUNDLE_PATH}"
+            ITEM_DEPS
+            1
+            0
+            "${ITEM_FULL_BUNDLE_DIR}"
+            "${DEP_DIRS}"
+            "${ITEM_RPATHS}")
 
         foreach(DEP IN LISTS ITEM_DEPS)
-            gp_resolve_item("${ITEM_FULL_BUNDLE_PATH}" "${DEP}" "${ITEM_FULL_BUNDLE_DIR}" "${DEP_DIRS}" DEP_FULL_PATH)
+            gp_resolve_item(
+                "${ITEM_FULL_BUNDLE_PATH}"
+                "${DEP}"
+                "${ITEM_FULL_BUNDLE_DIR}"
+                "${DEP_DIRS}"
+                DEP_FULL_PATH
+                "${ITEM_RPATHS}")
+
+            if(DEP_FULL_PATH MATCHES "^@" OR NOT EXISTS "${DEP_FULL_PATH}")
+                message(FATAL_ERROR "Could not resolve '${DEP}' required by '${ITEM_FULL_BUNDLE_PATH}'")
+            endif()
 
             if(DEP_FULL_PATH MATCHES "[.]dylib$")
                 get_filename_component(DEP_NAME "${DEP_FULL_PATH}" NAME)
-                file(COPY "${DEP_FULL_PATH}" DESTINATION "${BUNDLE_DIR}/Contents/MacOS/")
-                set(DEP_BUNDLE_PATH "Contents/MacOS/${DEP_NAME}")
+                file(COPY "${DEP_FULL_PATH}" DESTINATION "${BUNDLE_DIR}/Contents/Frameworks/" FOLLOW_SYMLINK_CHAIN)
+                set(DEP_BUNDLE_PATH "Contents/Frameworks/${DEP_NAME}")
             elseif(DEP_FULL_PATH MATCHES "^(.+)/(([^/]+[.]framework)/.+)$")
                 set(DEP_NAME "${CMAKE_MATCH_2}")
                 file(
@@ -404,15 +466,17 @@ function(tr_fixup_bundle_item BUNDLE_DIR BUNDLE_ITEMS DEP_DIRS)
                 message(FATAL_ERROR "Don't know how to fixup '${DEP_FULL_PATH}'")
             endif()
 
-            execute_process(COMMAND install_name_tool -change "${DEP}" "@rpath/${DEP_NAME}" "${ITEM_FULL_BUNDLE_PATH}")
+            execute_process(COMMAND install_name_tool -change "${DEP}" "${ITEM_DEP_PREFIX}/${DEP_NAME}" "${ITEM_FULL_BUNDLE_PATH}")
 
             set(DEP_FULL_BUNDLE_PATH "${BUNDLE_DIR}/${DEP_BUNDLE_PATH}")
             execute_process(COMMAND chmod u+w "${DEP_FULL_BUNDLE_PATH}")
-            execute_process(COMMAND install_name_tool -id "@rpath/${DEP_NAME}" "${DEP_FULL_BUNDLE_PATH}")
+            execute_process(COMMAND install_name_tool -id "@loader_path/${DEP_NAME}" "${DEP_FULL_BUNDLE_PATH}")
 
             list(REMOVE_ITEM BUNDLE_ITEMS "${DEP_BUNDLE_PATH}")
             list(APPEND BUNDLE_ITEMS "${DEP_BUNDLE_PATH}")
         endforeach()
+
+        _tr_bundle_delete_external_rpaths("${ITEM_FULL_BUNDLE_PATH}")
     endwhile()
 endfunction()
 

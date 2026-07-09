@@ -57,6 +57,41 @@ set(MAC_BUNDLE_NAME Transmission)
 
 add_compile_definitions(TR_MACOS_OBJC_FRAGILE_RUNTIME=$<BOOL:${TR_MACOS_OBJC_FRAGILE_RUNTIME}>)
 
+set(TR_MACOS_COMPATIBILITY_BUNDLE_DEP_DIRS)
+set(TR_MACOS_COMPATIBILITY_INSTALL_BUNDLE_DEP_DIRS)
+if(TR_MACOS_BUNDLE_COMPATIBILITY_DEPENDENCIES)
+    function(tr_macos_add_compatibility_bundle_dep_dir DEP_DIR)
+        if(DEP_DIR AND EXISTS "${DEP_DIR}")
+            list(APPEND TR_MACOS_COMPATIBILITY_BUNDLE_DEP_DIRS "${DEP_DIR}")
+            set(TR_MACOS_COMPATIBILITY_BUNDLE_DEP_DIRS "${TR_MACOS_COMPATIBILITY_BUNDLE_DEP_DIRS}" PARENT_SCOPE)
+        endif()
+    endfunction()
+
+    # Keep libc++, libc++abi, and libunwind from the selected toolchain together.
+    # Searching every installed LLVM runtime can bundle libraries from a different
+    # version than the one used to link the executable.
+    tr_macos_add_compatibility_bundle_dep_dir("${TR_MACOS_LIBCXX_RUNTIME_DIR}")
+
+    foreach(TR_MACOS_DEP_PREFIX IN LISTS CMAKE_PREFIX_PATH)
+        tr_macos_add_compatibility_bundle_dep_dir("${TR_MACOS_DEP_PREFIX}/lib")
+        tr_macos_add_compatibility_bundle_dep_dir("${TR_MACOS_DEP_PREFIX}/libexec/openssl3/lib")
+    endforeach()
+
+    if(TR_BLOCKS_RUNTIME_LIBRARY)
+        get_filename_component(TR_BLOCKS_RUNTIME_LIBRARY_DIR "${TR_BLOCKS_RUNTIME_LIBRARY}" DIRECTORY)
+        tr_macos_add_compatibility_bundle_dep_dir("${TR_BLOCKS_RUNTIME_LIBRARY_DIR}")
+    endif()
+
+    if(TR_MACOS_COMPATIBILITY_BUNDLE_DEP_DIRS)
+        list(REMOVE_DUPLICATES TR_MACOS_COMPATIBILITY_BUNDLE_DEP_DIRS)
+    endif()
+    set(TR_MACOS_COMPATIBILITY_INSTALL_BUNDLE_DEP_DIRS "${TR_MACOS_COMPATIBILITY_BUNDLE_DEP_DIRS}")
+
+    if(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME)
+        list(APPEND TR_MACOS_COMPATIBILITY_BUNDLE_DEP_DIRS "$<TARGET_FILE_DIR:_libarc_support_runtime>")
+    endif()
+endif()
+
 add_compile_options(
     $<$<COMPILE_LANGUAGE:C>:-fmodules>
 
@@ -868,6 +903,19 @@ if(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME AND NOT CMAKE_GENERATOR STREQUAL Xcode)
         VERBATIM)
 endif()
 
+if(TR_MACOS_BUNDLE_COMPATIBILITY_DEPENDENCIES AND NOT CMAKE_GENERATOR STREQUAL Xcode)
+    add_custom_command(
+        TARGET ${TR_NAME}-mac
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND}
+            "-DTR_CMAKE_MODULE_PATH=${PROJECT_SOURCE_DIR}/cmake"
+            "-DTR_BUNDLE_DIR=$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>"
+            "-DTR_BUNDLE_ITEMS=Contents/MacOS/${MAC_BUNDLE_NAME}"
+            "-DTR_DEP_DIRS=${TR_MACOS_COMPATIBILITY_BUNDLE_DEP_DIRS}"
+            -P "${PROJECT_SOURCE_DIR}/cmake/FixupMacOSBundle.cmake"
+        VERBATIM)
+endif()
+
 if(NOT CMAKE_GENERATOR STREQUAL Xcode AND NOT TR_MACOS_DEPLOYMENT_BEFORE_10_7)
     set(TR_MACOS_CODESIGN_COMMAND ${CODESIGN_EXECUTABLE})
     if(CODESIGN_ALLOCATE_EXECUTABLE)
@@ -906,4 +954,4 @@ install(CODE
     include(GetPrerequisites)
     tr_fixup_bundle_item(
         \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/Applications/${MAC_BUNDLE_NAME}.app\"
-        \"Contents/MacOS/${MAC_BUNDLE_NAME}\" \"${CMAKE_CURRENT_SOURCE_DIR}\")")
+        \"Contents/MacOS/${MAC_BUNDLE_NAME}\" \"${TR_MACOS_COMPATIBILITY_INSTALL_BUNDLE_DEP_DIRS};${CMAKE_CURRENT_SOURCE_DIR}\")")
