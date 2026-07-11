@@ -14,9 +14,18 @@
 
 @implementation PeerProgressIndicatorCell
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize seed = _seed;
+@synthesize fAttributes = _fAttributes;
+#endif
+
 - (id)copyWithZone:(NSZone*)zone
 {
     PeerProgressIndicatorCell* copy = [super copyWithZone:zone];
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+    // Fragile-runtime NSCell copies bitwise-copy ARC object slots; clear copied slots before ARC stores into them.
+    TRClearCopiedObjectPointer(&copy->_fAttributes);
+#endif
     copy->_fAttributes = _fAttributes;
 
     return copy;

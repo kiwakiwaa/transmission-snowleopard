@@ -5,6 +5,13 @@
 #import <AppKit/AppKit.h>
 
 @interface FileNameCell : NSActionCell
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSMutableDictionary* _fTitleAttributes;
+    NSMutableDictionary* _fStatusAttributes;
+}
+#endif
 
 - (NSRect)imageRectForBounds:(NSRect)bounds;
 

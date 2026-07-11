@@ -5,6 +5,12 @@
 #import <AppKit/AppKit.h>
 
 @interface PeerProgressIndicatorCell : NSLevelIndicatorCell
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    BOOL _seed;
+    NSDictionary* _fAttributes;
+}
+#endif
 
 @property(nonatomic) BOOL seed;
 

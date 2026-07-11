@@ -135,6 +135,11 @@ static NSColor* TRFileNameCellStatusColor(FileListNode* node, NSBackgroundStyle 
 
 @implementation FileNameCell
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fTitleAttributes = _fTitleAttributes;
+@synthesize fStatusAttributes = _fStatusAttributes;
+#endif
+
 - (instancetype)init
 {
     if ((self = [super init]))
@@ -158,6 +163,11 @@ static NSColor* TRFileNameCellStatusColor(FileListNode* node, NSBackgroundStyle 
 {
     FileNameCell* copy = [super copyWithZone:zone];
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+    // Fragile-runtime NSCell copies bitwise-copy ARC object slots; clear copied slots before ARC stores into them.
+    TRClearCopiedObjectPointer(&copy->_fTitleAttributes);
+    TRClearCopiedObjectPointer(&copy->_fStatusAttributes);
+#endif
     copy->_fTitleAttributes = _fTitleAttributes;
     copy->_fStatusAttributes = _fStatusAttributes;
 

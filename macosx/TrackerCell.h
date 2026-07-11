@@ -5,5 +5,11 @@
 #import <AppKit/AppKit.h>
 
 @interface TrackerCell : NSActionCell
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    NSMutableDictionary* _fNameAttributes;
+    NSMutableDictionary* _fStatusAttributes;
+}
+#endif
 
 @end

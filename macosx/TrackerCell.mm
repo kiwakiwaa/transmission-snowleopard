@@ -42,6 +42,11 @@ static NSMutableDictionary* fTrackerIconTasks;
 
 @implementation TrackerCell
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fNameAttributes = _fNameAttributes;
+@synthesize fStatusAttributes = _fStatusAttributes;
+#endif
+
 + (void)initialize
 {
     if (self != [TrackerCell self])
@@ -74,6 +79,11 @@ static NSMutableDictionary* fTrackerIconTasks;
 {
     TrackerCell* copy = [super copyWithZone:zone];
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+    // Fragile-runtime NSCell copies bitwise-copy ARC object slots; clear copied slots before ARC stores into them.
+    TRClearCopiedObjectPointer(&copy->_fNameAttributes);
+    TRClearCopiedObjectPointer(&copy->_fStatusAttributes);
+#endif
     copy->_fNameAttributes = _fNameAttributes;
     copy->_fStatusAttributes = _fStatusAttributes;
 

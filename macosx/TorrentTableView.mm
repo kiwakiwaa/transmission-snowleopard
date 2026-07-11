@@ -30,11 +30,22 @@ static CGFloat const kGroupDisclosureWidth = 18.0;
 #import "ProgressBarView.h"
 
 @interface LegacyTorrentTableCell : NSCell
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    TorrentTableView* __weak _tableView;
+    id _legacyObjectValue;
+}
+#endif
 @property(nonatomic, weak) TorrentTableView* tableView;
 @property(nonatomic, strong) id legacyObjectValue;
 @end
 
 @implementation LegacyTorrentTableCell
+
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize tableView = _tableView;
+@synthesize legacyObjectValue = _legacyObjectValue;
+#endif
 
 static CGFloat const kLegacyGroupStatusWidth = 170.0;
 static CGFloat const kLegacySmallStatusWidth = 130.0;
@@ -47,6 +58,22 @@ static CGFloat const kLegacySmallStatusWidth = 130.0;
     }
     return self;
 }
+
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+- (id)copyWithZone:(NSZone*)zone
+{
+    LegacyTorrentTableCell* copy = [super copyWithZone:zone];
+
+    // Fragile-runtime NSCell copies bitwise-copy ARC object slots; clear copied slots before ARC stores into them.
+    TRClearCopiedObjectPointer(&copy->_tableView);
+    TRClearCopiedObjectPointer(&copy->_legacyObjectValue);
+
+    copy.tableView = self.tableView;
+    copy.legacyObjectValue = self.legacyObjectValue;
+
+    return copy;
+}
+#endif
 
 - (void)setObjectValue:(id)objectValue
 {

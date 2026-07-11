@@ -9,6 +9,25 @@
 #import "ObjectiveCCompatibility.h"
 #import "LegacyRegularExpression.h"
 
+#ifndef TR_MACOS_OBJC_FRAGILE_RUNTIME
+#define TR_MACOS_OBJC_FRAGILE_RUNTIME 0
+#endif
+
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+#ifdef __cplusplus
+extern "C" {
+#endif
+void libarc_support_clear_copied_object_pointer(void* object);
+#ifdef __cplusplus
+}
+#endif
+
+static inline void TRClearCopiedObjectPointer(void* object)
+{
+    libarc_support_clear_copied_object_pointer(object);
+}
+#endif
+
 typedef void (^TRTimerBlock)(NSTimer* timer);
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_12
