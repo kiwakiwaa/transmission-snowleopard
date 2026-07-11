@@ -57,6 +57,17 @@ static void TRPrepareStatusSpeedField(NSTextField* field)
 
 @implementation StatusBarController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fStatusButton = _fStatusButton;
+@synthesize fTotalDLField = _fTotalDLField;
+@synthesize fTotalULField = _fTotalULField;
+@synthesize fTotalDLImageView = _fTotalDLImageView;
+@synthesize fTotalULImageView = _fTotalULImageView;
+@synthesize fLib = _fLib;
+@synthesize fPreviousDownloadRate = _fPreviousDownloadRate;
+@synthesize fPreviousUploadRate = _fPreviousUploadRate;
+#endif
+
 - (instancetype)initWithLib:(tr_session*)lib
 {
     if ((self = [super initWithNibName:@"StatusBar" bundle:nil]))

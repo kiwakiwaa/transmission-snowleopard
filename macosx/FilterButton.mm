@@ -7,6 +7,10 @@
 
 @implementation FilterButton
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize count = _count;
+#endif
+
 - (instancetype)initWithCoder:(NSCoder*)coder
 {
     if ((self = [super initWithCoder:coder]))

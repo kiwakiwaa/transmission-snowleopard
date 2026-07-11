@@ -5,6 +5,12 @@
 #import <AppKit/AppKit.h>
 
 @interface FilterButton : NSButton
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSUInteger _count;
+}
+#endif
 
 @property(nonatomic) NSUInteger count;
 

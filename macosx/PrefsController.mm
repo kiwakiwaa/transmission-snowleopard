@@ -122,6 +122,63 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
 
 @implementation PrefsController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fHandle = _fHandle;
+@synthesize fDefaults = _fDefaults;
+@synthesize fHasLoaded = _fHasLoaded;
+@synthesize fGeneralView = _fGeneralView;
+@synthesize fTransfersView = _fTransfersView;
+@synthesize fBandwidthView = _fBandwidthView;
+@synthesize fPeersView = _fPeersView;
+@synthesize fNetworkView = _fNetworkView;
+@synthesize fRemoteView = _fRemoteView;
+@synthesize fGroupsView = _fGroupsView;
+@synthesize fInitialString = _fInitialString;
+@synthesize fSystemPreferencesButton = _fSystemPreferencesButton;
+@synthesize fSetDefaultForMagnetButton = _fSetDefaultForMagnetButton;
+@synthesize fSetDefaultForTorrentButton = _fSetDefaultForTorrentButton;
+@synthesize fCheckForUpdatesLabel = _fCheckForUpdatesLabel;
+@synthesize fCheckForUpdatesButton = _fCheckForUpdatesButton;
+@synthesize fCheckForUpdatesBetaButton = _fCheckForUpdatesBetaButton;
+@synthesize fFolderPopUp = _fFolderPopUp;
+@synthesize fIncompleteFolderPopUp = _fIncompleteFolderPopUp;
+@synthesize fImportFolderPopUp = _fImportFolderPopUp;
+@synthesize fDoneScriptPopUp = _fDoneScriptPopUp;
+@synthesize fShowMagnetAddWindowCheck = _fShowMagnetAddWindowCheck;
+@synthesize fRatioStopField = _fRatioStopField;
+@synthesize fIdleStopField = _fIdleStopField;
+@synthesize fQueueDownloadField = _fQueueDownloadField;
+@synthesize fQueueSeedField = _fQueueSeedField;
+@synthesize fStalledField = _fStalledField;
+@synthesize fUploadField = _fUploadField;
+@synthesize fDownloadField = _fDownloadField;
+@synthesize fSpeedLimitUploadField = _fSpeedLimitUploadField;
+@synthesize fSpeedLimitDownloadField = _fSpeedLimitDownloadField;
+@synthesize fAutoSpeedDayTypePopUp = _fAutoSpeedDayTypePopUp;
+@synthesize fPeersGlobalField = _fPeersGlobalField;
+@synthesize fPeersTorrentField = _fPeersTorrentField;
+@synthesize fBlocklistURLField = _fBlocklistURLField;
+@synthesize fBlocklistMessageField = _fBlocklistMessageField;
+@synthesize fBlocklistDateField = _fBlocklistDateField;
+@synthesize fBlocklistButton = _fBlocklistButton;
+@synthesize fPortChecker = _fPortChecker;
+@synthesize fPortField = _fPortField;
+@synthesize fPortStatusField = _fPortStatusField;
+@synthesize fNatCheck = _fNatCheck;
+@synthesize fPortStatusImage = _fPortStatusImage;
+@synthesize fPortStatusProgress = _fPortStatusProgress;
+@synthesize fPortStatusTimer = _fPortStatusTimer;
+@synthesize fPeerPort = _fPeerPort;
+@synthesize fNatStatus = _fNatStatus;
+@synthesize fRPCPortField = _fRPCPortField;
+@synthesize fRPCPasswordField = _fRPCPasswordField;
+@synthesize fRPCWhitelistTable = _fRPCWhitelistTable;
+@synthesize fRPCWhitelistArray = _fRPCWhitelistArray;
+@synthesize fRPCAddRemoveControl = _fRPCAddRemoveControl;
+@synthesize fRPCPassword = _fRPCPassword;
+@synthesize fDefaultAppHelper = _fDefaultAppHelper;
+#endif
+
 - (instancetype)initWithHandle:(tr_session*)handle
 {
     if ((self = [super initWithWindowNibName:@"PrefsWindow"]))

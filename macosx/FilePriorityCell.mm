@@ -11,6 +11,10 @@
 
 @implementation FilePriorityCell
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize hovered = _hovered;
+#endif
+
 - (instancetype)init
 {
     if ((self = [super init]))

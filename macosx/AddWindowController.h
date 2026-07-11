@@ -4,10 +4,48 @@
 
 #import <AppKit/AppKit.h>
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+#import "Torrent.h"
+#endif
+
 @class Controller;
+@class FileOutlineController;
 @class Torrent;
 
 @interface AddWindowController : NSWindowController
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    Torrent* _torrent;
+    IBOutlet NSImageView* _fIconView;
+    IBOutlet NSImageView* _fLocationImageView;
+    IBOutlet NSTextField* _fNameField;
+    IBOutlet NSTextField* _fStatusField;
+    IBOutlet NSTextField* _fLocationField;
+    IBOutlet NSTextField* _fDownloadLabel;
+    IBOutlet NSTextField* _fGroupLabel;
+    IBOutlet NSTextField* _fPriorityLabel;
+    IBOutlet NSButton* _fStartCheck;
+    IBOutlet NSButton* _fDeleteCheck;
+    IBOutlet NSPopUpButton* _fGroupPopUp;
+    IBOutlet NSPopUpButton* _fPriorityPopUp;
+    IBOutlet NSProgressIndicator* _fVerifyIndicator;
+    IBOutlet NSTextField* _fFileFilterField;
+    IBOutlet NSButton* _fCheckAllButton;
+    IBOutlet NSButton* _fUncheckAllButton;
+    IBOutlet FileOutlineController* _fFileController;
+    IBOutlet NSScrollView* _fFileScrollView;
+    Controller* _fController;
+    NSString* _fDestination;
+    NSString* _fTorrentFile;
+    BOOL _fLockDestination;
+    BOOL _fDeleteTorrentEnableInitially;
+    BOOL _fCanToggleDelete;
+    NSInteger _fGroupValue;
+    __weak NSTimer* _fTimer;
+    TorrentDeterminationType _fGroupValueDetermination;
+}
+#endif
 
 @property(nonatomic, readonly) Torrent* torrent;
 

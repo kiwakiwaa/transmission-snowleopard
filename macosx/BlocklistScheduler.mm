@@ -20,6 +20,10 @@ static NSTimeInterval const kFullWait = 60 * 60 * 24 * 7;
 
 @implementation BlocklistScheduler
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fTimer = _fTimer;
+#endif
+
 + (BlocklistScheduler*)scheduler
 {
     static BlocklistScheduler* scheduler = nil;

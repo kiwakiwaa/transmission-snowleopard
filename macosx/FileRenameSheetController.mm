@@ -27,6 +27,16 @@ typedef void (^CompletionBlock)(BOOL);
 
 @implementation FileRenameSheetController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize labelField = _labelField;
+@synthesize inputField = _inputField;
+@synthesize renameButton = _renameButton;
+@synthesize cancelButton = _cancelButton;
+@synthesize torrent = _torrent;
+@synthesize node = _node;
+@synthesize originalName = _originalName;
+#endif
+
 - (void)endRenameSheetWithReturnCode:(NSModalResponse)returnCode
 {
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9

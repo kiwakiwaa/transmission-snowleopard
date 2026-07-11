@@ -9,6 +9,14 @@
 #include <libtransmission/macos-version.h>
 
 @interface RenameBaseRule : NSObject<RenameRule>
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSString* _identifier;
+    NSString* _localizedName;
+    BOOL _usesOrdering;
+}
+#endif
 
 @property(nonatomic, copy) NSString* identifier;
 @property(nonatomic, copy) NSString* localizedName;
@@ -19,6 +27,12 @@
 @end
 
 @implementation RenameBaseRule
+
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize identifier = _identifier;
+@synthesize localizedName = _localizedName;
+@synthesize usesOrdering = _usesOrdering;
+#endif
 
 - (instancetype)initWithIdentifier:(NSString*)identifier localizedName:(NSString*)localizedName usesOrdering:(BOOL)usesOrdering
 {
@@ -50,6 +64,12 @@
 @end
 
 @interface RenameReplaceRule : RenameBaseRule
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    RenameRuleReplaceMode _mode;
+}
+#endif
 
 @property(nonatomic) RenameRuleReplaceMode mode;
 
@@ -126,6 +146,10 @@ static NSString* TRBatchRenameNameByJoiningBaseNameAndExtension(NSString* baseNa
 }
 
 @implementation RenameReplaceRule
+
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize mode = _mode;
+#endif
 
 - (instancetype)initWithMode:(RenameRuleReplaceMode)mode
 {

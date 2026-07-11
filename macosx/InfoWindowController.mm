@@ -130,6 +130,40 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 
 @implementation InfoWindowController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fTorrents = _fTorrents;
+@synthesize fMinWindowWidth = _fMinWindowWidth;
+#endif
+#if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fLiveResizeTopEdge = _fLiveResizeTopEdge;
+@synthesize fRestoringLiveResizeTopEdge = _fRestoringLiveResizeTopEdge;
+#endif
+#endif
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fUpdatingWindowLayout = _fUpdatingWindowLayout;
+@synthesize fLegacyCurrentContentHeight = _fLegacyCurrentContentHeight;
+@synthesize fLegacyInspectorChromeHeight = _fLegacyInspectorChromeHeight;
+@synthesize fLegacyMinimumWidths = _fLegacyMinimumWidths;
+#endif
+#endif
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fViewController = _fViewController;
+@synthesize fCurrentTabTag = _fCurrentTabTag;
+@synthesize fTabs = _fTabs;
+@synthesize fGeneralViewController = _fGeneralViewController;
+@synthesize fActivityViewController = _fActivityViewController;
+@synthesize fTrackersViewController = _fTrackersViewController;
+@synthesize fPeersViewController = _fPeersViewController;
+@synthesize fFileViewController = _fFileViewController;
+@synthesize fOptionsViewController = _fOptionsViewController;
+@synthesize fImageView = _fImageView;
+@synthesize fNameField = _fNameField;
+@synthesize fBasicInfoField = _fBasicInfoField;
+@synthesize fNoneSelectedField = _fNoneSelectedField;
+#endif
+
 - (instancetype)init
 {
     self = [super initWithWindowNibName:@"InfoWindow"];

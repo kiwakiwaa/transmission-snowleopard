@@ -18,6 +18,13 @@
 
 @implementation URLSheetWindowController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fLabelField = _fLabelField;
+@synthesize fTextField = _fTextField;
+@synthesize fOpenButton = _fOpenButton;
+@synthesize fCancelButton = _fCancelButton;
+#endif
+
 - (void)endSheetWithReturnCode:(NSModalResponse)returnCode
 {
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9

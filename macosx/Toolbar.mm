@@ -10,6 +10,10 @@
 
 @implementation Toolbar
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize isRunningCustomizationPalette = _isRunningCustomizationPalette;
+#endif
+
 - (void)setVisible:(BOOL)visible
 {
     //we need to redraw the main window after each change

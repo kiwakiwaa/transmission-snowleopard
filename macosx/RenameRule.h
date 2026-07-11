@@ -47,6 +47,25 @@ typedef NS_ENUM(NSInteger, RenameRuleCaseMode) {
 @end
 
 @interface RenameRuleConfig : NSObject<NSCopying>
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSString* _searchText;
+    NSString* _replacementText;
+    NSString* _customText;
+    NSString* _regexPattern;
+    NSString* _regexReplacementText;
+    NSString* _dateFormat;
+    RenameRuleReplaceMode _replaceMode;
+    RenameRuleTextPlacement _textPlacement;
+    RenameRuleCharacterRemovalMode _characterRemovalMode;
+    RenameRuleCaseMode _caseMode;
+    NSInteger _characterLocation;
+    NSInteger _characterCount;
+    NSInteger _sequenceStart;
+    NSInteger _sequenceDigits;
+}
+#endif
 
 @property(nonatomic, copy) NSString* searchText;
 @property(nonatomic, copy) NSString* replacementText;
@@ -69,6 +88,13 @@ typedef NS_ENUM(NSInteger, RenameRuleCaseMode) {
 @end
 
 @interface RenameRuleResult : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSString* _generatedName;
+    NSString* _errorMessage;
+}
+#endif
 
 @property(nonatomic, copy) NSString* generatedName;
 @property(nonatomic, copy) NSString* errorMessage;

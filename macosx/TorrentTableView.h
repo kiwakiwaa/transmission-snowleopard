@@ -5,10 +5,27 @@
 #import <AppKit/AppKit.h>
 
 @class Torrent;
+@class Controller;
 
 extern CGFloat const kGroupSeparatorHeight;
 
 @interface TorrentTableView : NSOutlineView<NSOutlineViewDelegate, NSAnimationDelegate, NSPopoverDelegate, NSMenuItemValidation>
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    Controller* _fController;
+    NSUserDefaults* _fDefaults;
+    NSMutableIndexSet* _fCollapsedGroups;
+    NSMenu* _fContextRow;
+    NSMenu* _fContextNoRow;
+    NSIndexSet* _fSelectedRowIndexes;
+    CGFloat _piecesBarPercent;
+    NSAnimation* _fPiecesBarAnimation;
+    BOOL _fActionPopoverShown;
+    NSView* _fPositioningView;
+    NSDictionary* _fHoverEventDict;
+    NSMutableIndexSet* _fPendingSelectionReloadRows;
+}
+#endif
 
 - (void)reloadVisibleRows;
 

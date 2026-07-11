@@ -7,6 +7,15 @@
 
 @implementation GroupCell
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fGroupIndicatorView = _fGroupIndicatorView;
+@synthesize fGroupTitleField = _fGroupTitleField;
+@synthesize fGroupDownloadView = _fGroupDownloadView;
+@synthesize fGroupUploadAndRatioView = _fGroupUploadAndRatioView;
+@synthesize fGroupDownloadField = _fGroupDownloadField;
+@synthesize fGroupUploadAndRatioField = _fGroupUploadAndRatioField;
+#endif
+
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_9 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
 // Mavericks decodes this group row constraint slightly too far left compared
 // with newer AppKit, leaving the color indicator visually cramped.

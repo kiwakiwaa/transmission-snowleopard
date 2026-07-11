@@ -64,6 +64,32 @@ static NSMutableSet* creatorWindowControllerSet;
 
 @implementation CreatorWindowController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fIconView = _fIconView;
+@synthesize fNameField = _fNameField;
+@synthesize fStatusField = _fStatusField;
+@synthesize fPiecesField = _fPiecesField;
+@synthesize fLocationField = _fLocationField;
+@synthesize fTrackerTable = _fTrackerTable;
+@synthesize fTrackerAddRemoveControl = _fTrackerAddRemoveControl;
+@synthesize fCommentView = _fCommentView;
+@synthesize fPrivateCheck = _fPrivateCheck;
+@synthesize fOpenCheck = _fOpenCheck;
+@synthesize fSource = _fSource;
+@synthesize fPieceSizeStepper = _fPieceSizeStepper;
+@synthesize fProgressView = _fProgressView;
+@synthesize fProgressIndicator = _fProgressIndicator;
+@synthesize fBuilder = _fBuilder;
+@synthesize fPath = _fPath;
+@synthesize fFuture = _fFuture;
+@synthesize fLocation = _fLocation;
+@synthesize fTrackers = _fTrackers;
+@synthesize fTimer = _fTimer;
+@synthesize fStarted = _fStarted;
+@synthesize fOpenWhenCreated = _fOpenWhenCreated;
+@synthesize fDefaults = _fDefaults;
+#endif
+
 + (CreatorWindowController*)createTorrentFile:(tr_session*)handle
 {
     //get file/folder for torrent

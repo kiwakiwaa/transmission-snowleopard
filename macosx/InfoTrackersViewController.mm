@@ -32,6 +32,15 @@ typedef NS_ENUM(NSInteger, TrackerSegmentTag) {
 
 @implementation InfoTrackersViewController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fTorrents = _fTorrents;
+@synthesize fSet = _fSet;
+@synthesize fTrackers = _fTrackers;
+@synthesize fTrackerTable = _fTrackerTable;
+@synthesize fTrackerCell = _fTrackerCell;
+@synthesize fTrackerAddRemoveControl = _fTrackerAddRemoveControl;
+#endif
+
 - (instancetype)init
 {
     if ((self = [super initWithNibName:@"InfoTrackersView" bundle:nil]))

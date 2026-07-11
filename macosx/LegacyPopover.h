@@ -9,6 +9,8 @@
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_7
 
 @class TRLegacyPopover;
+@class TRLegacyPopoverPanel;
+@class TRLegacyPopoverFrameView;
 
 @protocol TRLegacyPopoverDelegate
 @optional
@@ -25,6 +27,31 @@ static NSPopoverBehavior const NSPopoverBehaviorTransient = 1;
 static NSPopoverBehavior const NSPopoverBehaviorSemitransient = 2;
 
 @interface TRLegacyPopover : NSResponder
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    NSPopoverBehavior fBehavior;
+    NSViewController* fContentViewController;
+    __unsafe_unretained id<TRLegacyPopoverDelegate> fDelegate;
+    TRLegacyPopoverPanel* fPanel;
+    TRLegacyPopoverFrameView* fFrameView;
+    NSView* fPositioningView;
+    NSWindow* fPositioningWindow;
+    NSRect fPositioningRect;
+    NSRectEdge fPreferredEdge;
+    NSUInteger fAnchorEdge;
+    id fLocalEventMonitor;
+    id fGlobalEventMonitor;
+    BOOL fShown;
+    BOOL fClosing;
+    BOOL fAutomaticCloseRegistered;
+    BOOL fGeometryChangeRegistered;
+    BOOL fPositioningViewPostsFrameChangedNotifications;
+    BOOL fPositioningViewPostsBoundsChangedNotifications;
+    BOOL fPositioningViewGeometryNotificationsEnabled;
+    BOOL fDeferredGeometryUpdateScheduled;
+    BOOL fOrderFrontScheduled;
+}
+#endif
 
 @property(nonatomic) NSPopoverBehavior behavior;
 @property(nonatomic, retain) NSViewController* contentViewController;

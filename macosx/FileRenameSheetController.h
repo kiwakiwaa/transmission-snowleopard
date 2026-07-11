@@ -9,6 +9,18 @@
 @class Torrent;
 
 @interface FileRenameSheetController : NSWindowController
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    IBOutlet NSTextField* __weak _labelField;
+    IBOutlet NSTextField* __weak _inputField;
+    IBOutlet NSButton* __weak _renameButton;
+    IBOutlet NSButton* __weak _cancelButton;
+    Torrent* _torrent;
+    FileListNode* _node;
+    NSString* _originalName;
+}
+#endif
 
 + (void)presentSheetForTorrent:(Torrent*)torrent
                 modalForWindow:(NSWindow*)window

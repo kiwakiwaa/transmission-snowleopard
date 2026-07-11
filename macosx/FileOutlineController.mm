@@ -58,6 +58,14 @@ static NSString* TRFileOutlinePathTooltip(FileListNode* node)
 
 @implementation FileOutlineController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fFileList = _fFileList;
+@synthesize fOutline = _fOutline;
+@synthesize batchRenameUndoManager = _batchRenameUndoManager;
+@synthesize torrent = _torrent;
+@synthesize filterText = _filterText;
+#endif
+
 - (void)dealloc
 {
     [self.batchRenameUndoManager removeAllActionsWithTarget:self];

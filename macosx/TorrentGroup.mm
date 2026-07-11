@@ -11,6 +11,11 @@
 
 @implementation TorrentGroup
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize groupIndex = _groupIndex;
+@synthesize torrents = _torrents;
+#endif
+
 - (instancetype)initWithGroup:(NSInteger)group
 {
     if ((self = [super init]))

@@ -40,6 +40,14 @@ typedef void* os_log_t;
 
 @implementation PowerManager
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize delegate = _delegate;
+@synthesize log = _log;
+@synthesize listening = _listening;
+@synthesize noNapActivity = _noNapActivity;
+@synthesize noSleepActivity = _noSleepActivity;
+#endif
+
 + (instancetype)shared
 {
     static PowerManager* sharedInstance = nil;

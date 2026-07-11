@@ -134,6 +134,16 @@ extern NSString const* VDKQueueAccessRevocationNotification;
 @end
 
 @interface VDKQueue : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    int _coreQueueFD;
+    NSMutableDictionary* _watchedPathEntries;
+    BOOL _keepWatcherThreadRunning;
+    __weak id<VDKQueueDelegate> _delegate;
+    BOOL _alwaysPostNotifications;
+}
+#endif
 
 //  Note: there is no need to ask whether a path is already being watched.
 //        Just add it or remove it and this class will take action only if appropriate.

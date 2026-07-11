@@ -26,6 +26,13 @@ static CGFloat const kPaddingBetweenNameAndFolderStatus = 4.0;
 
 @implementation BaseFileNameCellView
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize node = _node;
+@synthesize iconView = _iconView;
+@synthesize nameField = _nameField;
+@synthesize statusField = _statusField;
+#endif
+
 - (instancetype)initWithFrame:(NSRect)frameRect
 {
     if ((self = [super initWithFrame:frameRect]))

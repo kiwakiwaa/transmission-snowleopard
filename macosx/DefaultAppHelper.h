@@ -5,6 +5,12 @@
 #import <Foundation/Foundation.h>
 
 @interface DefaultAppHelper : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSString* _bundleIdentifier;
+}
+#endif
 
 - (BOOL)isDefaultForTorrentFiles;
 - (void)setDefaultForTorrentFiles:(void (^_Nullable)())completionHandler;

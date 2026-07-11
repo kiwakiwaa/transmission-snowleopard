@@ -25,6 +25,19 @@
 
 @class AddMagnetWindowController;
 @class AddWindowController;
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@class Badger;
+@class DragOverlayWindow;
+@class FilterBarController;
+@class InfoWindowController;
+@class StatusBarController;
+@class SystemNotificationController;
+@class TorrentTableView;
+@class URLSheetWindowController;
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
+@class NSURLSession;
+#endif
+#endif
 @class MessageWindowController;
 @class PrefsController;
 @class Torrent;
@@ -56,6 +69,66 @@ typedef NS_ENUM(NSUInteger, AddType) { //
                             SUUpdaterDelegate
 #endif
                             >
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    IBOutlet NSWindow* _fWindow;
+    NSLayoutConstraint* _fMinHeightConstraint;
+    NSLayoutConstraint* _fFixedHeightConstraint;
+    IBOutlet TorrentTableView* _fTableView;
+    IBOutlet NSMenuItem* _fOpenIgnoreDownloadFolder;
+    IBOutlet NSButton* _fActionButton;
+    IBOutlet NSButton* _fSpeedLimitButton;
+    IBOutlet NSButton* _fClearCompletedButton;
+    IBOutlet NSTextField* _fTotalTorrentsField;
+    IBOutlet NSMenuItem* _fNextFilterItem;
+    IBOutlet NSMenuItem* _fNextInfoTabItem;
+    IBOutlet NSMenuItem* _fPrevInfoTabItem;
+    IBOutlet NSMenu* _fSortMenu;
+    IBOutlet NSMenu* _fGroupsSetMenu;
+    IBOutlet NSMenu* _fGroupsSetContextMenu;
+    IBOutlet NSMenu* _fShareMenu;
+    IBOutlet NSMenu* _fShareContextMenu;
+    tr_session* _fLib;
+    NSMutableArray* _fTorrents;
+    NSMutableArray* _fDisplayedTorrents;
+    NSMutableDictionary* _fTorrentHashes;
+    InfoWindowController* _fInfoController;
+    MessageWindowController* _fMessageController;
+    NSUserDefaults* _fDefaults;
+    NSString* _fConfigDirectory;
+    DragOverlayWindow* _fOverlayWindow;
+    NSTimer* _fTimer;
+    StatusBarController* _fStatusBar;
+    FilterBarController* _fFilterBar;
+    QLPreviewPanel* _fPreviewPanel;
+    BOOL _fQuitting;
+    BOOL _fQuitRequested;
+    BOOL _fPauseOnLaunch;
+    Badger* _fBadger;
+#if !TR_HAS_USER_NOTIFICATIONS
+    SystemNotificationController* _fNotificationController;
+#endif
+    NSMutableArray* _fAutoImportedNames;
+    NSTimer* _fAutoImportTimer;
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
+    NSURLSession* _fSession;
+#else
+    NSMutableDictionary* _fURLDownloadTasks;
+#endif
+    NSMutableSet* _fAddingTransfers;
+    NSMutableSet* _fAddWindows;
+    URLSheetWindowController* _fUrlSheetController;
+    BOOL _fGlobalPopoverShown;
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
+    NSPopover* _fLegacyGlobalPopover;
+#endif
+    NSView* _fPositioningView;
+    BOOL _fSoundPlaying;
+    PrefsController* _prefsController;
+    VDKQueue* _fileWatcherQueue;
+}
+#endif
 
 - (void)openFiles:(NSArray*)filenames addType:(AddType)type forcePath:(NSString*)path;
 

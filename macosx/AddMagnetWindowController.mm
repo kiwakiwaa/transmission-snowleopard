@@ -35,6 +35,20 @@ typedef NS_ENUM(NSUInteger, PopupPriority) {
 
 @implementation AddMagnetWindowController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize torrent = _torrent;
+@synthesize fLocationImageView = _fLocationImageView;
+@synthesize fNameField = _fNameField;
+@synthesize fLocationField = _fLocationField;
+@synthesize fStartCheck = _fStartCheck;
+@synthesize fGroupPopUp = _fGroupPopUp;
+@synthesize fPriorityPopUp = _fPriorityPopUp;
+@synthesize fController = _fController;
+@synthesize fDestination = _fDestination;
+@synthesize fGroupValue = _fGroupValue;
+@synthesize fGroupDeterminationType = _fGroupDeterminationType;
+#endif
+
 - (instancetype)initWithTorrent:(Torrent*)torrent destination:(NSString*)path controller:(Controller*)controller
 {
     if ((self = [super initWithWindowNibName:@"AddMagnetWindow"]))

@@ -7,6 +7,12 @@
 @class Torrent;
 
 @interface GroupsController : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSMutableArray* _fGroups;
+}
+#endif
 
 @property(nonatomic, class, readonly) GroupsController* groups;
 

@@ -7,6 +7,12 @@
 @class Torrent;
 
 @interface TorrentGroup : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    NSInteger _groupIndex;
+    NSMutableArray* _torrents;
+}
+#endif
 
 - (instancetype)initWithGroup:(NSInteger)group;
 

@@ -14,6 +14,11 @@
 
 @implementation TrackerNode
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize torrent = _torrent;
+@synthesize fStat = _fStat;
+#endif
+
 + (NSDateFormatter*)dateFormatter
 {
     static NSDateFormatter* formatter = nil;

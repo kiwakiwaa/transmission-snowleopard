@@ -29,6 +29,12 @@ typedef NS_ENUM(NSInteger, ArrowDirection) {
 
 @implementation BadgeView
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fAttributes = _fAttributes;
+@synthesize fDownloadRate = _fDownloadRate;
+@synthesize fUploadRate = _fUploadRate;
+#endif
+
 - (instancetype)init
 {
     if ((self = [super init]))

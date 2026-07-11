@@ -21,6 +21,16 @@
 
 @implementation GlobalOptionsPopoverViewController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fHandle = _fHandle;
+@synthesize fDefaults = _fDefaults;
+@synthesize fUploadLimitField = _fUploadLimitField;
+@synthesize fDownloadLimitField = _fDownloadLimitField;
+@synthesize fRatioStopField = _fRatioStopField;
+@synthesize fIdleStopField = _fIdleStopField;
+@synthesize fInitialString = _fInitialString;
+#endif
+
 - (instancetype)initWithHandle:(tr_session*)handle
 {
     if ((self = [super initWithNibName:@"GlobalOptionsPopover" bundle:nil]))

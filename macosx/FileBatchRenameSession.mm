@@ -23,6 +23,12 @@ static NSString* const kFileBatchRenameSessionErrorDomain = @"org.transmissionbt
 
 @implementation FileBatchRenameOperation
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize node = _node;
+@synthesize fromName = _fromName;
+@synthesize toName = _toName;
+#endif
+
 + (instancetype)operationWithNode:(FileListNode*)node fromName:(NSString*)fromName toName:(NSString*)toName
 {
     FileBatchRenameOperation* operation = [[self alloc] init];
@@ -51,6 +57,15 @@ typedef void (^FileBatchRenameErrorCompletionHandler)(NSError* error);
 @end
 
 @implementation FileBatchRenameSession
+
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize mutableItems = _mutableItems;
+@synthesize displayedItems = _displayedItems;
+@synthesize rule = _rule;
+@synthesize config = _config;
+@synthesize canRename = _canRename;
+@synthesize validationSummary = _validationSummary;
+#endif
 
 - (instancetype)initWithFileListNodes:(NSArray*)nodes
 {

@@ -59,6 +59,10 @@ static NSString* TRSupportedAnnouncedClientIdentity(NSString* value)
 
 @implementation GroupsController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fGroups = _fGroups;
+#endif
+
 + (GroupsController*)groups
 {
     static GroupsController* fGroupsInstance = nil;

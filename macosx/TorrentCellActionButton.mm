@@ -33,6 +33,20 @@
 TR_LEGACY_WEAK_REFERENCE_ACCESSORS(TorrentCell, torrentCell, setTorrentCell, _torrentCellWeakReference)
 #endif
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fTrackingArea = _fTrackingArea;
+@synthesize fImage = _fImage;
+@synthesize fAlternativeImage = _fAlternativeImage;
+#endif
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7 || !TR_MACOS_DEPLOYMENT_BEFORE_10_8
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize torrentCell = _torrentCell;
+#endif
+#endif
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fDefaults = _fDefaults;
+#endif
+
 - (TorrentTableView*)torrentTableView
 {
     return self.torrentCell.fTorrentTableView;

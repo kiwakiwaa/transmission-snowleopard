@@ -34,6 +34,24 @@
 
 @implementation FilePriorityCellView
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize node = _node;
+@synthesize hovered = _hovered;
+@synthesize segmentedControl = _segmentedControl;
+@synthesize iconsContainerView = _iconsContainerView;
+#endif
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize stackView = _stackView;
+@synthesize lowPriorityView = _lowPriorityView;
+@synthesize mediumPriorityView = _mediumPriorityView;
+@synthesize highPriorityView = _highPriorityView;
+#endif
+#endif
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize trackingArea = _trackingArea;
+#endif
+
 - (instancetype)initWithFrame:(NSRect)frameRect
 {
     if ((self = [super initWithFrame:frameRect]))

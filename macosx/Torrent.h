@@ -14,6 +14,25 @@ typedef NS_ENUM(NSUInteger, TorrentDeterminationType) { TorrentDeterminationAuto
 extern NSString* const kTorrentDidChangeGroupNotification;
 
 @interface Torrent : NSObject<NSCopying, QLPreviewItem>
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    tr_torrent* _fHandle;
+    tr_stat _fStat;
+    NSUserDefaults* _fDefaults;
+    NSImage* _fIcon;
+    NSArray* _fileList;
+    NSArray* _flatFileList;
+    NSIndexSet* _fPreviousFinishedIndexes;
+    NSDate* _fPreviousFinishedIndexesDate;
+    NSInteger _groupValue;
+    TorrentDeterminationType _fGroupValueDetermination;
+    TorrentDeterminationType _fDownloadFolderDetermination;
+    BOOL _fResumeOnWake;
+    NSString* _hashString;
+    tr_torrent_id_t _id;
+    BOOL _removeWhenFinishSeeding;
+}
+#endif
 
 - (instancetype)initWithPath:(NSString*)path
                     location:(NSString*)location

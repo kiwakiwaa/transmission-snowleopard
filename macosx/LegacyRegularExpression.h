@@ -43,9 +43,25 @@ enum
 
 @class TRLegacyRegularExpression;
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+#ifdef __cplusplus
+struct URegularExpression;
+#else
+typedef struct URegularExpression URegularExpression;
+#endif
+#endif
+
 typedef void (^TRNSMatchingBlock)(NSTextCheckingResult* result, NSMatchingFlags flags, BOOL* stop);
 
 @interface TRLegacyRegularExpression : NSObject <NSCopying, NSCoding>
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSString* _pattern;
+    NSRegularExpressionOptions _options;
+    URegularExpression* _regex;
+}
+#endif
 + (NSString*)escapedPatternForString:(NSString*)string;
 + (NSString*)escapedTemplateForString:(NSString*)string;
 + (instancetype)regularExpressionWithPattern:(NSString*)pattern options:(NSRegularExpressionOptions)options error:(NSError**)error;
@@ -82,6 +98,12 @@ typedef void (^TRNSMatchingBlock)(NSTextCheckingResult* result, NSMatchingFlags 
 @end
 
 @interface TRLegacyDataDetector : TRLegacyRegularExpression
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    uint64_t _checkingTypes;
+}
+#endif
 + (instancetype)dataDetectorWithTypes:(uint64_t)checkingTypes error:(NSError**)error;
 @end
 

@@ -13,6 +13,11 @@
 
 @implementation GroupToolbarItem
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fEnabled = _fEnabled;
+@synthesize fHasEnabledState = _fHasEnabledState;
+#endif
+
 - (void)applyStateToControl
 {
     if (![self.view isKindOfClass:[NSControl class]])

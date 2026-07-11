@@ -41,6 +41,18 @@ static NSString* const kWebSeedAnimationId = @"webSeed";
 
 @implementation InfoPeersViewController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fTorrents = _fTorrents;
+@synthesize fSet = _fSet;
+@synthesize fPeers = _fPeers;
+@synthesize fWebSeeds = _fWebSeeds;
+@synthesize fPeerTable = _fPeerTable;
+@synthesize fWebSeedTable = _fWebSeedTable;
+@synthesize fConnectedPeersField = _fConnectedPeersField;
+@synthesize fViewTopMargin = _fViewTopMargin;
+@synthesize fWebSeedTableTopConstraint = _fWebSeedTableTopConstraint;
+#endif
+
 - (instancetype)init
 {
     if ((self = [super initWithNibName:@"InfoPeersView" bundle:nil]))

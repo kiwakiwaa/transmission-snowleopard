@@ -8,6 +8,16 @@
 
 @implementation FileBatchRenameItem
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize node = _node;
+@synthesize originalName = _originalName;
+@synthesize originalPath = _originalPath;
+@synthesize visibleOrderIndex = _visibleOrderIndex;
+@synthesize active = _active;
+@synthesize generatedName = _generatedName;
+@synthesize validationMessage = _validationMessage;
+#endif
+
 - (instancetype)initWithFileListNode:(FileListNode*)node visibleOrderIndex:(NSUInteger)visibleOrderIndex
 {
     NSParameterAssert(node != nil);

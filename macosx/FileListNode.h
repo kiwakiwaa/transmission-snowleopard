@@ -2,11 +2,28 @@
 // It may be used under the MIT (SPDX: MIT) license.
 // License text can be found in the licenses/ folder.
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+#import <AppKit/AppKit.h>
+#else
 #import <Foundation/Foundation.h>
+#endif
 
 @class Torrent;
 
 @interface FileListNode : NSObject<NSCopying>
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSString* _name;
+    NSString* _path;
+    __weak Torrent* _torrent;
+    uint64_t _size;
+    BOOL _isFolder;
+    NSMutableArray* _children;
+    NSMutableIndexSet* _indexesInternal;
+    NSImage* _iconInternal;
+}
+#endif
 
 @property(nonatomic, readonly) NSString* name;
 @property(nonatomic, readonly) NSString* path;

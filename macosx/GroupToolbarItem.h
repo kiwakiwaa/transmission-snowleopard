@@ -5,6 +5,12 @@
 #import <AppKit/AppKit.h>
 
 @interface GroupToolbarItem : NSToolbarItemGroup
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    BOOL _fEnabled;
+    BOOL _fHasEnabledState;
+}
+#endif
 
 - (void)createMenu:(NSArray*)labels;
 

@@ -5,6 +5,14 @@
 #import <AppKit/AppKit.h>
 
 @interface BadgeView : NSView
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSMutableDictionary* _fAttributes;
+    CGFloat _fDownloadRate;
+    CGFloat _fUploadRate;
+}
+#endif
 
 - (BOOL)setRatesWithDownload:(CGFloat)downloadRate upload:(CGFloat)uploadRate;
 

@@ -55,6 +55,10 @@ NSString* const UserInfoIdentifierKey = @"TransmissionNotificationIdentifier";
 
 @implementation SystemNotificationController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize delegate = _delegate;
+#endif
+
 - (void)configureUserNotifications
 {
 #if TR_HAS_LEGACY_USER_NOTIFICATIONS

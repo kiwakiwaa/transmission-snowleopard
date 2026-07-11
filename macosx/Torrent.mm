@@ -120,6 +120,24 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
 
 @implementation Torrent
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fHandle = _fHandle;
+@synthesize fStat = _fStat;
+@synthesize fDefaults = _fDefaults;
+@synthesize fIcon = _fIcon;
+@synthesize fileList = _fileList;
+@synthesize flatFileList = _flatFileList;
+@synthesize fPreviousFinishedIndexes = _fPreviousFinishedIndexes;
+@synthesize fPreviousFinishedIndexesDate = _fPreviousFinishedIndexesDate;
+@synthesize groupValue = _groupValue;
+@synthesize fGroupValueDetermination = _fGroupValueDetermination;
+@synthesize fDownloadFolderDetermination = _fDownloadFolderDetermination;
+@synthesize fResumeOnWake = _fResumeOnWake;
+@synthesize hashString = _hashString;
+@synthesize id = _id;
+@synthesize removeWhenFinishSeeding = _removeWhenFinishSeeding;
+#endif
+
 + (void)initialize
 {
     if (self != [Torrent self])

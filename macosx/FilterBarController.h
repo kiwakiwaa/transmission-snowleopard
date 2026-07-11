@@ -20,7 +20,23 @@ extern FilterSearchType const FilterSearchTypeTracker;
 
 extern NSInteger const kGroupFilterAllTag;
 
+@class FilterButton;
+
 @interface FilterBarController : NSTitlebarAccessoryViewController<NSMenuItemValidation>
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    IBOutlet FilterButton* _fNoFilterButton;
+    IBOutlet FilterButton* _fActiveFilterButton;
+    IBOutlet FilterButton* _fDownloadFilterButton;
+    IBOutlet FilterButton* _fSeedFilterButton;
+    IBOutlet FilterButton* _fPauseFilterButton;
+    IBOutlet FilterButton* _fErrorFilterButton;
+    IBOutlet NSSearchField* _fSearchField;
+    IBOutlet NSLayoutConstraint* _fSearchFieldMinWidthConstraint;
+    IBOutlet NSPopUpButton* _fGroupsButton;
+}
+#endif
 
 @property(nonatomic, readonly) NSArray* searchStrings;
 

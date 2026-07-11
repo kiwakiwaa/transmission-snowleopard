@@ -7,6 +7,18 @@
 #include <libtransmission/transmission.h>
 
 @interface GlobalOptionsPopoverViewController : NSViewController
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    tr_session* _fHandle;
+    NSUserDefaults* _fDefaults;
+    IBOutlet NSTextField* _fUploadLimitField;
+    IBOutlet NSTextField* _fDownloadLimitField;
+    IBOutlet NSTextField* _fRatioStopField;
+    IBOutlet NSTextField* _fIdleStopField;
+    NSString* _fInitialString;
+}
+#endif
 
 - (instancetype)initWithHandle:(tr_session*)handle;
 

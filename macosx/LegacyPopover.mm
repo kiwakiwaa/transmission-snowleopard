@@ -11,6 +11,11 @@
 #import <float.h>
 
 @interface TRLegacyPopoverPanel : NSPanel
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    __unsafe_unretained TRLegacyPopover* popover;
+}
+#endif
 
 @property(nonatomic, assign) TRLegacyPopover* popover;
 
@@ -37,6 +42,7 @@
 @end
 
 @interface TRLegacyPopover () <NSWindowDelegate>
+#if !TR_MACOS_OBJC_FRAGILE_RUNTIME
 {
     NSPopoverBehavior fBehavior;
     NSViewController* fContentViewController;
@@ -60,7 +66,7 @@
     BOOL fDeferredGeometryUpdateScheduled;
     BOOL fOrderFrontScheduled;
 }
-
+#endif
 - (void)closeAskingDelegate:(BOOL)asksDelegate;
 - (void)updatePanelContentAndFrame;
 - (void)repositionPanel;

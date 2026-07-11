@@ -5,6 +5,20 @@
 #import <AppKit/AppKit.h>
 
 @interface MessageWindowController : NSWindowController
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    NSTableView* _fMessageTable;
+    NSPopUpButton* _fLevelButton;
+    NSButton* _fSaveButton;
+    NSButton* _fClearButton;
+    NSSearchField* _fFilterField;
+    NSMutableArray* _fMessages;
+    NSMutableArray* _fDisplayedMessages;
+    NSDictionary* _fAttributes;
+    NSTimer* _fTimer;
+    NSLock* _fLock;
+}
+#endif
 
 - (IBAction)changeLevel:(id)sender;
 - (IBAction)changeFilter:(id)sender;

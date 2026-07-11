@@ -7,6 +7,13 @@
 @class FileListNode;
 
 @interface FileCheckCellView : NSTableCellView
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    __weak FileListNode* _node;
+    __weak NSButton* _checkButton;
+}
+#endif
 
 @property(nonatomic, weak) FileListNode* node;
 

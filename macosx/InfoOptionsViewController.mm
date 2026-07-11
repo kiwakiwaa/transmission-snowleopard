@@ -93,6 +93,35 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 
 @implementation InfoOptionsViewController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fTorrents = _fTorrents;
+@synthesize fSet = _fSet;
+@synthesize fPriorityPopUp = _fPriorityPopUp;
+@synthesize fRatioPopUp = _fRatioPopUp;
+@synthesize fIdlePopUp = _fIdlePopUp;
+@synthesize fUploadLimitCheck = _fUploadLimitCheck;
+@synthesize fDownloadLimitCheck = _fDownloadLimitCheck;
+@synthesize fGlobalLimitCheck = _fGlobalLimitCheck;
+@synthesize fRemoveSeedingCompleteCheck = _fRemoveSeedingCompleteCheck;
+@synthesize fUploadLimitField = _fUploadLimitField;
+@synthesize fDownloadLimitField = _fDownloadLimitField;
+@synthesize fRatioLimitField = _fRatioLimitField;
+@synthesize fIdleLimitField = _fIdleLimitField;
+@synthesize fUploadLimitLabel = _fUploadLimitLabel;
+@synthesize fDownloadLimitLabel = _fDownloadLimitLabel;
+@synthesize fIdleLimitLabel = _fIdleLimitLabel;
+@synthesize fRatioLimitGlobalLabel = _fRatioLimitGlobalLabel;
+@synthesize fIdleLimitGlobalLabel = _fIdleLimitGlobalLabel;
+@synthesize fPeersConnectLabel = _fPeersConnectLabel;
+@synthesize fPeersConnectField = _fPeersConnectField;
+@synthesize fInitialString = _fInitialString;
+@synthesize fOptionsStackView = _fOptionsStackView;
+@synthesize fSeedingView = _fSeedingView;
+@synthesize fCurrentHeight = _fCurrentHeight;
+@synthesize fPriorityView = _fPriorityView;
+@synthesize oldHeight = _oldHeight;
+#endif
+
 - (instancetype)init
 {
     if ((self = [super initWithNibName:@"InfoOptionsView" bundle:nil]))

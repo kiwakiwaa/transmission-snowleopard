@@ -56,6 +56,18 @@ typedef NS_ENUM(NSInteger, FilterTypeTag) {
 
 @implementation FilterBarController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fNoFilterButton = _fNoFilterButton;
+@synthesize fActiveFilterButton = _fActiveFilterButton;
+@synthesize fDownloadFilterButton = _fDownloadFilterButton;
+@synthesize fSeedFilterButton = _fSeedFilterButton;
+@synthesize fPauseFilterButton = _fPauseFilterButton;
+@synthesize fErrorFilterButton = _fErrorFilterButton;
+@synthesize fSearchField = _fSearchField;
+@synthesize fSearchFieldMinWidthConstraint = _fSearchFieldMinWidthConstraint;
+@synthesize fGroupsButton = _fGroupsButton;
+#endif
+
 - (instancetype)init
 {
     self = [super initWithNibName:@"FilterBar" bundle:nil];

@@ -22,6 +22,10 @@
 
 @implementation FileOutlineView
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize hoveredRow = _hoveredRow;
+#endif
+
 - (void)awakeFromNib
 {
     [super awakeFromNib];

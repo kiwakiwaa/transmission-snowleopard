@@ -6,6 +6,10 @@
 
 @implementation WebSeedTableView
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize webSeeds = _webSeeds;
+#endif
+
 - (void)mouseDown:(NSEvent*)event
 {
     [self.window makeKeyWindow];

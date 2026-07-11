@@ -5,6 +5,15 @@
 #import <AppKit/AppKit.h>
 
 @interface URLSheetWindowController : NSWindowController
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    IBOutlet NSTextField* _fLabelField;
+    IBOutlet NSTextField* _fTextField;
+    IBOutlet NSButton* _fOpenButton;
+    IBOutlet NSButton* _fCancelButton;
+}
+#endif
 
 @property(nonatomic, readonly) NSString* urlString;
 

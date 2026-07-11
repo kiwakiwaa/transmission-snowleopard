@@ -86,6 +86,60 @@ typedef NS_ENUM(NSInteger, BatchRenameRulePopupTag) {
 
 @implementation FileBatchRenameSheetController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize ruleLabel = _ruleLabel;
+@synthesize searchLabel = _searchLabel;
+@synthesize replacementLabel = _replacementLabel;
+@synthesize textLabel = _textLabel;
+@synthesize dateFormatLabel = _dateFormatLabel;
+@synthesize dateLocationLabel = _dateLocationLabel;
+@synthesize sequenceTextLabel = _sequenceTextLabel;
+@synthesize sequenceLocationLabel = _sequenceLocationLabel;
+@synthesize sequenceDigitsLabel = _sequenceDigitsLabel;
+@synthesize sequenceStartLabel = _sequenceStartLabel;
+@synthesize characterModeLabel = _characterModeLabel;
+@synthesize characterLocationLabel = _characterLocationLabel;
+@synthesize characterCountLabel = _characterCountLabel;
+@synthesize regexPatternLabel = _regexPatternLabel;
+@synthesize regexReplacementLabel = _regexReplacementLabel;
+@synthesize rulePopup = _rulePopup;
+@synthesize replaceRuleView = _replaceRuleView;
+@synthesize textRuleView = _textRuleView;
+@synthesize dateRuleView = _dateRuleView;
+@synthesize sequenceRuleView = _sequenceRuleView;
+@synthesize characterRemovalRuleView = _characterRemovalRuleView;
+@synthesize regularExpressionRuleView = _regularExpressionRuleView;
+@synthesize changeCaseRuleView = _changeCaseRuleView;
+@synthesize renameButton = _renameButton;
+@synthesize cancelButton = _cancelButton;
+@synthesize session = _session;
+@synthesize completionHandler = _completionHandler;
+@synthesize completedOperations = _completedOperations;
+@synthesize replaceModePopup = _replaceModePopup;
+@synthesize dateTextPlacementPopup = _dateTextPlacementPopup;
+@synthesize sequenceTextPlacementPopup = _sequenceTextPlacementPopup;
+@synthesize characterRemovalModePopup = _characterRemovalModePopup;
+@synthesize searchField = _searchField;
+@synthesize replacementField = _replacementField;
+@synthesize customTextField = _customTextField;
+@synthesize sequenceTextField = _sequenceTextField;
+@synthesize regexPatternField = _regexPatternField;
+@synthesize regexReplacementField = _regexReplacementField;
+@synthesize dateFormatField = _dateFormatField;
+@synthesize sequenceStartField = _sequenceStartField;
+@synthesize sequenceDigitsField = _sequenceDigitsField;
+@synthesize characterLocationField = _characterLocationField;
+@synthesize characterCountField = _characterCountField;
+@synthesize sequenceStartStepper = _sequenceStartStepper;
+@synthesize sequenceDigitsStepper = _sequenceDigitsStepper;
+@synthesize characterLocationStepper = _characterLocationStepper;
+@synthesize characterCountStepper = _characterCountStepper;
+@synthesize caseSegmentedControl = _caseSegmentedControl;
+@synthesize tableScrollView = _tableScrollView;
+@synthesize tableView = _tableView;
+@synthesize statusField = _statusField;
+#endif
+
 - (void)endRenameSheetWithReturnCode:(NSModalResponse)returnCode
 {
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9

@@ -19,6 +19,17 @@
 
 @implementation FileListNode
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize name = _name;
+@synthesize path = _path;
+@synthesize torrent = _torrent;
+@synthesize size = _size;
+@synthesize isFolder = _isFolder;
+@synthesize children = _children;
+@synthesize indexesInternal = _indexesInternal;
+@synthesize iconInternal = _iconInternal;
+#endif
+
 - (instancetype)initWithFolderName:(NSString*)name path:(NSString*)path torrent:(Torrent*)torrent
 {
     if ((self = [self initWithFolder:YES name:name path:path torrent:torrent]))

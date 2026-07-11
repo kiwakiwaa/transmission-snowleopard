@@ -43,6 +43,30 @@ static TRLegacyStackViewVisibilityPriority const TRLegacyStackViewVisibilityPrio
 static TRLegacyStackViewVisibilityPriority const TRLegacyStackViewVisibilityPriorityMustHold = 1000.0;
 
 @interface LegacyStackView : NSView
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    NSMutableArray* fLeadingViews;
+    NSMutableArray* fCenterViews;
+    NSMutableArray* fTrailingViews;
+    NSMutableSet* fDetachedViews;
+    NSMutableDictionary* fVisibilityPriorities;
+    BOOL fUpdatingSubviews;
+    BOOL fNeedsLegacyLayout;
+    BOOL fLayingOutLegacySubviews;
+    CGFloat fLeadingOffset;
+    CGFloat fTrailingOffset;
+    CGFloat fCenterOffset;
+    CGFloat fTopOffset;
+    CGFloat fHorizontalHuggingPriority;
+    CGFloat fVerticalHuggingPriority;
+    CGFloat fHorizontalClippingResistancePriority;
+    CGFloat fVerticalClippingResistancePriority;
+    TRLegacyStackViewOrientation _orientation;
+    TRLegacyStackViewAlignment _alignment;
+    CGFloat _spacing;
+    BOOL _detachesHiddenViews;
+}
+#endif
 
 @property(nonatomic, readonly, copy) NSArray* arrangedSubviews;
 @property(nonatomic, readonly, copy) NSArray* views;

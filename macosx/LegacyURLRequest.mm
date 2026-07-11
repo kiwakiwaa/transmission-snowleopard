@@ -6,7 +6,9 @@
 
 #include <libtransmission/macos-version.h>
 
+#if !TR_MACOS_OBJC_FRAGILE_RUNTIME
 typedef NS_ENUM(NSUInteger, TRURLRequestTaskKind) { TRURLRequestTaskKindData, TRURLRequestTaskKindDownload };
+#endif
 
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @interface TRURLRequestTask ()<NSURLSessionDataDelegate, NSURLSessionDownloadDelegate>
@@ -34,6 +36,29 @@ typedef NS_ENUM(NSUInteger, TRURLRequestTaskKind) { TRURLRequestTaskKindData, TR
 @end
 
 @implementation TRURLRequestTask
+
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize request = _request;
+@synthesize kind = _kind;
+@synthesize dataCompletionHandler = _dataCompletionHandler;
+@synthesize progressHandler = _progressHandler;
+@synthesize downloadCompletionHandler = _downloadCompletionHandler;
+@synthesize response = _response;
+@synthesize receivedData = _receivedData;
+@synthesize downloadLocation = _downloadLocation;
+@synthesize finished = _finished;
+#endif
+
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize session = _session;
+@synthesize task = _task;
+#endif
+#else
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize connection = _connection;
+#endif
+#endif
 
 + (TRURLRequestTask*)dataTaskWithRequest:(NSURLRequest*)request completionHandler:(TRURLDataCompletionHandler)completionHandler
 {

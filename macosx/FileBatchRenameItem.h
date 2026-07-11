@@ -7,6 +7,18 @@
 @class FileListNode;
 
 @interface FileBatchRenameItem : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    FileListNode* _node;
+    NSString* _originalName;
+    NSString* _originalPath;
+    NSUInteger _visibleOrderIndex;
+    BOOL _active;
+    NSString* _generatedName;
+    NSString* _validationMessage;
+}
+#endif
 
 @property(nonatomic, readonly) FileListNode* node;
 @property(nonatomic, copy, readonly) NSString* originalName;

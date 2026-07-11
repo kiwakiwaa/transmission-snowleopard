@@ -14,6 +14,10 @@ static NSUInteger const kBonjourServiceNameMaxLength = 63;
 
 @implementation BonjourController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fService = _fService;
+#endif
+
 static BonjourController* fDefaultController = nil;
 
 + (BonjourController*)defaultController

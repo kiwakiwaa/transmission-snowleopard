@@ -35,7 +35,9 @@ constexpr uint32_t UREGEX_UWORD = 256;
 
 constexpr NSMatchingOptions TRMatchingSkipResultObjects = 1U << 13;
 
+#if !TR_MACOS_OBJC_FRAGILE_RUNTIME
 struct URegularExpression;
+#endif
 
 extern "C" URegularExpression* uregex_open(UChar const* pattern, int32_t patternLength, uint32_t flags, void* parseError, UErrorCode* status);
 extern "C" URegularExpression* uregex_clone(URegularExpression const* regex, UErrorCode* status);
@@ -425,6 +427,7 @@ static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(
     return TR_AUTORELEASE([[TRRegularExpressionCheckingResult alloc] initWithRanges:ranges count:count regularExpression:regularExpression]);
 }
 
+#if !TR_MACOS_OBJC_FRAGILE_RUNTIME
 @interface NSRegularExpression ()
 {
     NSString* _pattern;
@@ -432,6 +435,7 @@ static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(
     URegularExpression* _regex;
 }
 @end
+#endif
 
 @implementation NSRegularExpression
 
@@ -970,11 +974,13 @@ completion:
 
 @end
 
+#if !TR_MACOS_OBJC_FRAGILE_RUNTIME
 @interface NSDataDetector ()
 {
     uint64_t _checkingTypes;
 }
 @end
+#endif
 
 @implementation NSDataDetector
 

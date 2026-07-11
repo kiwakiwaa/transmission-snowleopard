@@ -7,6 +7,11 @@
 #include <libtransmission/macos-version.h>
 
 @interface TRSheetCallback : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    TRSheetCompletionHandler _handler;
+}
+#endif
 
 @property(nonatomic, copy) TRSheetCompletionHandler handler;
 
@@ -17,6 +22,10 @@
 @end
 
 @implementation TRSheetCallback
+
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize handler = _handler;
+#endif
 
 - (instancetype)initWithCompletionHandler:(TRSheetCompletionHandler)handler
 {

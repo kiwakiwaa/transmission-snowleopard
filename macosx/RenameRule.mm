@@ -6,6 +6,23 @@
 
 @implementation RenameRuleConfig
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize searchText = _searchText;
+@synthesize replacementText = _replacementText;
+@synthesize customText = _customText;
+@synthesize regexPattern = _regexPattern;
+@synthesize regexReplacementText = _regexReplacementText;
+@synthesize dateFormat = _dateFormat;
+@synthesize replaceMode = _replaceMode;
+@synthesize textPlacement = _textPlacement;
+@synthesize characterRemovalMode = _characterRemovalMode;
+@synthesize caseMode = _caseMode;
+@synthesize characterLocation = _characterLocation;
+@synthesize characterCount = _characterCount;
+@synthesize sequenceStart = _sequenceStart;
+@synthesize sequenceDigits = _sequenceDigits;
+#endif
+
 + (instancetype)defaultConfig
 {
     RenameRuleConfig* config = [[self alloc] init];
@@ -49,6 +66,11 @@
 @end
 
 @implementation RenameRuleResult
+
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize generatedName = _generatedName;
+@synthesize errorMessage = _errorMessage;
+#endif
 
 + (instancetype)resultWithGeneratedName:(NSString*)generatedName errorMessage:(NSString*)errorMessage
 {

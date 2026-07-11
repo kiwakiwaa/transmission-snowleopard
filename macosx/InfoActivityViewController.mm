@@ -92,6 +92,31 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 
 @implementation InfoActivityViewController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fTorrents = _fTorrents;
+@synthesize fSet = _fSet;
+@synthesize fDateAddedField = _fDateAddedField;
+@synthesize fDateCompletedField = _fDateCompletedField;
+@synthesize fDateActivityField = _fDateActivityField;
+@synthesize fStateField = _fStateField;
+@synthesize fProgressField = _fProgressField;
+@synthesize fHaveField = _fHaveField;
+@synthesize fDownloadedTotalField = _fDownloadedTotalField;
+@synthesize fUploadedTotalField = _fUploadedTotalField;
+@synthesize fFailedHashField = _fFailedHashField;
+@synthesize fRatioField = _fRatioField;
+@synthesize fDownloadTimeField = _fDownloadTimeField;
+@synthesize fSeedTimeField = _fSeedTimeField;
+@synthesize fErrorMessageView = _fErrorMessageView;
+@synthesize fPiecesView = _fPiecesView;
+@synthesize fPiecesControl = _fPiecesControl;
+@synthesize fActivityStackView = _fActivityStackView;
+@synthesize fDatesView = _fDatesView;
+@synthesize fCurrentHeight = _fCurrentHeight;
+@synthesize fTransferView = _fTransferView;
+@synthesize oldHeight = _oldHeight;
+#endif
+
 - (instancetype)init
 {
     if ((self = [super initWithNibName:@"InfoActivityView" bundle:nil]))

@@ -5,5 +5,11 @@
 #import "TorrentCell.h"
 
 @interface SmallTorrentCell : TorrentCell
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSTrackingArea* _fTrackingArea;
+}
+#endif
 
 @end

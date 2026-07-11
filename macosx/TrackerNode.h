@@ -9,6 +9,12 @@
 @class Torrent;
 
 @interface TrackerNode : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    __weak Torrent* _torrent;
+    tr_tracker_view _fStat;
+}
+#endif
 
 @property(nonatomic, weak, readonly) Torrent* torrent;
 

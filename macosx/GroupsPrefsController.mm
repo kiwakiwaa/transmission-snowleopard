@@ -47,6 +47,21 @@ typedef NS_ENUM(NSInteger, SegmentTag) {
 
 @implementation GroupsPrefsController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fTableView = _fTableView;
+@synthesize fAddRemoveControl = _fAddRemoveControl;
+@synthesize fSelectedColorView = _fSelectedColorView;
+@synthesize fSelectedColorNameField = _fSelectedColorNameField;
+@synthesize fCustomLocationEnableCheck = _fCustomLocationEnableCheck;
+@synthesize fCustomLocationPopUp = _fCustomLocationPopUp;
+@synthesize fAutoAssignRulesEnableCheck = _fAutoAssignRulesEnableCheck;
+@synthesize fAutoAssignRulesEditButton = _fAutoAssignRulesEditButton;
+@synthesize fAnnouncedClientIdentityPopUp = _fAnnouncedClientIdentityPopUp;
+@synthesize groupRulesSheetWindow = _groupRulesSheetWindow;
+@synthesize ruleEditor = _ruleEditor;
+@synthesize ruleEditorHeightConstraint = _ruleEditorHeightConstraint;
+#endif
+
 - (void)awakeFromNib
 {
     [super awakeFromNib];

@@ -8,6 +8,15 @@
 @class Torrent;
 
 @interface ProgressBarView : NSView
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    NSUserDefaults* _fDefaults;
+    NSBitmapImageRep* _fPiecesBitmap;
+    NSColor* _fBarBorderColor;
+    NSColor* _fBluePieceColor;
+    NSColor* _fBarMinimalBorderColor;
+}
+#endif
 
 @property(class, nonatomic, readonly) ProgressBarView* sharedInstance;
 

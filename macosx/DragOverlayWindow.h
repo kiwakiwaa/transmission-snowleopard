@@ -5,6 +5,13 @@
 #import <AppKit/AppKit.h>
 
 @interface DragOverlayWindow : NSWindow
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSViewAnimation* _fFadeInAnimation;
+    NSViewAnimation* _fFadeOutAnimation;
+}
+#endif
 
 - (instancetype)initForWindow:(NSWindow*)window;
 

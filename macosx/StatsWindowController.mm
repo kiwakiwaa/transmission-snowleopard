@@ -36,6 +36,25 @@ static NSTimeInterval const kUpdateSeconds = 1.0;
 
 @implementation StatsWindowController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fUploadedField = _fUploadedField;
+@synthesize fUploadedAllField = _fUploadedAllField;
+@synthesize fDownloadedField = _fDownloadedField;
+@synthesize fDownloadedAllField = _fDownloadedAllField;
+@synthesize fRatioField = _fRatioField;
+@synthesize fRatioAllField = _fRatioAllField;
+@synthesize fTimeField = _fTimeField;
+@synthesize fTimeAllField = _fTimeAllField;
+@synthesize fNumOpenedField = _fNumOpenedField;
+@synthesize fUploadedLabelField = _fUploadedLabelField;
+@synthesize fDownloadedLabelField = _fDownloadedLabelField;
+@synthesize fRatioLabelField = _fRatioLabelField;
+@synthesize fTimeLabelField = _fTimeLabelField;
+@synthesize fNumOpenedLabelField = _fNumOpenedLabelField;
+@synthesize fResetButton = _fResetButton;
+@synthesize fTimer = _fTimer;
+#endif
+
 static StatsWindowController* fStatsWindowInstance = nil;
 static tr_session* fLib = NULL;
 

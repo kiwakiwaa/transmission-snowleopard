@@ -18,6 +18,11 @@
 
 @implementation DragOverlayWindow
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fFadeInAnimation = _fFadeInAnimation;
+@synthesize fFadeOutAnimation = _fFadeOutAnimation;
+#endif
+
 - (instancetype)initForWindow:(NSWindow*)window
 {
     if ((self = ([super initWithContentRect:window.frame

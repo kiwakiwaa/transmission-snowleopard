@@ -5,6 +5,12 @@
 #import <AppKit/AppKit.h>
 
 @interface WebSeedTableView : NSTableView<NSMenuItemValidation>
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSArray* __weak _webSeeds;
+}
+#endif
 
 @property(nonatomic, weak) NSArray* webSeeds;
 

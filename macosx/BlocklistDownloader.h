@@ -4,7 +4,14 @@
 
 #import <Foundation/Foundation.h>
 
+#include <libtransmission/macos-version.h>
+
 @class BlocklistDownloaderViewController;
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
+@class NSURLSession;
+#else
+@class TRURLRequestTask;
+#endif
 
 typedef NS_ENUM(NSUInteger, BlocklistDownloadState) {
     BlocklistDownloadStateStart,
@@ -13,6 +20,20 @@ typedef NS_ENUM(NSUInteger, BlocklistDownloadState) {
 };
 
 @interface BlocklistDownloader : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    BlocklistDownloaderViewController* _viewController;
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
+    NSURLSession* _fSession;
+#else
+    TRURLRequestTask* _fTask;
+#endif
+    NSUInteger _fCurrentSize;
+    long long _fExpectedSize;
+    BlocklistDownloadState _fState;
+}
+#endif
 
 @property(nonatomic) BlocklistDownloaderViewController* viewController;
 @property(nonatomic, class, readonly) BOOL isRunning;

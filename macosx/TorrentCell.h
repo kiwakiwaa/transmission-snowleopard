@@ -13,6 +13,28 @@
 #endif
 
 @interface TorrentCell : NSTableCellView
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    IBOutlet NSButton* _fActionButton;
+    IBOutlet NSButton* _fControlButton;
+    IBOutlet NSButton* _fRevealButton;
+    IBOutlet NSImageView* _fIconView;
+    IBOutlet NSImageView* _fGroupIndicatorView;
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+    IBOutlet LegacyStackView* _fStackView;
+#else
+    IBOutlet NSStackView* _fStackView;
+#endif
+    IBOutlet NSTextField* _fTorrentTitleField;
+    IBOutlet NSImageView* _fTorrentPriorityView;
+    IBOutlet NSLayoutConstraint* _fTorrentPriorityViewWidthConstraint;
+    IBOutlet NSTextField* _fTorrentProgressField;
+    IBOutlet NSTextField* _fTorrentStatusField;
+    IBOutlet NSView* _fTorrentProgressBarView;
+    TorrentTableView* __weak _fTorrentTableView;
+}
+#endif
 
 @property(nonatomic) IBOutlet NSButton* fActionButton;
 @property(nonatomic) IBOutlet NSButton* fControlButton;

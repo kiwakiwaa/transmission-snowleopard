@@ -138,6 +138,17 @@ static inline uint32_t arc4random_uniform(uint32_t upper_bound)
     } while (0)
 
 @interface NSLayoutConstraint : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    CGFloat constant;
+    BOOL active;
+    __unsafe_unretained id firstItem;
+    __unsafe_unretained id secondItem;
+    NSLayoutAttribute firstAttribute;
+    NSDictionary* animations;
+}
+#endif
 @property(nonatomic) CGFloat constant;
 @property(nonatomic, getter=isActive) BOOL active;
 @property(nonatomic, assign) id firstItem;
@@ -170,6 +181,15 @@ static inline uint32_t arc4random_uniform(uint32_t upper_bound)
 @end
 
 @interface NSTableCellView : NSView
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSTextField* textField;
+    NSImageView* imageView;
+    id objectValue;
+    NSBackgroundStyle backgroundStyle;
+}
+#endif
 @property(nonatomic, retain) NSTextField* textField;
 @property(nonatomic, retain) NSImageView* imageView;
 @property(nonatomic, retain) id objectValue;
@@ -270,6 +290,14 @@ static inline uint32_t arc4random_uniform(uint32_t upper_bound)
 @end
 
 @interface NSSharingService : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSString* title;
+    NSImage* image;
+    __unsafe_unretained id<NSSharingServiceDelegate> delegate;
+}
+#endif
 @property(nonatomic, copy) NSString* title;
 @property(nonatomic, retain) NSImage* image;
 @property(nonatomic, assign) id<NSSharingServiceDelegate> delegate;
@@ -278,6 +306,12 @@ static inline uint32_t arc4random_uniform(uint32_t upper_bound)
 @end
 
 @interface NSSharingServicePicker : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    __unsafe_unretained id<NSSharingServicePickerDelegate> delegate;
+}
+#endif
 @property(nonatomic, assign) id<NSSharingServicePickerDelegate> delegate;
 - (instancetype)initWithItems:(NSArray*)items;
 - (void)showRelativeToRect:(NSRect)positioningRect ofView:(NSView*)positioningView preferredEdge:(NSRectEdge)preferredEdge;

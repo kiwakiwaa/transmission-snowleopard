@@ -5,6 +5,27 @@
 #import <AppKit/AppKit.h>
 
 @interface StatsWindowController : NSWindowController
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    IBOutlet NSTextField* _fUploadedField;
+    IBOutlet NSTextField* _fUploadedAllField;
+    IBOutlet NSTextField* _fDownloadedField;
+    IBOutlet NSTextField* _fDownloadedAllField;
+    IBOutlet NSTextField* _fRatioField;
+    IBOutlet NSTextField* _fRatioAllField;
+    IBOutlet NSTextField* _fTimeField;
+    IBOutlet NSTextField* _fTimeAllField;
+    IBOutlet NSTextField* _fNumOpenedField;
+    IBOutlet NSTextField* _fUploadedLabelField;
+    IBOutlet NSTextField* _fDownloadedLabelField;
+    IBOutlet NSTextField* _fRatioLabelField;
+    IBOutlet NSTextField* _fTimeLabelField;
+    IBOutlet NSTextField* _fNumOpenedLabelField;
+    IBOutlet NSButton* _fResetButton;
+    NSTimer* _fTimer;
+}
+#endif
 
 @property(nonatomic, class, readonly) StatsWindowController* statsWindow;
 

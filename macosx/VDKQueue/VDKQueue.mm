@@ -38,6 +38,14 @@ NSString const* VDKQueueAccessRevocationNotification = @"VDKQueueAccessWasRevoke
 
 /// This is a simple model class used to hold info about each path we watch.
 @interface VDKQueuePathEntry : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSString* _path;
+    int _watchedFD;
+    u_int _subscriptionFlags;
+}
+#endif
 
 @property(atomic, copy, readonly) NSString* path;
 @property(atomic, assign, readonly) int watchedFD;
@@ -46,6 +54,12 @@ NSString const* VDKQueueAccessRevocationNotification = @"VDKQueueAccessWasRevoke
 @end
 
 @implementation VDKQueuePathEntry
+
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize path = _path;
+@synthesize watchedFD = _watchedFD;
+@synthesize subscriptionFlags = _subscriptionFlags;
+#endif
 
 - (nullable instancetype)initWithPath:(NSString*)inPath andSubscriptionFlags:(u_int)flags
 {
@@ -76,6 +90,7 @@ NSString const* VDKQueueAccessRevocationNotification = @"VDKQueueAccessWasRevoke
 #pragma mark -
 #pragma mark VDKQueue
 
+#if !TR_MACOS_OBJC_FRAGILE_RUNTIME
 @interface VDKQueue ()
 {
   @private
@@ -87,8 +102,14 @@ NSString const* VDKQueueAccessRevocationNotification = @"VDKQueueAccessWasRevoke
     BOOL _keepWatcherThreadRunning;
 }
 @end
+#endif
 
 @implementation VDKQueue
+
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize delegate = _delegate;
+@synthesize alwaysPostNotifications = _alwaysPostNotifications;
+#endif
 
 #pragma mark -
 #pragma mark INIT/DEALLOC

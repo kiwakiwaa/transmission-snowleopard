@@ -546,6 +546,78 @@ static void removeKeRangerRansomware()
 
 @implementation Controller
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fWindow = _fWindow;
+@synthesize fMinHeightConstraint = _fMinHeightConstraint;
+@synthesize fFixedHeightConstraint = _fFixedHeightConstraint;
+@synthesize fTableView = _fTableView;
+@synthesize fOpenIgnoreDownloadFolder = _fOpenIgnoreDownloadFolder;
+@synthesize fActionButton = _fActionButton;
+@synthesize fSpeedLimitButton = _fSpeedLimitButton;
+@synthesize fClearCompletedButton = _fClearCompletedButton;
+@synthesize fTotalTorrentsField = _fTotalTorrentsField;
+@synthesize fNextFilterItem = _fNextFilterItem;
+@synthesize fNextInfoTabItem = _fNextInfoTabItem;
+@synthesize fPrevInfoTabItem = _fPrevInfoTabItem;
+@synthesize fSortMenu = _fSortMenu;
+@synthesize fGroupsSetMenu = _fGroupsSetMenu;
+@synthesize fGroupsSetContextMenu = _fGroupsSetContextMenu;
+@synthesize fShareMenu = _fShareMenu;
+@synthesize fShareContextMenu = _fShareContextMenu;
+@synthesize fLib = _fLib;
+@synthesize fTorrents = _fTorrents;
+@synthesize fDisplayedTorrents = _fDisplayedTorrents;
+@synthesize fTorrentHashes = _fTorrentHashes;
+@synthesize fInfoController = _fInfoController;
+@synthesize fMessageController = _fMessageController;
+@synthesize fDefaults = _fDefaults;
+@synthesize fConfigDirectory = _fConfigDirectory;
+@synthesize fOverlayWindow = _fOverlayWindow;
+@synthesize fTimer = _fTimer;
+@synthesize fStatusBar = _fStatusBar;
+@synthesize fFilterBar = _fFilterBar;
+@synthesize fPreviewPanel = _fPreviewPanel;
+@synthesize fQuitting = _fQuitting;
+@synthesize fQuitRequested = _fQuitRequested;
+@synthesize fPauseOnLaunch = _fPauseOnLaunch;
+@synthesize fBadger = _fBadger;
+#endif
+#if !TR_HAS_USER_NOTIFICATIONS
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fNotificationController = _fNotificationController;
+#endif
+#endif
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fAutoImportedNames = _fAutoImportedNames;
+@synthesize fAutoImportTimer = _fAutoImportTimer;
+#endif
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fSession = _fSession;
+#endif
+#else
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fURLDownloadTasks = _fURLDownloadTasks;
+#endif
+#endif
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fAddingTransfers = _fAddingTransfers;
+@synthesize fAddWindows = _fAddWindows;
+@synthesize fUrlSheetController = _fUrlSheetController;
+@synthesize fGlobalPopoverShown = _fGlobalPopoverShown;
+#endif
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fLegacyGlobalPopover = _fLegacyGlobalPopover;
+#endif
+#endif
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fPositioningView = _fPositioningView;
+@synthesize fSoundPlaying = _fSoundPlaying;
+@synthesize prefsController = _prefsController;
+@synthesize fileWatcherQueue = _fileWatcherQueue;
+#endif
+
 + (void)initialize
 {
     if (self != [Controller self])

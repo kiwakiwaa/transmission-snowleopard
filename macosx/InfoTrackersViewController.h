@@ -6,7 +6,21 @@
 
 #import "InfoViewController.h"
 
+@class TrackerCell;
+@class TrackerTableView;
+
 @interface InfoTrackersViewController : NSViewController<InfoViewController>
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSArray* _fTorrents;
+    BOOL _fSet;
+    NSMutableArray* _fTrackers;
+    IBOutlet TrackerTableView* _fTrackerTable;
+    TrackerCell* _fTrackerCell;
+    IBOutlet NSSegmentedControl* _fTrackerAddRemoveControl;
+}
+#endif
 
 - (void)setInfoForTorrents:(NSArray*)torrents;
 - (void)updateInfo;

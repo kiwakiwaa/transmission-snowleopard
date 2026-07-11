@@ -28,6 +28,11 @@
 @end
 
 @interface SystemNotificationController : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    id<SystemNotificationControllerDelegate> __weak _delegate;
+}
+#endif
 
 @property(nonatomic, weak) id<SystemNotificationControllerDelegate> delegate;
 

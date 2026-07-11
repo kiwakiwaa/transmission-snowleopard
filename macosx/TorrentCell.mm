@@ -12,6 +12,22 @@
 
 @implementation TorrentCell
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fActionButton = _fActionButton;
+@synthesize fControlButton = _fControlButton;
+@synthesize fRevealButton = _fRevealButton;
+@synthesize fIconView = _fIconView;
+@synthesize fGroupIndicatorView = _fGroupIndicatorView;
+@synthesize fStackView = _fStackView;
+@synthesize fTorrentTitleField = _fTorrentTitleField;
+@synthesize fTorrentPriorityView = _fTorrentPriorityView;
+@synthesize fTorrentPriorityViewWidthConstraint = _fTorrentPriorityViewWidthConstraint;
+@synthesize fTorrentProgressField = _fTorrentProgressField;
+@synthesize fTorrentStatusField = _fTorrentStatusField;
+@synthesize fTorrentProgressBarView = _fTorrentProgressBarView;
+@synthesize fTorrentTableView = _fTorrentTableView;
+#endif
+
 - (void)awakeFromNib
 {
     [super awakeFromNib];

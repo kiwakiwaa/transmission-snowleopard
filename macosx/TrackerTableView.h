@@ -7,6 +7,13 @@
 @class Torrent;
 
 @interface TrackerTableView : NSTableView<NSMenuItemValidation>
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    Torrent* __weak _torrent;
+    NSArray* __weak _trackers;
+}
+#endif
 
 @property(nonatomic, weak) Torrent* torrent;
 @property(nonatomic, weak) NSArray* trackers;

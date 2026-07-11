@@ -10,8 +10,19 @@
 #import "InfoWindowController.h"
 #import "NSApplicationAdditions.h"
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+static NSInteger const kMaxAcross = TRPiecesViewMaxAcross;
+static NSInteger const kMaxCells = TRPiecesViewMaxCells;
+#else
 static NSInteger const kMaxAcross = 18;
 static NSInteger const kMaxCells = kMaxAcross * kMaxAcross;
+
+typedef struct PieceInfo
+{
+    int8_t available[kMaxCells];
+    float complete[kMaxCells];
+} PieceInfo;
+#endif
 
 static CGFloat const kBetweenPadding = 1.0;
 
@@ -32,20 +43,20 @@ static NSColor* HighColor(void)
     return TRSystemGreenColor(); // high availability
 }
 
-typedef struct PieceInfo
-{
-    int8_t available[kMaxCells];
-    float complete[kMaxCells];
-} PieceInfo;
-
 @interface PiecesView ()
 @end
 
 @implementation PiecesView
+#if !TR_MACOS_OBJC_FRAGILE_RUNTIME
 {
     PieceInfo fPieceInfo;
     NSString* fRenderedHashString;
 }
+#endif
+
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize torrent = _torrent;
+#endif
 
 - (NSColor*)backgroundColor
 {

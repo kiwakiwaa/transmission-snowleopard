@@ -7,6 +7,18 @@
 #include <libtransmission/transmission.h>
 
 @interface StatusBarController : NSTitlebarAccessoryViewController<NSMenuItemValidation>
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    NSButton* _fStatusButton;
+    NSTextField* _fTotalDLField;
+    NSTextField* _fTotalULField;
+    NSImageView* _fTotalDLImageView;
+    NSImageView* _fTotalULImageView;
+    tr_session* _fLib;
+    CGFloat _fPreviousDownloadRate;
+    CGFloat _fPreviousUploadRate;
+}
+#endif
 
 - (instancetype)initWithLib:(tr_session*)lib;
 

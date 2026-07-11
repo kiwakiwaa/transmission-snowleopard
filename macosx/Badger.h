@@ -7,6 +7,12 @@
 @class Torrent;
 
 @interface Badger : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSMutableSet* _fHashes;
+}
+#endif
 
 - (void)updateBadgeWithDownload:(CGFloat)downloadRate upload:(CGFloat)uploadRate;
 - (void)addCompletedTorrent:(Torrent*)torrent;

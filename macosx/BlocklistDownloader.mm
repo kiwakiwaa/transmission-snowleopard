@@ -34,6 +34,24 @@
 
 @implementation BlocklistDownloader
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize viewController = _viewController;
+#endif
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fSession = _fSession;
+#endif
+#else
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fTask = _fTask;
+#endif
+#endif
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fCurrentSize = _fCurrentSize;
+@synthesize fExpectedSize = _fExpectedSize;
+@synthesize fState = _fState;
+#endif
+
 static BlocklistDownloader* fBLDownloader = nil;
 
 + (BlocklistDownloader*)downloader

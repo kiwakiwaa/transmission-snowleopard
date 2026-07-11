@@ -4,9 +4,32 @@
 
 #import <AppKit/AppKit.h>
 
+#include <stdint.h>
+
 @class Torrent;
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+enum
+{
+    TRPiecesViewMaxAcross = 18,
+    TRPiecesViewMaxCells = TRPiecesViewMaxAcross * TRPiecesViewMaxAcross,
+};
+
+typedef struct PieceInfo
+{
+    int8_t available[TRPiecesViewMaxCells];
+    float complete[TRPiecesViewMaxCells];
+} PieceInfo;
+#endif
+
 @interface PiecesView : NSImageView
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    Torrent* _torrent;
+    PieceInfo fPieceInfo;
+    NSString* fRenderedHashString;
+}
+#endif
 
 @property(nonatomic) Torrent* torrent;
 

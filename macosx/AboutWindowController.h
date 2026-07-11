@@ -5,6 +5,18 @@
 #import <AppKit/AppKit.h>
 
 @interface AboutWindowController : NSWindowController
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    IBOutlet NSTextView* _fTextView;
+    IBOutlet NSTextView* _fLicenseView;
+    IBOutlet NSTextField* _fVersionField;
+    IBOutlet NSTextField* _fCopyrightField;
+    IBOutlet NSButton* _fLicenseButton;
+    IBOutlet NSButton* _fLicenseCloseButton;
+    IBOutlet NSPanel* _fLicenseSheet;
+}
+#endif
 
 @property(nonatomic, class, readonly) AboutWindowController* aboutController;
 

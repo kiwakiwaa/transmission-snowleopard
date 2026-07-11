@@ -50,6 +50,7 @@ static BOOL TRLegacyStackViewVisibilityPriorityIsNotVisible(TRLegacyStackViewVis
 }
 
 @interface LegacyStackView ()
+#if !TR_MACOS_OBJC_FRAGILE_RUNTIME
 {
     NSMutableArray* fLeadingViews;
     NSMutableArray* fCenterViews;
@@ -68,7 +69,7 @@ static BOOL TRLegacyStackViewVisibilityPriorityIsNotVisible(TRLegacyStackViewVis
     CGFloat fHorizontalClippingResistancePriority;
     CGFloat fVerticalClippingResistancePriority;
 }
-
+#endif
 - (void)commonInit;
 - (void)ensureArrangedSubviewsFromCurrentSubviews;
 - (void)inferLegacyLayoutFromInitialFrames;
@@ -88,6 +89,13 @@ static BOOL TRLegacyStackViewVisibilityPriorityIsNotVisible(TRLegacyStackViewVis
 @end
 
 @implementation LegacyStackView
+
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize orientation = _orientation;
+@synthesize alignment = _alignment;
+@synthesize spacing = _spacing;
+@synthesize detachesHiddenViews = _detachesHiddenViews;
+#endif
 
 + (instancetype)stackViewWithViews:(NSArray*)views
 {

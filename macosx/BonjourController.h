@@ -5,6 +5,12 @@
 #import <Foundation/Foundation.h>
 
 @interface BonjourController : NSObject<NSNetServiceDelegate>
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSNetService* _fService;
+}
+#endif
 
 @property(nonatomic, class, readonly) BonjourController* defaultController;
 @property(nonatomic, class, readonly) BOOL defaultControllerExists;

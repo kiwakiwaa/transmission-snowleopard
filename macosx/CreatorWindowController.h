@@ -4,9 +4,43 @@
 
 #import <AppKit/AppKit.h>
 
+#include <future>
+#include <memory>
+
+#include <libtransmission/error.h>
 #include <libtransmission/transmission.h>
 
+class tr_metainfo_builder;
+
 @interface CreatorWindowController : NSWindowController
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    IBOutlet NSImageView* _fIconView;
+    IBOutlet NSTextField* _fNameField;
+    IBOutlet NSTextField* _fStatusField;
+    IBOutlet NSTextField* _fPiecesField;
+    IBOutlet NSTextField* _fLocationField;
+    IBOutlet NSTableView* _fTrackerTable;
+    IBOutlet NSSegmentedControl* _fTrackerAddRemoveControl;
+    IBOutlet NSTextView* _fCommentView;
+    IBOutlet NSButton* _fPrivateCheck;
+    IBOutlet NSButton* _fOpenCheck;
+    IBOutlet NSTextField* _fSource;
+    IBOutlet NSStepper* _fPieceSizeStepper;
+    IBOutlet NSView* _fProgressView;
+    IBOutlet NSProgressIndicator* _fProgressIndicator;
+    std::shared_ptr<tr_metainfo_builder> _fBuilder;
+    NSURL* _fPath;
+    std::shared_future<tr_error> _fFuture;
+    NSURL* _fLocation;
+    NSMutableArray* _fTrackers;
+    NSTimer* _fTimer;
+    BOOL _fStarted;
+    BOOL _fOpenWhenCreated;
+    NSUserDefaults* _fDefaults;
+}
+#endif
 
 + (CreatorWindowController*)createTorrentFile:(tr_session*)handle;
 + (CreatorWindowController*)createTorrentFile:(tr_session*)handle forFile:(NSURL*)file;

@@ -20,6 +20,14 @@
 
 @implementation BlocklistDownloaderViewController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fStatusWindow = _fStatusWindow;
+@synthesize fProgressBar = _fProgressBar;
+@synthesize fTextField = _fTextField;
+@synthesize fButton = _fButton;
+@synthesize fPrefsController = _fPrefsController;
+#endif
+
 static BlocklistDownloaderViewController* fBLViewController = nil;
 + (void)downloadWithPrefsController:(PrefsController*)prefsController
 {

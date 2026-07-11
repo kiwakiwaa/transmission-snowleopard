@@ -15,6 +15,12 @@
 @implementation InfoWindow
 
 #if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize anchorsLiveResizeTopEdge = _anchorsLiveResizeTopEdge;
+@synthesize liveResizeTopEdge = _liveResizeTopEdge;
+@synthesize settingAnchoredFrame = _settingAnchoredFrame;
+#endif
+
 - (NSRect)anchoredLiveResizeFrame:(NSRect)frameRect
 {
     if (!self.settingAnchoredFrame && self.anchorsLiveResizeTopEdge && self.liveResizeTopEdge > 0.0)

@@ -5,9 +5,29 @@
 #import <AppKit/AppKit.h>
 
 @class Controller;
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+#import "Torrent.h"
+#else
 @class Torrent;
+#endif
 
 @interface AddMagnetWindowController : NSWindowController
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    Torrent* _torrent;
+    IBOutlet NSImageView* _fLocationImageView;
+    IBOutlet NSTextField* _fNameField;
+    IBOutlet NSTextField* _fLocationField;
+    IBOutlet NSButton* _fStartCheck;
+    IBOutlet NSPopUpButton* _fGroupPopUp;
+    IBOutlet NSPopUpButton* _fPriorityPopUp;
+    Controller* _fController;
+    NSString* _fDestination;
+    NSInteger _fGroupValue;
+    TorrentDeterminationType _fGroupDeterminationType;
+}
+#endif
 
 @property(nonatomic, readonly) Torrent* torrent;
 

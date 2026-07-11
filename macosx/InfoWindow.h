@@ -11,6 +11,15 @@
 #endif
 
 @interface InfoWindow : NSPanel
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+#if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
+    BOOL _anchorsLiveResizeTopEdge;
+    CGFloat _liveResizeTopEdge;
+    BOOL _settingAnchoredFrame;
+#endif
+}
+#endif
 
 #if TR_INSPECTOR_ANCHORED_LIVE_RESIZE
 @property(nonatomic) BOOL anchorsLiveResizeTopEdge;

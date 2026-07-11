@@ -20,6 +20,16 @@
 
 @implementation AboutWindowController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fTextView = _fTextView;
+@synthesize fLicenseView = _fLicenseView;
+@synthesize fVersionField = _fVersionField;
+@synthesize fCopyrightField = _fCopyrightField;
+@synthesize fLicenseButton = _fLicenseButton;
+@synthesize fLicenseCloseButton = _fLicenseCloseButton;
+@synthesize fLicenseSheet = _fLicenseSheet;
+#endif
+
 static AboutWindowController* fAboutBoxInstance = nil;
 
 + (AboutWindowController*)aboutController

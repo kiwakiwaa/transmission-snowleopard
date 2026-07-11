@@ -54,6 +54,19 @@ static NSUInteger const kMaxQueueLength = 10000U;
 
 @implementation MessageWindowController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fMessageTable = _fMessageTable;
+@synthesize fLevelButton = _fLevelButton;
+@synthesize fSaveButton = _fSaveButton;
+@synthesize fClearButton = _fClearButton;
+@synthesize fFilterField = _fFilterField;
+@synthesize fMessages = _fMessages;
+@synthesize fDisplayedMessages = _fDisplayedMessages;
+@synthesize fAttributes = _fAttributes;
+@synthesize fTimer = _fTimer;
+@synthesize fLock = _fLock;
+#endif
+
 - (instancetype)init
 {
     return [super initWithWindowNibName:@"MessageWindow"];

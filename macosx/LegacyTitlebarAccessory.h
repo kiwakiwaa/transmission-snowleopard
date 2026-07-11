@@ -8,6 +8,14 @@
 
 #if TR_MACOS_SDK_BEFORE_10_10
 @interface NSTitlebarAccessoryViewController : NSViewController
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    NSLayoutAttribute _layoutAttribute;
+    BOOL _hidden;
+    BOOL _automaticallyAdjustsSize;
+}
+#endif
+
 @property(nonatomic) NSLayoutAttribute layoutAttribute;
 @property(nonatomic, getter=isHidden) BOOL hidden;
 @property(nonatomic) BOOL automaticallyAdjustsSize;

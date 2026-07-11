@@ -29,6 +29,21 @@
 
 @implementation InfoGeneralViewController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fTorrents = _fTorrents;
+@synthesize fSet = _fSet;
+@synthesize fPiecesField = _fPiecesField;
+@synthesize fHashField = _fHashField;
+@synthesize fSecureField = _fSecureField;
+@synthesize fDataLocationField = _fDataLocationField;
+@synthesize fLastDataLocationField = _fLastDataLocationField;
+@synthesize fLastDataLabel = _fLastDataLabel;
+@synthesize fCreatorField = _fCreatorField;
+@synthesize fDateCreatedField = _fDateCreatedField;
+@synthesize fCommentView = _fCommentView;
+@synthesize fRevealDataButton = _fRevealDataButton;
+#endif
+
 - (instancetype)init
 {
     if ((self = [super initWithNibName:@"InfoGeneralView" bundle:nil]))

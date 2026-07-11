@@ -13,6 +13,14 @@ typedef void (^FileBatchRenameCompletionHandler)(BOOL success, NSString* errorMe
 typedef void (^FileBatchRenameExecutionCompletionHandler)(BOOL success, NSString* errorMessage, NSArray* operations);
 
 @interface FileBatchRenameOperation : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    FileListNode* _node;
+    NSString* _fromName;
+    NSString* _toName;
+}
+#endif
 
 @property(nonatomic, readonly) FileListNode* node;
 @property(nonatomic, copy, readonly) NSString* fromName;
@@ -24,6 +32,17 @@ typedef void (^FileBatchRenameExecutionCompletionHandler)(BOOL success, NSString
 @end
 
 @interface FileBatchRenameSession : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSMutableArray* _mutableItems;
+    NSArray* _displayedItems;
+    id<RenameRule> _rule;
+    RenameRuleConfig* _config;
+    BOOL _canRename;
+    NSString* _validationSummary;
+}
+#endif
 
 @property(nonatomic, readonly) NSArray* items;
 @property(nonatomic, readonly) NSArray* displayedItems;

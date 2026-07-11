@@ -80,6 +80,37 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
 
 @implementation AddWindowController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize torrent = _torrent;
+@synthesize fIconView = _fIconView;
+@synthesize fLocationImageView = _fLocationImageView;
+@synthesize fNameField = _fNameField;
+@synthesize fStatusField = _fStatusField;
+@synthesize fLocationField = _fLocationField;
+@synthesize fDownloadLabel = _fDownloadLabel;
+@synthesize fGroupLabel = _fGroupLabel;
+@synthesize fPriorityLabel = _fPriorityLabel;
+@synthesize fStartCheck = _fStartCheck;
+@synthesize fDeleteCheck = _fDeleteCheck;
+@synthesize fGroupPopUp = _fGroupPopUp;
+@synthesize fPriorityPopUp = _fPriorityPopUp;
+@synthesize fVerifyIndicator = _fVerifyIndicator;
+@synthesize fFileFilterField = _fFileFilterField;
+@synthesize fCheckAllButton = _fCheckAllButton;
+@synthesize fUncheckAllButton = _fUncheckAllButton;
+@synthesize fFileController = _fFileController;
+@synthesize fFileScrollView = _fFileScrollView;
+@synthesize fController = _fController;
+@synthesize fDestination = _fDestination;
+@synthesize fTorrentFile = _fTorrentFile;
+@synthesize fLockDestination = _fLockDestination;
+@synthesize fDeleteTorrentEnableInitially = _fDeleteTorrentEnableInitially;
+@synthesize fCanToggleDelete = _fCanToggleDelete;
+@synthesize fGroupValue = _fGroupValue;
+@synthesize fTimer = _fTimer;
+@synthesize fGroupValueDetermination = _fGroupValueDetermination;
+#endif
+
 - (instancetype)initWithTorrent:(Torrent*)torrent
                           destination:(NSString*)path
                       lockDestination:(BOOL)lockDestination

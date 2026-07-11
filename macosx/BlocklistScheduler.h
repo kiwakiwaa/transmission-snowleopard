@@ -5,6 +5,11 @@
 #import <AppKit/AppKit.h>
 
 @interface BlocklistScheduler : NSObject
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    NSTimer* _fTimer;
+}
+#endif
 
 @property(nonatomic, class, readonly) BlocklistScheduler* scheduler;
 

@@ -27,6 +27,14 @@ static NSInteger const kMaxPieces = 18 * 18;
 
 @implementation ProgressBarView
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fDefaults = _fDefaults;
+@synthesize fPiecesBitmap = _fPiecesBitmap;
+@synthesize fBarBorderColor = _fBarBorderColor;
+@synthesize fBluePieceColor = _fBluePieceColor;
+@synthesize fBarMinimalBorderColor = _fBarMinimalBorderColor;
+#endif
+
 + (ProgressBarView*)sharedInstance
 {
     static ProgressBarView* sSharedInstance = [[ProgressBarView alloc] init];

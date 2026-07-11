@@ -15,6 +15,10 @@
 
 @implementation Badger
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fHashes = _fHashes;
+#endif
+
 - (instancetype)init
 {
     if ((self = [super init]))

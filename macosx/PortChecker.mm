@@ -43,6 +43,22 @@ static NSTimeInterval const kCheckFireInterval = 3.0;
 
 // Lion rejects native weak references to the KVO subclass of PrefsController.
 TR_LEGACY_WEAK_REFERENCE_ACCESSORS(NSObject<PortCheckerDelegate>, fDelegate, setFDelegate, _delegateWeakReference)
+#else
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fDelegate = _fDelegate;
+#endif
+#endif
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fStatus = _fStatus;
+#endif
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fSession = _fSession;
+#endif
+#endif
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fTask = _fTask;
+@synthesize fTimer = _fTimer;
 #endif
 
 - (instancetype)initForPort:(NSInteger)portNumber delay:(BOOL)delay withDelegate:(id<PortCheckerDelegate>)delegate

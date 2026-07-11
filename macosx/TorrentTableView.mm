@@ -340,6 +340,21 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 
 @implementation TorrentTableView
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fController = _fController;
+@synthesize fDefaults = _fDefaults;
+@synthesize fCollapsedGroups = _fCollapsedGroups;
+@synthesize fContextRow = _fContextRow;
+@synthesize fContextNoRow = _fContextNoRow;
+@synthesize fSelectedRowIndexes = _fSelectedRowIndexes;
+@synthesize piecesBarPercent = _piecesBarPercent;
+@synthesize fPiecesBarAnimation = _fPiecesBarAnimation;
+@synthesize fActionPopoverShown = _fActionPopoverShown;
+@synthesize fPositioningView = _fPositioningView;
+@synthesize fHoverEventDict = _fHoverEventDict;
+@synthesize fPendingSelectionReloadRows = _fPendingSelectionReloadRows;
+#endif
+
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 - (void)configureLegacyTorrentColumn
 {

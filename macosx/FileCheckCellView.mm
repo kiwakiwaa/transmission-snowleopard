@@ -23,6 +23,11 @@
 
 @implementation FileCheckCellView
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize node = _node;
+@synthesize checkButton = _checkButton;
+#endif
+
 - (instancetype)initWithFrame:(NSRect)frameRect
 {
     if ((self = [super initWithFrame:frameRect]))

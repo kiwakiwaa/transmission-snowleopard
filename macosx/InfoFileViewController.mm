@@ -24,6 +24,15 @@
 
 @implementation InfoFileViewController
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fTorrents = _fTorrents;
+@synthesize fSet = _fSet;
+@synthesize fFileController = _fFileController;
+@synthesize fFileFilterField = _fFileFilterField;
+@synthesize fCheckAllButton = _fCheckAllButton;
+@synthesize fUncheckAllButton = _fUncheckAllButton;
+#endif
+
 - (instancetype)init
 {
     if ((self = [super initWithNibName:@"InfoFileView" bundle:nil]))

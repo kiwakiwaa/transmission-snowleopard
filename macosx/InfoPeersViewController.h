@@ -6,7 +6,24 @@
 
 #import "InfoViewController.h"
 
+@class NSLayoutConstraint;
+@class WebSeedTableView;
+
 @interface InfoPeersViewController : NSViewController<InfoViewController>
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSArray* _fTorrents;
+    BOOL _fSet;
+    NSMutableArray* _fPeers;
+    NSMutableArray* _fWebSeeds;
+    IBOutlet NSTableView* _fPeerTable;
+    IBOutlet WebSeedTableView* _fWebSeedTable;
+    IBOutlet NSTextField* _fConnectedPeersField;
+    CGFloat _fViewTopMargin;
+    IBOutlet NSLayoutConstraint* _fWebSeedTableTopConstraint;
+}
+#endif
 
 - (void)setInfoForTorrents:(NSArray*)torrents;
 - (void)updateInfo;

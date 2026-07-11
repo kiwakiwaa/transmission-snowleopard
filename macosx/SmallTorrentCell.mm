@@ -14,6 +14,10 @@
 
 @implementation SmallTorrentCell
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fTrackingArea = _fTrackingArea;
+#endif
+
 // show fControlButton and fRevealButton
 - (void)mouseEntered:(NSEvent*)event
 {

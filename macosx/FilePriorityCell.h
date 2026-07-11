@@ -5,6 +5,12 @@
 #import <AppKit/AppKit.h>
 
 @interface FilePriorityCell : NSSegmentedCell
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    BOOL _hovered;
+}
+#endif
 
 @property(nonatomic) BOOL hovered;
 

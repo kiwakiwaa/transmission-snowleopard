@@ -34,6 +34,10 @@ UTType* GetTorrentFileType(void) API_AVAILABLE(macos(11.0))
 
 @implementation DefaultAppHelper
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize bundleIdentifier = _bundleIdentifier;
+#endif
+
 - (instancetype)init
 {
     if (self = [super init])

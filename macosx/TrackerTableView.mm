@@ -8,6 +8,11 @@
 
 @implementation TrackerTableView
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize torrent = _torrent;
+@synthesize trackers = _trackers;
+#endif
+
 - (void)mouseDown:(NSEvent*)event
 {
     [self.window makeKeyWindow];

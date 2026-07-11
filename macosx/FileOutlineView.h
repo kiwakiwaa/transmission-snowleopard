@@ -5,6 +5,11 @@
 #import <AppKit/AppKit.h>
 
 @interface FileOutlineView : NSOutlineView
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+    NSInteger _hoveredRow;
+}
+#endif
 
 @property(nonatomic, readonly) NSInteger hoveredRow;
 

@@ -18,6 +18,12 @@ static CGFloat const kIconWidth = 64.0;
 
 @implementation DragOverlayView
 
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+@synthesize fBadge = _fBadge;
+@synthesize fMainLineAttributes = _fMainLineAttributes;
+@synthesize fSubLineAttributes = _fSubLineAttributes;
+#endif
+
 - (instancetype)initWithFrame:(NSRect)frame
 {
     if ((self = [super initWithFrame:frame]))

@@ -5,6 +5,14 @@
 #import <AppKit/AppKit.h>
 
 @interface DragOverlayView : NSView
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+{
+  @private
+    NSImage* _fBadge;
+    NSDictionary* _fMainLineAttributes;
+    NSDictionary* _fSubLineAttributes;
+}
+#endif
 
 - (void)setOverlay:(NSImage*)icon mainLine:(NSString*)mainLine subLine:(NSString*)subLine;
 
