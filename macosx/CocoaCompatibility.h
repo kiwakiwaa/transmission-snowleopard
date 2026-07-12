@@ -105,9 +105,16 @@ typedef NSUInteger NSLayoutFormatOptions;
 typedef NSUInteger NSTableViewAnimationOptions;
 
 static NSLayoutAttribute const NSLayoutAttributeNotAnAttribute = 0;
+static NSLayoutAttribute const NSLayoutAttributeLeft = 1;
+static NSLayoutAttribute const NSLayoutAttributeRight = 2;
+static NSLayoutAttribute const NSLayoutAttributeTop = 3;
 static NSLayoutAttribute const NSLayoutAttributeBottom = 4;
+static NSLayoutAttribute const NSLayoutAttributeLeading = 5;
+static NSLayoutAttribute const NSLayoutAttributeTrailing = 6;
 static NSLayoutAttribute const NSLayoutAttributeWidth = 7;
 static NSLayoutAttribute const NSLayoutAttributeHeight = 8;
+static NSLayoutAttribute const NSLayoutAttributeCenterX = 9;
+static NSLayoutAttribute const NSLayoutAttributeCenterY = 10;
 
 static NSLayoutRelation const NSLayoutRelationLessThanOrEqual = -1;
 static NSLayoutRelation const NSLayoutRelationEqual = 0;

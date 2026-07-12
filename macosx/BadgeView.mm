@@ -59,8 +59,8 @@ typedef NS_ENUM(NSInteger, ArrowDirection) {
         // arrow height equal to font capital letter height + shadow
         CGFloat arrowHeight = [_fAttributes[NSFontAttributeName] capHeight] + 4;
 
-        kArrowInset = { badgeSize.height * 0.2, badgeSize.height * 0.1 };
-        kArrowSize = { arrowHeight * arrowWidthHeightRatio, arrowHeight };
+        kArrowInset = CGSizeMake(static_cast<CGFloat>(badgeSize.height * 0.2), static_cast<CGFloat>(badgeSize.height * 0.1));
+        kArrowSize = CGSizeMake(static_cast<CGFloat>(arrowHeight * arrowWidthHeightRatio), arrowHeight);
     }
     return self;
 }
@@ -107,7 +107,7 @@ typedef NS_ENUM(NSInteger, ArrowDirection) {
 - (void)badge:(NSImage*)badge arrow:(ArrowDirection)arrowDirection string:(NSString*)string atHeight:(CGFloat)height
 {
     // background
-    NSRect badgeRect = { { 0.0, height }, badge.size };
+    NSRect badgeRect = NSMakeRect(0.0, height, badge.size.width, badge.size.height);
     [badge drawInRect:badgeRect fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1.0];
 
     //string is in center of image
@@ -120,8 +120,11 @@ typedef NS_ENUM(NSInteger, ArrowDirection) {
 
     // arrow
     NSImage* arrow = arrowDirection == ArrowDirectionUp ? kWhiteUpArrow : kWhiteDownArrow;
-    NSRect arrowRect = { { kArrowInset.width, stringRect.origin.y + kArrowInset.height + (arrowDirection == ArrowDirectionUp ? 0.5 : -0.5) },
-                         kArrowSize };
+    NSRect arrowRect = NSMakeRect(kArrowInset.width,
+                                  static_cast<CGFloat>(stringRect.origin.y + kArrowInset.height +
+                                                       (arrowDirection == ArrowDirectionUp ? 0.5 : -0.5)),
+                                  kArrowSize.width,
+                                  kArrowSize.height);
     [arrow drawInRect:arrowRect fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1.0];
 }
 

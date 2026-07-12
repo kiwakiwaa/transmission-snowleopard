@@ -1680,7 +1680,13 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
 {
     NSUInteger count = indexSet.count;
     tr_file_index_t* files = static_cast<tr_file_index_t*>(malloc(count * sizeof(tr_file_index_t)));
-    [indexSet getIndexes:files maxCount:count inIndexRange:nil];
+    NSUInteger* indexes = static_cast<NSUInteger*>(malloc(count * sizeof(NSUInteger)));
+    [indexSet getIndexes:indexes maxCount:count inIndexRange:nil];
+    for (NSUInteger i = 0; i < count; ++i)
+    {
+        files[i] = indexes[i];
+    }
+    free(indexes);
 
     tr_torrentSetFileDLs(self.fHandle, files, count, state != NSControlStateValueOff);
     free(files);
