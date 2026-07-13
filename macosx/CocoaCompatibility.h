@@ -6,6 +6,9 @@
 
 #include <libtransmission/macos-version.h>
 
+#import "LegacyDispatch.h"
+#import "LegacyFoundationTypes.h"
+#import "LegacyFastEnumeration.h"
 #import "ObjectiveCCompatibility.h"
 #import "LegacyRegularExpression.h"
 

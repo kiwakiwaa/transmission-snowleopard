@@ -215,6 +215,9 @@ target_sources(${TR_NAME}-mac
         ButtonToolbarItem.mm
         CocoaCompatibility.h
         CocoaCompatibility.mm
+        LegacyDispatch.h
+        LegacyDispatch.mm
+        LegacyFoundationTypes.h
         LegacyRegularExpression.h
         LegacyRegularExpression.mm
         ColorTextField.h
@@ -299,6 +302,8 @@ target_sources(${TR_NAME}-mac
         InfoWindow.mm
         InfoWindowController.h
         InfoWindowController.mm
+        LegacyAssociatedObjects.h
+        LegacyAssociatedObjects.mm
         LegacyArchiving.h
         LegacyArchiving.mm
         LegacyColors.h
@@ -401,6 +406,13 @@ target_sources(${TR_NAME}-mac
         VersionComparator.mm
         WebSeedTableView.h
         WebSeedTableView.mm)
+
+if(TR_MACOS_DEPLOYMENT_BEFORE_10_5)
+    target_sources(${TR_NAME}-mac
+        PRIVATE
+            LegacyFastEnumeration.h
+            LegacyFastEnumeration.mm)
+endif()
 
 if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
     target_sources(${TR_NAME}-mac
