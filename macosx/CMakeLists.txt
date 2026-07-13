@@ -8,22 +8,24 @@ if(TR_MACOS_DEPLOYMENT_BEFORE_10_8)
     set(TR_MACOS_USE_SOURCE_IMAGE_ASSETS ON)
 endif()
 
-find_program(CODESIGN_EXECUTABLE codesign REQUIRED)
-find_program(XCRUN_EXECUTABLE xcrun)
-if(XCRUN_EXECUTABLE)
-    execute_process(
-        COMMAND ${XCRUN_EXECUTABLE} -find codesign_allocate
-        OUTPUT_VARIABLE TR_MACOS_XCRUN_CODESIGN_ALLOCATE_EXECUTABLE
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        RESULT_VARIABLE TR_MACOS_XCRUN_CODESIGN_ALLOCATE_RESULT
-        ERROR_QUIET)
-    if(TR_MACOS_XCRUN_CODESIGN_ALLOCATE_RESULT EQUAL 0 AND EXISTS "${TR_MACOS_XCRUN_CODESIGN_ALLOCATE_EXECUTABLE}")
-        set(CODESIGN_ALLOCATE_EXECUTABLE "${TR_MACOS_XCRUN_CODESIGN_ALLOCATE_EXECUTABLE}"
-            CACHE FILEPATH "codesign_allocate executable" FORCE)
+if(NOT TR_MACOS_DEPLOYMENT_BEFORE_10_5)
+    find_program(CODESIGN_EXECUTABLE codesign REQUIRED)
+    find_program(XCRUN_EXECUTABLE xcrun)
+    if(XCRUN_EXECUTABLE)
+        execute_process(
+            COMMAND ${XCRUN_EXECUTABLE} -find codesign_allocate
+            OUTPUT_VARIABLE TR_MACOS_XCRUN_CODESIGN_ALLOCATE_EXECUTABLE
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE TR_MACOS_XCRUN_CODESIGN_ALLOCATE_RESULT
+            ERROR_QUIET)
+        if(TR_MACOS_XCRUN_CODESIGN_ALLOCATE_RESULT EQUAL 0 AND EXISTS "${TR_MACOS_XCRUN_CODESIGN_ALLOCATE_EXECUTABLE}")
+            set(CODESIGN_ALLOCATE_EXECUTABLE "${TR_MACOS_XCRUN_CODESIGN_ALLOCATE_EXECUTABLE}"
+                CACHE FILEPATH "codesign_allocate executable" FORCE)
+        endif()
     endif()
-endif()
-if(NOT CODESIGN_ALLOCATE_EXECUTABLE)
-    find_program(CODESIGN_ALLOCATE_EXECUTABLE codesign_allocate)
+    if(NOT CODESIGN_ALLOCATE_EXECUTABLE)
+        find_program(CODESIGN_ALLOCATE_EXECUTABLE codesign_allocate)
+    endif()
 endif()
 if(TR_MACOS_USE_SOURCE_IMAGE_ASSETS)
     find_program(SIPS_EXECUTABLE sips REQUIRED)
@@ -32,6 +34,9 @@ else()
 endif()
 
 set(TR_MACOS_OBJC_ARC_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:-fobjc-arc>")
+if(CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.6)
+    set(TR_MACOS_OBJC_ARC_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:SHELL:-Xclang -fobjc-arc>")
+endif()
 set(TR_MACOS_OBJC_WEAK_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:-fobjc-weak>")
 set(TR_MACOS_OBJC_RUNTIME_COMPILE_OPTIONS)
 set(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME OFF)
@@ -39,7 +44,7 @@ if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
     set(TR_MACOS_OBJC_WEAK_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:SHELL:-Xclang -fobjc-runtime-has-weak>")
 
     if(NOT TARGET libarc_support::runtime)
-        message(FATAL_ERROR "macOS 10.6 ARC builds require third-party/libarc_support")
+        message(FATAL_ERROR "macOS builds before 10.7 require third-party/libarc_support")
     endif()
     set(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME ON)
 
@@ -93,6 +98,8 @@ if(TR_MACOS_BUNDLE_COMPATIBILITY_DEPENDENCIES)
 endif()
 
 add_compile_options(
+    $<$<COMPILE_LANGUAGE:C,CXX>:-fblocks>
+
     $<$<COMPILE_LANGUAGE:C>:-fmodules>
 
     # https://github.com/llvm/llvm-project/issues/57432
@@ -122,7 +129,9 @@ add_link_options(
 if(NOT TR_MACOS_DEPLOYMENT_BEFORE_12_0)
     add_subdirectory(QuickLookExtension)
 endif()
-add_subdirectory(QuickLookPlugin)
+if(NOT TR_MACOS_DEPLOYMENT_BEFORE_10_5)
+    add_subdirectory(QuickLookPlugin)
+endif()
 add_subdirectory(VDKQueue)
 
 add_executable(${TR_NAME}-mac MACOSX_BUNDLE)
@@ -425,7 +434,7 @@ target_compile_definitions(${TR_NAME}-mac
         TR_ENABLE_SPARKLE=$<BOOL:${TR_ENABLE_SPARKLE}>
         TR_RAISE_FILE_DESCRIPTOR_LIMIT=$<BOOL:${TR_RAISE_FILE_DESCRIPTOR_LIMIT}>)
 
-if(TR_ENABLE_SPARKLE)
+if(TR_ENABLE_SPARKLE AND NOT TR_MACOS_DEPLOYMENT_BEFORE_10_5)
     target_sources(${TR_NAME}-mac
         PRIVATE
             SparkleProxy.mm)
@@ -870,6 +879,9 @@ if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
 endif()
 if(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME)
     target_link_libraries(${TR_NAME}-mac PRIVATE libarc_support::runtime)
+    if(TR_BLOCKS_RUNTIME_LIBRARY)
+        target_link_libraries(${TR_NAME}-mac PRIVATE "${TR_BLOCKS_RUNTIME_LIBRARY}")
+    endif()
 endif()
 
 if(NOT TR_MACOS_TARGET_BEFORE_11_0)

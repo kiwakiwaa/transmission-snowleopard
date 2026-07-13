@@ -28,12 +28,22 @@ if(NOT CMAKE_OSX_SYSROOT AND DEFINED ENV{CMAKE_OSX_SYSROOT})
 endif()
 
 if(NOT CMAKE_OSX_SYSROOT)
+    set(_tr_macos_sdk_names "MacOSX${TR_MACOS_SDK_VERSION}.sdk")
+    if(TR_MACOS_SDK_VERSION VERSION_EQUAL 10.4)
+        list(APPEND _tr_macos_sdk_names "MacOSX10.4u.sdk")
+    endif()
+
     foreach(_tr_macos_sdk_dir
-            "/Developer/SDKs/MacOSX${TR_MACOS_SDK_VERSION}.sdk"
-            "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX${TR_MACOS_SDK_VERSION}.sdk")
-        if(EXISTS "${_tr_macos_sdk_dir}")
-            set(CMAKE_OSX_SYSROOT "${_tr_macos_sdk_dir}"
-                CACHE PATH "macOS SDK to use for this build")
+            "/Developer/SDKs"
+            "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs")
+        foreach(_tr_macos_sdk_name IN LISTS _tr_macos_sdk_names)
+            if(EXISTS "${_tr_macos_sdk_dir}/${_tr_macos_sdk_name}")
+                set(CMAKE_OSX_SYSROOT "${_tr_macos_sdk_dir}/${_tr_macos_sdk_name}"
+                    CACHE PATH "macOS SDK to use for this build")
+                break()
+            endif()
+        endforeach()
+        if(CMAKE_OSX_SYSROOT)
             break()
         endif()
     endforeach()
@@ -312,7 +322,10 @@ foreach(_tr_macos_llvm_libexec_dir IN LISTS _tr_macos_libcxx_candidate_dirs)
         endif()
 
         set(_tr_macos_libcxx_stdlib_flag "-stdlib=libc++")
-        set(_tr_macos_libcxx_link_flags "-L${_tr_macos_libcxx_dir} -Wl,-rpath,${_tr_macos_libcxx_dir}")
+        set(_tr_macos_libcxx_link_flags "-L${_tr_macos_libcxx_dir}")
+        if(NOT CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.5)
+            string(APPEND _tr_macos_libcxx_link_flags " -Wl,-rpath,${_tr_macos_libcxx_dir}")
+        endif()
         set(_tr_macos_libcxx_companion_libraries)
         set(TR_MACOS_LIBCXX_RUNTIME_DIR "${_tr_macos_libcxx_dir}"
             CACHE PATH "libc++ runtime directory for macOS compatibility bundle fixups" FORCE)

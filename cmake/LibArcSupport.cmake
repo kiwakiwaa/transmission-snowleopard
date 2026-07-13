@@ -6,7 +6,7 @@ set(TR_LIBARC_SUPPORT_SOURCE_DIR "${TR_THIRD_PARTY_SOURCE_DIR}/libarc_support")
 
 if(NOT EXISTS "${TR_LIBARC_SUPPORT_SOURCE_DIR}/include/libarc_support/arc_runtime.h")
     if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
-        message(FATAL_ERROR "macOS 10.6 ARC builds require third-party/libarc_support")
+        message(FATAL_ERROR "macOS builds before 10.7 require third-party/libarc_support")
     endif()
     return()
 endif()
@@ -50,6 +50,7 @@ target_compile_options(_libarc_support_runtime
 target_link_libraries(_libarc_support_runtime
     PRIVATE
         "-framework CoreFoundation"
+        "-framework Foundation"
         "-lobjc")
 
 set(TR_BLOCKS_RUNTIME_LIBRARY_DIRS)
