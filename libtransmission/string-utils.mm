@@ -14,6 +14,25 @@
 // macOS implementation of tr_strv_to_utf8_string() that autodetects the encoding.
 // This replaces the generic implementation of the function in utils.cc.
 
+#if TR_MACOS_SDK_BEFORE_10_6
+static NSString* TRStringByConvertingCFEncoding(std::string_view sv, CFStringEncoding encoding)
+{
+    CFStringRef const convertedString = CFStringCreateWithBytes(
+        kCFAllocatorDefault,
+        reinterpret_cast<UInt8 const*>(std::data(sv)),
+        static_cast<CFIndex>(std::size(sv)),
+        encoding,
+        true);
+    if (convertedString == nullptr)
+    {
+        return nil;
+    }
+
+    NSString* const nsString = (__bridge_transfer NSString*)convertedString;
+    return nsString.UTF8String != nullptr ? nsString : nil;
+}
+#endif
+
 static NSString* TRStringByDetectingEncoding(std::string_view sv)
 {
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_10 && !TR_MACOS_SDK_BEFORE_10_10
@@ -38,8 +57,10 @@ static NSString* TRStringByDetectingEncoding(std::string_view sv)
         NSWindowsCP1252StringEncoding,  NSISOLatin1StringEncoding,         NSMacOSRomanStringEncoding,
         NSWindowsCP1250StringEncoding,  NSWindowsCP1251StringEncoding,     NSWindowsCP1253StringEncoding,
         NSWindowsCP1254StringEncoding,  NSISOLatin2StringEncoding,         NSShiftJISStringEncoding,
-        NSJapaneseEUCStringEncoding,    NSISO2022JPStringEncoding,         NSUTF16StringEncoding,
-        NSUTF16BigEndianStringEncoding, NSUTF16LittleEndianStringEncoding,
+        NSJapaneseEUCStringEncoding,    NSISO2022JPStringEncoding,
+#if !TR_MACOS_SDK_BEFORE_10_6
+        NSUTF16StringEncoding,          NSUTF16BigEndianStringEncoding,    NSUTF16LittleEndianStringEncoding,
+#endif
     };
 
     for (auto const encoding : encodings)
@@ -50,6 +71,23 @@ static NSString* TRStringByDetectingEncoding(std::string_view sv)
             return convertedString;
         }
     }
+
+#if TR_MACOS_SDK_BEFORE_10_6
+    CFStringEncoding const cf_encodings[] = {
+        kCFStringEncodingUTF16,
+        kCFStringEncodingUTF16BE,
+        kCFStringEncodingUTF16LE,
+    };
+
+    for (auto const encoding : cf_encodings)
+    {
+        NSString* const convertedString = TRStringByConvertingCFEncoding(sv, encoding);
+        if (convertedString != nil)
+        {
+            return convertedString;
+        }
+    }
+#endif
 
     return nil;
 #endif

@@ -37,7 +37,7 @@
 #include <sys/sendfile.h>
 #define USE_SENDFILE64
 #endif
-#elif defined(__APPLE__) && defined(HAVE_COPYFILE)
+#elif defined(__APPLE__) && defined(HAVE_COPYFILE) && defined(HAVE_COPYFILE_H)
 #include <copyfile.h>
 #ifndef COPYFILE_CLONE /* macos < 10.12 */
 #define COPYFILE_CLONE 0

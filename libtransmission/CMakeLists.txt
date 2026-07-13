@@ -8,11 +8,42 @@ endif()
 
 check_symbol_exists(SO_REUSEPORT "sys/types.h;sys/socket.h" HAVE_SO_REUSEPORT)
 
-add_compile_options(
-    # equivalent of XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES for this directory
-    $<$<AND:$<BOOL:${APPLE}>,$<NOT:$<BOOL:${TR_MACOS_DEPLOYMENT_BEFORE_10_7}>>,$<OR:$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:Clang>>,$<OR:$<COMPILE_LANGUAGE:C>,$<COMPILE_LANGUAGE:CXX>>>:-fobjc-arc>)
+set(TR_LIBTRANSMISSION_OBJC_ARC_COMPILE_OPTIONS -fobjc-arc)
+if(APPLE AND CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.6)
+    set(TR_LIBTRANSMISSION_OBJC_ARC_COMPILE_OPTIONS -Xclang -fobjc-arc)
+endif()
+
+set(TR_LIBTRANSMISSION_OBJC_RUNTIME_COMPILE_OPTIONS)
+set(TR_LIBTRANSMISSION_OBJC_WEAK_COMPILE_OPTIONS)
+if(APPLE AND TR_MACOS_DEPLOYMENT_BEFORE_10_7)
+    set(TR_LIBTRANSMISSION_OBJC_WEAK_COMPILE_OPTIONS -Xclang -fobjc-runtime-has-weak)
+
+    if(TR_MACOS_OBJC_FRAGILE_RUNTIME)
+        list(LENGTH CMAKE_OSX_ARCHITECTURES TR_LIBTRANSMISSION_MACOS_ARCH_COUNT)
+        if(TR_LIBTRANSMISSION_MACOS_ARCH_COUNT EQUAL 1)
+            list(APPEND TR_LIBTRANSMISSION_OBJC_RUNTIME_COMPILE_OPTIONS -fobjc-runtime=macosx-fragile-10.7)
+        else()
+            list(APPEND TR_LIBTRANSMISSION_OBJC_RUNTIME_COMPILE_OPTIONS -Xarch_i386 -fobjc-runtime=macosx-fragile-10.7)
+        endif()
+    endif()
+endif()
+
+set_property(
+    SOURCE string-utils.mm
+    APPEND
+    PROPERTY COMPILE_OPTIONS
+    # equivalent of XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES for string-utils.mm
+    ${TR_LIBTRANSMISSION_OBJC_ARC_COMPILE_OPTIONS}
+    ${TR_LIBTRANSMISSION_OBJC_RUNTIME_COMPILE_OPTIONS}
+    ${TR_LIBTRANSMISSION_OBJC_WEAK_COMPILE_OPTIONS})
 
 add_library(${TR_NAME} STATIC)
+
+if(APPLE AND TR_MACOS_DEPLOYMENT_BEFORE_10_7 AND TARGET libarc_support::runtime)
+    target_link_libraries(${TR_NAME}
+        PUBLIC
+            libarc_support::runtime)
+endif()
 
 set(IS_APPLE_CLANG FALSE)
 if(APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -259,6 +290,10 @@ tr_target_compile_definitions_for_functions(${TR_NAME}
         pread
         pwrite
         sendfile64)
+
+tr_target_compile_definitions_for_headers(${TR_NAME}
+    PRIVATE
+        copyfile.h)
 
 target_include_directories(${TR_NAME}
     PUBLIC
