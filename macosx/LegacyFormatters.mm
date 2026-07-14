@@ -3,6 +3,7 @@
 // License text can be found in the licenses/ folder.
 
 #import "LegacyFormatters.h"
+#import "CocoaCompatibility.h"
 
 #include <libtransmission/macos-version.h>
 
@@ -141,7 +142,7 @@ NSString* TRTimeRemainingString(NSTimeInterval interval)
     formatter.referenceDate = referenceDate;
     NSString* string = [formatter stringFromTimeInterval:interval];
 #else
-    NSString* string = [formatter stringFromDate:referenceDate toDate:[referenceDate dateByAddingTimeInterval:interval]];
+    NSString* string = [formatter stringFromDate:referenceDate toDate:TRDateByAddingTimeInterval(referenceDate, interval)];
 #endif
     return string ?: TRLegacyTimeRemainingString(interval);
 #else

@@ -3,6 +3,7 @@
 // License text can be found in the licenses/ folder.
 
 #import "LegacyURLRequest.h"
+#import "CocoaCompatibility.h"
 
 #include <libtransmission/macos-version.h>
 
@@ -98,9 +99,13 @@ typedef NS_ENUM(NSUInteger, TRURLRequestTaskKind) { TRURLRequestTaskKindData, TR
                                                             [self.session dataTaskWithRequest:self.request];
     [self.task resume];
 #else
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    self.connection = [[NSURLConnection alloc] initWithRequest:self.request delegate:self];
+#else
     self.connection = [[NSURLConnection alloc] initWithRequest:self.request delegate:self startImmediately:NO];
-    [self.connection scheduleInRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
+    [self.connection scheduleInRunLoop:TRMainRunLoop() forMode:NSRunLoopCommonModes];
     [self.connection start];
+#endif
 #endif
 }
 

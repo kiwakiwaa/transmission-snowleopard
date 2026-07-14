@@ -14,6 +14,19 @@ static NSModalResponse const NSModalResponseCancel = 0;
 
 typedef void (^TRSheetCompletionHandler)(NSModalResponse returnCode);
 
+#if TR_MACOS_SDK_BEFORE_10_6
+@interface NSSavePanel (TRLegacyPanelSheetDeclarations)
+- (void)beginSheetModalForWindow:(NSWindow*)window completionHandler:(TRSheetCompletionHandler)handler;
+@end
+#endif
+
+void TRBeginPanelSheetModalForWindow(NSSavePanel* panel, NSWindow* window, TRSheetCompletionHandler handler);
+void TRBeginSavePanelSheetModalForWindow(
+    NSSavePanel* panel,
+    NSWindow* window,
+    NSString* name,
+    TRSheetCompletionHandler handler);
+
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @interface NSWindow (TransmissionCompatibility)
 - (void)beginSheet:(NSWindow*)sheet completionHandler:(TRSheetCompletionHandler)handler;

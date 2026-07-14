@@ -6,7 +6,7 @@
 
 #include <libtransmission/macos-version.h>
 
-#import <objc/runtime.h>
+#import "LegacyAssociatedObjects.h"
 
 void TRTitlebarAccessoryUseFixedViewSize(NSTitlebarAccessoryViewController* controller)
 {
@@ -36,11 +36,12 @@ static char TRLegacyTitlebarAccessoryControllersKey;
 
 static NSMutableArray* TRLegacyTitlebarAccessoryControllersForWindow(NSWindow* window, BOOL create)
 {
-    NSMutableArray* controllers = objc_getAssociatedObject(window, &TRLegacyTitlebarAccessoryControllersKey);
+    NSMutableArray* controllers = TRLegacyGetAssociatedObject(window, &TRLegacyTitlebarAccessoryControllersKey);
     if (controllers == nil && create)
     {
         controllers = [NSMutableArray array];
-        objc_setAssociatedObject(window, &TRLegacyTitlebarAccessoryControllersKey, controllers, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        TRLegacySetAssociatedObject(
+            window, &TRLegacyTitlebarAccessoryControllersKey, controllers, TRLegacyAssociationRetainNonatomic);
     }
     return controllers;
 }
@@ -179,7 +180,7 @@ static char TRTitlebarAccessoryHiddenKey;
 
 static NSNumber* TRTitlebarAccessoryStoredHidden(NSTitlebarAccessoryViewController* controller)
 {
-    return objc_getAssociatedObject(controller, &TRTitlebarAccessoryHiddenKey);
+    return TRLegacyGetAssociatedObject(controller, &TRTitlebarAccessoryHiddenKey);
 }
 
 static void TRRemoveTitlebarAccessoryViewController(NSWindow* window, NSTitlebarAccessoryViewController* controller)
@@ -226,7 +227,7 @@ void TRTitlebarAccessorySetHidden(NSWindow* window, NSTitlebarAccessoryViewContr
 {
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_12
     (void)window;
-    objc_setAssociatedObject(controller, &TRTitlebarAccessoryHiddenKey, @(hidden), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    TRLegacySetAssociatedObject(controller, &TRTitlebarAccessoryHiddenKey, @(hidden), TRLegacyAssociationRetainNonatomic);
 #else
     (void)window;
     controller.hidden = hidden;

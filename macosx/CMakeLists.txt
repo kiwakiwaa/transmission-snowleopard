@@ -215,11 +215,21 @@ target_sources(${TR_NAME}-mac
         ButtonToolbarItem.mm
         CocoaCompatibility.h
         CocoaCompatibility.mm
+        LegacyAnimationContext.h
+        LegacyAnimationContext.mm
         LegacyDispatch.h
         LegacyDispatch.mm
+        LegacyDockTile.h
+        LegacyDockTile.mm
+        LegacyEventMonitor.h
+        LegacyEventMonitor.mm
         LegacyFoundationTypes.h
+        LegacyTrackingArea.h
+        LegacyTrackingArea.mm
         LegacyRegularExpression.h
         LegacyRegularExpression.mm
+        LegacyViewController.h
+        LegacyViewController.mm
         ColorTextField.h
         ColorTextField.mm
         ObjectiveCCompatibility.h

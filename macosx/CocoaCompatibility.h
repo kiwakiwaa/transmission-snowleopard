@@ -6,21 +6,47 @@
 
 #include <libtransmission/macos-version.h>
 
+#if TR_MACOS_SDK_BEFORE_10_5
+#define NSImageNamePreferencesGeneral @"NSPreferencesGeneral"
+#define NSImageNameUserGroup @"NSUserGroup"
+#define NSImageNameNetwork @"NSNetwork"
+#define NSImageNameStatusAvailable @"NSStatusAvailable"
+#define NSImageNameStatusUnavailable @"NSStatusUnavailable"
+#define NSImageNameStatusPartiallyAvailable @"NSStatusPartiallyAvailable"
+#define NSImageNameFolder @"NSFolder"
+#define NSImageNameCaution @"NSCaution"
+#define NSImageScaleProportionallyDown NSScaleProportionally
+#endif
+
 #import "LegacyDispatch.h"
+#import "LegacyEventMonitor.h"
 #import "LegacyFoundationTypes.h"
 #import "LegacyFastEnumeration.h"
+#import "LegacyTrackingArea.h"
+#import "LegacyAnimationContext.h"
 #import "ObjectiveCCompatibility.h"
 #import "LegacyRegularExpression.h"
+#import "LegacySheets.h"
+#import "LegacyViewController.h"
 
 #ifndef TR_MACOS_OBJC_FRAGILE_RUNTIME
 #define TR_MACOS_OBJC_FRAGILE_RUNTIME 0
 #endif
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+@interface NSObject (TRLegacyNibAwakening)
+- (void)awakeFromNib;
+@end
+
+void TRInstallTigerNamedImageFallbacks(void);
+#endif
+
 #if TR_MACOS_OBJC_FRAGILE_RUNTIME
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-void libarc_support_clear_copied_object_pointer(void* object);
+    void libarc_support_clear_copied_object_pointer(void* object);
 #ifdef __cplusplus
 }
 #endif
@@ -36,7 +62,10 @@ typedef void (^TRTimerBlock)(NSTimer* timer);
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_12
 @interface NSTimer (TRLegacyBlockTimer)
 + (NSTimer*)tr_scheduledTimerWithTimeInterval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(TRTimerBlock)block;
-+ (NSTimer*)tr_timerWithFireDate:(NSDate*)date interval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(TRTimerBlock)block;
++ (NSTimer*)tr_timerWithFireDate:(NSDate*)date
+                        interval:(NSTimeInterval)interval
+                         repeats:(BOOL)repeats
+                           block:(TRTimerBlock)block;
 @end
 #endif
 
@@ -107,6 +136,219 @@ typedef NSInteger NSLayoutRelation;
 typedef NSUInteger NSLayoutFormatOptions;
 typedef NSUInteger NSTableViewAnimationOptions;
 
+#if TR_MACOS_SDK_BEFORE_10_5
+typedef NSInteger NSBackgroundStyle;
+static NSBackgroundStyle const NSBackgroundStyleLight = 0;
+static NSBackgroundStyle const NSBackgroundStyleDark = 1;
+static NSBackgroundStyle const NSBackgroundStyleRaised = 2;
+static NSBackgroundStyle const NSBackgroundStyleLowered = 3;
+
+typedef NSUInteger NSWindowCollectionBehavior;
+enum
+{
+    NSWindowCollectionBehaviorDefault = 0,
+    NSWindowCollectionBehaviorCanJoinAllSpaces = 1 << 0,
+    NSWindowCollectionBehaviorMoveToActiveSpace = 1 << 1,
+    NSWindowCollectionBehaviorManaged = 1 << 2,
+    NSWindowCollectionBehaviorTransient = 1 << 3,
+    NSWindowCollectionBehaviorStationary = 1 << 4,
+    NSWindowCollectionBehaviorParticipatesInCycle = 1 << 5,
+    NSWindowCollectionBehaviorIgnoresCycle = 1 << 6,
+    NSWindowCollectionBehaviorFullScreenNone = 0,
+    NSWindowCollectionBehaviorFullScreenPrimary = 1 << 7,
+};
+
+@interface NSWindow (TRLegacyCollectionBehaviorDeclarations)
+@property(nonatomic) NSWindowCollectionBehavior collectionBehavior;
+@end
+
+@interface NSAlert (TRLegacySuppressionButtonDeclarations)
+@property(nonatomic) BOOL showsSuppressionButton;
+@property(nonatomic, readonly) NSButton* suppressionButton;
+@end
+
+@interface NSCache : NSObject
+{
+  @private
+    NSMutableDictionary* _objects;
+}
+- (id)objectForKey:(id)key;
+- (void)setObject:(id)object forKey:(id)key;
+@end
+#endif
+
+#if TR_MACOS_SDK_BEFORE_10_6
+@protocol NSApplicationDelegate
+@end
+
+@protocol NSNetServiceDelegate
+@end
+
+@protocol NSAnimationDelegate
+@end
+
+@protocol NSControlTextEditingDelegate
+@end
+
+@protocol NSOutlineViewDelegate
+@end
+
+@protocol NSOutlineViewDataSource
+@end
+
+@protocol NSSoundDelegate
+@end
+
+@protocol NSTableViewDataSource
+@end
+
+@protocol NSTableViewDelegate
+@end
+
+@protocol NSTextFieldDelegate
+@end
+
+@protocol NSToolbarDelegate
+@end
+
+@protocol NSWindowDelegate
+@end
+
+@interface NSBundle (TRLegacyResourceURLDeclarations)
+- (NSURL*)URLForResource:(NSString*)name withExtension:(NSString*)ext;
+@end
+
+@interface NSBezierPath (TRLegacyRoundedRectDeclarations)
++ (NSBezierPath*)bezierPathWithRoundedRect:(NSRect)rect xRadius:(CGFloat)xRadius yRadius:(CGFloat)yRadius;
+@end
+
+@interface NSCell (TRLegacySingleLineModeDeclarations)
+@property(nonatomic) BOOL usesSingleLineMode;
+@property(nonatomic) NSBackgroundStyle backgroundStyle;
+@end
+
+@interface NSIndexSet (TRLegacyRangeCountingDeclarations)
+- (NSUInteger)countOfIndexesInRange:(NSRange)range;
+- (void)enumerateIndexesUsingBlock:(void (^)(NSUInteger idx, BOOL* stop))block;
+@end
+
+@interface NSArray (TRLegacyBlockEnumerationDeclarations)
+- (void)enumerateObjectsWithOptions:(NSUInteger)options usingBlock:(void (^)(id obj, NSUInteger idx, BOOL* stop))block;
+- (void)enumerateObjectsAtIndexes:(NSIndexSet*)indexes
+                           options:(NSUInteger)options
+                        usingBlock:(void (^)(id obj, NSUInteger idx, BOOL* stop))block;
+- (NSUInteger)indexOfObjectWithOptions:(NSUInteger)options passingTest:(BOOL (^)(id obj, NSUInteger idx, BOOL* stop))predicate;
+- (NSUInteger)indexOfObjectAtIndexes:(NSIndexSet*)indexes
+                              options:(NSUInteger)options
+                          passingTest:(BOOL (^)(id obj, NSUInteger idx, BOOL* stop))predicate;
+- (NSIndexSet*)indexesOfObjectsWithOptions:(NSUInteger)options passingTest:(BOOL (^)(id obj, NSUInteger idx, BOOL* stop))predicate;
+- (NSIndexSet*)indexesOfObjectsAtIndexes:(NSIndexSet*)indexes
+                                  options:(NSUInteger)options
+                              passingTest:(BOOL (^)(id obj, NSUInteger idx, BOOL* stop))predicate;
+@end
+
+@interface NSControl (TRLegacyIntegerValueDeclarations)
+@property(nonatomic) NSInteger integerValue;
+@end
+
+@interface NSImage (TRLegacyDrawingDeclarations)
+- (BOOL)isTemplate;
+- (void)setTemplate:(BOOL)isTemplate;
+- (void)drawInRect:(NSRect)rect
+          fromRect:(NSRect)fromRect
+         operation:(NSCompositingOperation)operation
+          fraction:(CGFloat)fraction
+    respectFlipped:(BOOL)respectFlipped
+             hints:(NSDictionary*)hints;
+@end
+
+@interface NSEvent (TRLegacyModifierFlagsDeclarations)
++ (NSUInteger)modifierFlags;
+@end
+
+@interface NSNumber (TRLegacyIntegerDeclarations)
++ (NSNumber*)numberWithInteger:(NSInteger)value;
+- (NSInteger)integerValue;
+@end
+
+@interface NSString (TRLegacyReplacingDeclarations)
+- (NSString*)stringByReplacingCharactersInRange:(NSRange)range withString:(NSString*)replacement;
+- (NSString*)stringByReplacingOccurrencesOfString:(NSString*)target withString:(NSString*)replacement;
+@end
+
+@interface NSTableColumn (TRLegacyHeaderToolTipDeclarations)
+@property(nonatomic, copy) NSString* headerToolTip;
+@end
+
+@interface NSTableView (TRLegacyReloadDeclarations)
+- (NSCell*)preparedCellAtColumn:(NSInteger)column row:(NSInteger)row;
+- (void)reloadDataForRowIndexes:(NSIndexSet*)rowIndexes columnIndexes:(NSIndexSet*)columnIndexes;
+@end
+#endif
+
+#endif
+
+NSURL* TRURLForResource(NSBundle* bundle, NSString* name, NSString* extension);
+void TRSetWindowCollectionBehavior(NSWindow* window, NSWindowCollectionBehavior behavior);
+void TRSetAlertShowsSuppressionButton(NSAlert* alert, BOOL showsSuppressionButton);
+NSButton* TRAlertSuppressionButton(NSAlert* alert);
+void TRSetCellUsesSingleLineMode(NSCell* cell, BOOL usesSingleLineMode);
+NSDate* TRDateByAddingTimeInterval(NSDate* date, NSTimeInterval interval);
+NSRunLoop* TRMainRunLoop(void);
+BOOL TRMoveItemAtPath(NSFileManager* fileManager, NSString* sourcePath, NSString* destinationPath, NSError** error);
+BOOL TRRemoveItemAtPath(NSFileManager* fileManager, NSString* path, NSError** error);
+NSArray* TRContentsOfDirectoryAtPath(NSFileManager* fileManager, NSString* path, NSError** error);
+NSDictionary* TRAttributesOfItemAtPath(NSFileManager* fileManager, NSString* path, NSError** error);
+BOOL TRCopyItemAtURL(NSFileManager* fileManager, NSURL* sourceURL, NSURL* destinationURL, NSError** error);
+BOOL TRMoveItemAtURL(NSFileManager* fileManager, NSURL* sourceURL, NSURL* destinationURL, NSError** error);
+NSString* TRWorkspaceTypeOfFile(NSWorkspace* workspace, NSString* path, NSError** error);
+BOOL TRIsTorrentFileAtPath(NSString* path);
+NSURL* TRURLByDeletingLastPathComponent(NSURL* URL);
+NSURL* TRURLByDeletingPathExtension(NSURL* URL);
+NSURL* TRURLByAppendingPathComponent(NSURL* URL, NSString* pathComponent);
+NSString* TRURLLastPathComponent(NSURL* URL);
+NSString* TRURLPathExtension(NSURL* URL);
+NSArray* TRURLPathComponents(NSURL* URL);
+BOOL TRURLCheckResourceIsReachable(NSURL* URL, NSError** error);
+NSURL* TRUserDefaultsURLForKey(NSUserDefaults* defaults, NSString* key);
+void TRUserDefaultsSetURL(NSUserDefaults* defaults, NSURL* URL, NSString* key);
+void TRCoderEncodeInteger(NSCoder* coder, NSInteger value, NSString* key);
+NSInteger TRCoderDecodeInteger(NSCoder* coder, NSString* key);
+void TRPasteboardWriteStrings(NSPasteboard* pasteboard, NSArray* strings);
+NSArray* TRPasteboardReadStrings(NSPasteboard* pasteboard);
+BOOL TRPasteboardCanReadStrings(NSPasteboard* pasteboard);
+NSArray* TRPasteboardReadURLs(NSPasteboard* pasteboard);
+void TRSavePanelSetDirectoryURL(NSSavePanel* panel, NSURL* directoryURL);
+void TRSavePanelSetNameFieldStringValue(NSSavePanel* panel, NSString* name);
+void TRActivateFileViewerSelectingURLs(NSArray* URLs);
+NSSortDescriptor* TRSortDescriptor(NSString* key, BOOL ascending);
+NSSortDescriptor* TRSortDescriptorWithSelector(NSString* key, BOOL ascending, SEL selector);
+void TRMenuRemoveAllItems(NSMenu* menu);
+NSCharacterSet* TRNewlineCharacterSet(void);
+NSString* TRFirstLineFromString(NSString* string);
+
+#if TR_MACOS_SDK_BEFORE_10_7
+
+#ifndef NSRunLoopCommonModes
+#define NSRunLoopCommonModes NSDefaultRunLoopMode
+#endif
+
+#ifndef NSURLRequestReloadIgnoringLocalAndRemoteCacheData
+#define NSURLRequestReloadIgnoringLocalAndRemoteCacheData NSURLRequestReloadIgnoringCacheData
+#endif
+
+#ifndef NSURLErrorFailingURLStringErrorKey
+#define NSURLErrorFailingURLStringErrorKey NSErrorFailingURLStringKey
+#endif
+
+#ifndef NSDiacriticInsensitiveSearch
+#define NSDiacriticInsensitiveSearch 0
+#endif
+
+#ifndef NSEnumerationConcurrent
+#define NSEnumerationConcurrent 0
+#endif
+
 static NSLayoutAttribute const NSLayoutAttributeNotAnAttribute = 0;
 static NSLayoutAttribute const NSLayoutAttributeLeft = 1;
 static NSLayoutAttribute const NSLayoutAttributeRight = 2;
@@ -128,8 +370,10 @@ static NSTableViewAnimationOptions const NSTableViewAnimationSlideDown = 0;
 static NSTableViewAnimationOptions const NSTableViewAnimationSlideUp = 0;
 static NSTableViewAnimationOptions const NSTableViewAnimationEffectFade = 0;
 
+#if !TR_MACOS_SDK_BEFORE_10_5
 #ifndef NSWindowCollectionBehaviorFullScreenPrimary
 #define NSWindowCollectionBehaviorFullScreenPrimary NSWindowCollectionBehaviorFullScreenNone
+#endif
 #endif
 
 static inline uint32_t arc4random_uniform(uint32_t upper_bound)
@@ -173,7 +417,10 @@ static inline uint32_t arc4random_uniform(uint32_t upper_bound)
                          attribute:(NSLayoutAttribute)attr2
                         multiplier:(CGFloat)multiplier
                           constant:(CGFloat)c;
-+ (NSArray*)constraintsWithVisualFormat:(NSString*)format options:(NSLayoutFormatOptions)opts metrics:(NSDictionary*)metrics views:(NSDictionary*)views;
++ (NSArray*)constraintsWithVisualFormat:(NSString*)format
+                                options:(NSLayoutFormatOptions)opts
+                                metrics:(NSDictionary*)metrics
+                                  views:(NSDictionary*)views;
 + (void)activateConstraints:(NSArray*)constraints;
 + (void)deactivateConstraints:(NSArray*)constraints;
 @end
@@ -221,16 +468,22 @@ static inline uint32_t arc4random_uniform(uint32_t upper_bound)
 @interface NSOutlineView (TRLegacyTableAnimations)
 - (void)beginUpdates;
 - (void)endUpdates;
-- (void)insertItemsAtIndexes:(NSIndexSet*)indexes inParent:(id)parent withAnimation:(NSTableViewAnimationOptions)animationOptions;
-- (void)removeItemsAtIndexes:(NSIndexSet*)indexes inParent:(id)parent withAnimation:(NSTableViewAnimationOptions)animationOptions;
+- (void)insertItemsAtIndexes:(NSIndexSet*)indexes
+                    inParent:(id)parent
+               withAnimation:(NSTableViewAnimationOptions)animationOptions;
+- (void)removeItemsAtIndexes:(NSIndexSet*)indexes
+                    inParent:(id)parent
+               withAnimation:(NSTableViewAnimationOptions)animationOptions;
 - (void)moveItemAtIndex:(NSInteger)fromIndex inParent:(id)oldParent toIndex:(NSInteger)toIndex inParent:(id)newParent;
 @end
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
 @interface NSAnimationContext (TRLegacyAnimationContext)
 @property(nonatomic) BOOL allowsImplicitAnimation;
 @property(nonatomic, copy) void (^completionHandler)(void);
 + (void)runAnimationGroup:(void (^)(NSAnimationContext* context))changes completionHandler:(void (^)(void))completionHandler;
 @end
+#endif
 
 @protocol NSWindowRestoration
 @end
@@ -272,7 +525,9 @@ static inline uint32_t arc4random_uniform(uint32_t upper_bound)
 
 #if TR_MACOS_SDK_BEFORE_10_8
 @interface NSImage (TRLegacyImageDrawing)
-+ (NSImage*)imageWithSize:(NSSize)size flipped:(BOOL)drawingHandlerShouldBeCalledWithFlippedContext drawingHandler:(BOOL (^)(NSRect dstRect))drawingHandler;
++ (NSImage*)imageWithSize:(NSSize)size
+                  flipped:(BOOL)drawingHandlerShouldBeCalledWithFlippedContext
+           drawingHandler:(BOOL (^)(NSRect dstRect))drawingHandler;
 @end
 
 @protocol NSURLConnectionDataDelegate
@@ -363,7 +618,6 @@ static inline uint32_t arc4random_uniform(uint32_t upper_bound)
 #import "LegacyConstraints.h"
 #import "LegacyPowerActivity.h"
 #import "LegacySegmentedControl.h"
-#import "LegacySheets.h"
 #import "LegacySymbols.h"
 #import "LegacyTitlebarAccessory.h"
 
@@ -481,8 +735,10 @@ static NSControlStateValue const NSControlStateValueOn = NSOnState;
 #define TRLeftMouseDownMask NSEventMaskLeftMouseDown
 #endif
 
+#if !TR_MACOS_SDK_BEFORE_10_5
 #ifndef NSWindowCollectionBehaviorFullScreenNone
 #define NSWindowCollectionBehaviorFullScreenNone 0
+#endif
 #endif
 
 #if TR_MACOS_SDK_BEFORE_10_12

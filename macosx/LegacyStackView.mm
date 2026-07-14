@@ -43,10 +43,29 @@ static CGFloat const TRLegacyStackViewDefaultSpacing = 8.0;
 static CGFloat const TRLegacyStackViewDefaultHuggingPriority = 250.0;
 static CGFloat const TRLegacyStackViewDefaultClippingResistancePriority = 1000.0;
 static CGFloat const TRLegacyStackViewAlignmentTolerance = 1.0;
+static char const TRLegacyStackViewHorizontalSortContext = 0;
 
 static BOOL TRLegacyStackViewVisibilityPriorityIsNotVisible(TRLegacyStackViewVisibilityPriority priority)
 {
     return priority <= TRLegacyStackViewVisibilityPriorityNotVisible;
+}
+
+static NSInteger TRLegacyStackViewCompareInitialFrames(id firstObject, id secondObject, void* context)
+{
+    NSView* firstView = firstObject;
+    NSView* secondView = secondObject;
+    BOOL const horizontal = context != NULL;
+    CGFloat const firstPosition = horizontal ? NSMinX(firstView.frame) : NSMaxY(firstView.frame);
+    CGFloat const secondPosition = horizontal ? NSMinX(secondView.frame) : NSMaxY(secondView.frame);
+    if (firstPosition < secondPosition)
+    {
+        return horizontal ? NSOrderedAscending : NSOrderedDescending;
+    }
+    if (firstPosition > secondPosition)
+    {
+        return horizontal ? NSOrderedDescending : NSOrderedAscending;
+    }
+    return NSOrderedSame;
 }
 
 @interface LegacyStackView ()
@@ -153,7 +172,9 @@ static BOOL TRLegacyStackViewVisibilityPriorityIsNotVisible(TRLegacyStackViewVis
 
 - (void)viewWillDraw
 {
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
     [super viewWillDraw];
+#endif
     if (fNeedsLegacyLayout)
     {
         [self layoutLegacySubviews];
@@ -499,23 +520,12 @@ static BOOL TRLegacyStackViewVisibilityPriorityIsNotVisible(TRLegacyStackViewVis
     NSArray* sortedSubviews;
     if (self.orientation == TRLegacyStackViewOrientationHorizontal)
     {
-        sortedSubviews = [visibleSubviews sortedArrayUsingComparator:^NSComparisonResult(id firstObject, id secondObject) {
-            NSView* firstView = firstObject;
-            NSView* secondView = secondObject;
-            CGFloat const firstX = NSMinX(firstView.frame);
-            CGFloat const secondX = NSMinX(secondView.frame);
-            return firstX < secondX ? NSOrderedAscending : firstX > secondX ? NSOrderedDescending : NSOrderedSame;
-        }];
+        sortedSubviews = [visibleSubviews sortedArrayUsingFunction:TRLegacyStackViewCompareInitialFrames
+                                                           context:(void*)&TRLegacyStackViewHorizontalSortContext];
     }
     else
     {
-        sortedSubviews = [visibleSubviews sortedArrayUsingComparator:^NSComparisonResult(id firstObject, id secondObject) {
-            NSView* firstView = firstObject;
-            NSView* secondView = secondObject;
-            CGFloat const firstY = NSMaxY(firstView.frame);
-            CGFloat const secondY = NSMaxY(secondView.frame);
-            return firstY > secondY ? NSOrderedAscending : firstY < secondY ? NSOrderedDescending : NSOrderedSame;
-        }];
+        sortedSubviews = [visibleSubviews sortedArrayUsingFunction:TRLegacyStackViewCompareInitialFrames context:NULL];
     }
 
     if (fLeadingViews.count == 0 && fTrailingViews.count == 0 && fCenterViews.count == visibleSubviews.count)

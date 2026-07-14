@@ -31,7 +31,7 @@
 {
     if ((self = [super init]))
     {
-        _handler = [handler copy];
+        self.handler = handler;
     }
 
     return self;
@@ -60,6 +60,65 @@
 }
 
 @end
+
+#pragma mark - Panel Sheets
+
+static void TRBeginPanelSheetModalForWindowImpl(
+    NSSavePanel* panel,
+    NSWindow* window,
+    NSString* name,
+    TRSheetCompletionHandler handler)
+{
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+    if ([panel respondsToSelector:@selector(beginSheetModalForWindow:completionHandler:)])
+    {
+        [panel beginSheetModalForWindow:window completionHandler:handler];
+        return;
+    }
+
+    TRSheetCallback* callback = handler ? [[TRSheetCallback alloc] initWithCompletionHandler:handler] : nil;
+    void* contextInfo = callback ? (void*)CFBridgingRetain(callback) : NULL;
+    SEL const didEndSelector = callback ? @selector(sheetDidEnd:returnCode:contextInfo:) : NULL;
+
+    if ([panel isKindOfClass:[NSOpenPanel class]])
+    {
+        NSOpenPanel* openPanel = (NSOpenPanel*)panel;
+        [openPanel beginSheetForDirectory:[openPanel directory]
+                                    file:nil
+                                   types:[openPanel allowedFileTypes]
+                          modalForWindow:window
+                           modalDelegate:callback
+                          didEndSelector:didEndSelector
+                             contextInfo:contextInfo];
+    }
+    else
+    {
+        [panel beginSheetForDirectory:[panel directory]
+                                 file:name
+                       modalForWindow:window
+                        modalDelegate:callback
+                       didEndSelector:didEndSelector
+                          contextInfo:contextInfo];
+    }
+#else
+    (void)name;
+    [panel beginSheetModalForWindow:window completionHandler:handler];
+#endif
+}
+
+void TRBeginPanelSheetModalForWindow(NSSavePanel* panel, NSWindow* window, TRSheetCompletionHandler handler)
+{
+    TRBeginPanelSheetModalForWindowImpl(panel, window, nil, handler);
+}
+
+void TRBeginSavePanelSheetModalForWindow(
+    NSSavePanel* panel,
+    NSWindow* window,
+    NSString* name,
+    TRSheetCompletionHandler handler)
+{
+    TRBeginPanelSheetModalForWindowImpl(panel, window, name, handler);
+}
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @implementation NSWindow (TransmissionCompatibility)

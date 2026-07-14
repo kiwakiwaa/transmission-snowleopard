@@ -290,7 +290,9 @@ NSImage* TRImageForSystemSymbol(NSString* symbolName, NSString* description)
     NSImage* fallbackImage = TRLegacySystemSymbolImage(symbolName);
     if (fallbackImage != nil)
     {
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
         fallbackImage.accessibilityDescription = description;
+#endif
         return fallbackImage;
     }
 
@@ -299,7 +301,7 @@ NSImage* TRImageForSystemSymbol(NSString* symbolName, NSString* description)
     dispatch_once(&onceToken, ^{
         imageNames = @{
             @"doc.badge.plus" : @"CreateLarge",
-            @"folder" : NSImageNameFolder,
+            @"folder" : @"NSFolder",
             @"globe" : @"Globe",
             @"nosign" : @"CleanupTemplate",
             @"pause.circle.fill" : @"PauseOff",
