@@ -6,8 +6,6 @@
 
 #if TR_MACOS_SDK_BEFORE_10_7
 
-#import <objc/runtime.h>
-
 #include <algorithm>
 #include <climits>
 #include <cstdint>
@@ -44,15 +42,19 @@ extern "C" URegularExpression* uregex_clone(URegularExpression const* regex, UEr
 extern "C" void uregex_close(URegularExpression* regex);
 extern "C" int32_t uregex_groupCount(URegularExpression* regex, UErrorCode* status);
 extern "C" void uregex_setText(URegularExpression* regex, UChar const* text, int32_t textLength, UErrorCode* status);
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
 extern "C" void uregex_setRegion(URegularExpression* regex, int32_t regionStart, int32_t regionLimit, UErrorCode* status);
+#endif
 extern "C" UBool uregex_findNext(URegularExpression* regex, UErrorCode* status);
 extern "C" int32_t uregex_start(URegularExpression* regex, int32_t groupNum, UErrorCode* status);
 extern "C" int32_t uregex_end(URegularExpression* regex, int32_t groupNum, UErrorCode* status);
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
 extern "C" UBool uregex_hitEnd(URegularExpression* regex, UErrorCode* status);
 extern "C" UBool uregex_requireEnd(URegularExpression* regex, UErrorCode* status);
 extern "C" void uregex_useAnchoringBounds(URegularExpression* regex, UBool b, UErrorCode* status);
 extern "C" void uregex_useTransparentBounds(URegularExpression* regex, UBool b, UErrorCode* status);
 extern "C" void uregex_setMatchCallback(URegularExpression* regex, UBool (*callback)(void const*, int32_t), void const* context, UErrorCode* status);
+#endif
 
 #if __has_feature(objc_arc)
 #define TR_AUTORELEASE(obj) (obj)
@@ -102,8 +104,7 @@ void TRRaiseRangeException(id self, SEL selector)
             break;
         }
 
-        foundRange = [escaped rangeOfCharacterFromSet:characterSet
-                                              options:0
+        foundRange = [escaped rangeOfCharacterFromSet:characterSet options:0
                                                 range:NSMakeRange(nextLocation, [escaped length] - nextLocation)];
     }
 
@@ -140,9 +141,9 @@ void TRRaiseRangeException(id self, SEL selector)
     return flags;
 }
 
-[[nodiscard]] UChar* TRCopyCharacters(NSString* string, int32_t* length)
+[[nodiscard]] UChar* TRCopyCharactersInRange(NSString* string, NSRange range, int32_t* length)
 {
-    NSUInteger const nsLength = [string length];
+    NSUInteger const nsLength = range.length;
     if (nsLength > static_cast<NSUInteger>(INT32_MAX))
     {
         return nullptr;
@@ -157,7 +158,7 @@ void TRRaiseRangeException(id self, SEL selector)
 
     if (nsLength != 0)
     {
-        [string getCharacters:reinterpret_cast<unichar*>(characters) range:NSMakeRange(0, nsLength)];
+        [string getCharacters:reinterpret_cast<unichar*>(characters) range:range];
     }
     else
     {
@@ -168,8 +169,17 @@ void TRRaiseRangeException(id self, SEL selector)
     return characters;
 }
 
+[[nodiscard]] UChar* TRCopyCharacters(NSString* string, int32_t* length)
+{
+    return TRCopyCharactersInRange(string, NSMakeRange(0, [string length]), length);
+}
+
 [[nodiscard]] NSMatchingFlags TRMatchFlags(URegularExpression* regex)
 {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    (void)regex;
+    return 0;
+#else
     UErrorCode status = U_ZERO_ERROR;
     BOOL const hitEnd = uregex_hitEnd(regex, &status) != 0 && status <= U_ZERO_ERROR;
     status = U_ZERO_ERROR;
@@ -185,8 +195,10 @@ void TRRaiseRangeException(id self, SEL selector)
         flags |= NSMatchingRequiredEnd;
     }
     return flags;
+#endif
 }
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
 struct TRMatchCallbackContext
 {
     TRNSMatchingBlock block;
@@ -229,11 +241,7 @@ UBool TRRegexFindProgressCallback(void const* rawContext, int64_t /*matchIndex*/
     return 1;
 }
 
-using TRSetFindProgressCallbackFunc = void (*)(
-    URegularExpression* regex,
-    UBool (*callback)(void const*, int64_t),
-    void const* context,
-    UErrorCode* status);
+using TRSetFindProgressCallbackFunc = void (*)(URegularExpression* regex, UBool (*callback)(void const*, int64_t), void const* context, UErrorCode* status);
 
 [[nodiscard]] TRSetFindProgressCallbackFunc TRGetSetFindProgressCallback()
 {
@@ -241,6 +249,7 @@ using TRSetFindProgressCallbackFunc = void (*)(
         dlsym(RTLD_DEFAULT, "uregex_setFindProgressCallback"));
     return callback;
 }
+#endif
 
 [[nodiscard]] Class TRRealRegularExpressionClass()
 {
@@ -252,10 +261,7 @@ using TRSetFindProgressCallbackFunc = void (*)(
     return NSClassFromString(@"NSDataDetector");
 }
 
-[[nodiscard]] id TRCallRealRegularExpressionFactory(
-    NSString* pattern,
-    NSRegularExpressionOptions options,
-    NSError** error)
+[[nodiscard]] id TRCallRealRegularExpressionFactory(NSString* pattern, NSRegularExpressionOptions options, NSError** error)
 {
     Class realClass = TRRealRegularExpressionClass();
     if (realClass == Nil)
@@ -268,11 +274,7 @@ using TRSetFindProgressCallbackFunc = void (*)(
     return reinterpret_cast<FactoryFunc>([realClass methodForSelector:selector])(realClass, selector, pattern, options, error);
 }
 
-[[nodiscard]] id TRCallRealRegularExpressionInit(
-    id object,
-    NSString* pattern,
-    NSRegularExpressionOptions options,
-    NSError** error)
+[[nodiscard]] id TRCallRealRegularExpressionInit(id object, NSString* pattern, NSRegularExpressionOptions options, NSError** error)
 {
     SEL const selector = @selector(initWithPattern:options:error:);
     using InitFunc = id (*)(id, SEL, NSString*, NSRegularExpressionOptions, NSError**);
@@ -311,18 +313,69 @@ using TRSetFindProgressCallbackFunc = void (*)(
 
 } // namespace
 
+#if TR_MACOS_SDK_BEFORE_10_6
+@implementation NSTextCheckingResult
+
+@synthesize resultType = _resultType;
+@synthesize range = _range;
+@synthesize URL = _URL;
+
++ (NSTextCheckingResult*)linkCheckingResultWithRange:(NSRange)range URL:(NSURL*)url
+{
+    return TR_AUTORELEASE([[self alloc] initWithResultType:NSTextCheckingTypeLink range:range URL:url]);
+}
+
+- (instancetype)initWithResultType:(NSTextCheckingType)resultType range:(NSRange)range URL:(NSURL*)url
+{
+    if ((self = [super init]) != nil)
+    {
+        _resultType = resultType;
+        _range = range;
+        _URL = url;
+    }
+    return self;
+}
+
+- (id)copyWithZone:(NSZone*)zone
+{
+    (void)zone;
+#if __has_feature(objc_arc)
+    return self;
+#else
+    return [self retain];
+#endif
+}
+
+- (void)encodeWithCoder:(NSCoder*)coder
+{
+    (void)coder;
+}
+
+- (instancetype)initWithCoder:(NSCoder*)coder
+{
+    (void)coder;
+    return [super init];
+}
+
+@end
+#endif
+
 @interface TRRegularExpressionCheckingResult : NSTextCheckingResult
 {
     NSArray* _ranges;
     NSRegularExpression* _regularExpression;
 }
-- (instancetype)initWithRanges:(NSRangePointer)ranges count:(NSUInteger)count regularExpression:(NSRegularExpression*)regularExpression;
+- (instancetype)initWithRanges:(NSRangePointer)ranges
+                         count:(NSUInteger)count
+             regularExpression:(NSRegularExpression*)regularExpression;
 - (instancetype)initWithRangeArray:(NSArray*)ranges regularExpression:(NSRegularExpression*)regularExpression;
 @end
 
 @implementation TRRegularExpressionCheckingResult
 
-- (instancetype)initWithRanges:(NSRangePointer)ranges count:(NSUInteger)count regularExpression:(NSRegularExpression*)regularExpression
+- (instancetype)initWithRanges:(NSRangePointer)ranges
+                         count:(NSUInteger)count
+             regularExpression:(NSRegularExpression*)regularExpression
 {
     if (count == 0)
     {
@@ -404,8 +457,10 @@ using TRSetFindProgressCallbackFunc = void (*)(
 - (id)resultByAdjustingRangesWithOffset:(NSInteger)offset
 {
     NSMutableArray* adjustedRanges = [NSMutableArray arrayWithCapacity:[_ranges count]];
-    for (NSValue* rangeValue in _ranges)
+    NSUInteger const nRanges = [_ranges count];
+    for (NSUInteger i = 0; i < nRanges; ++i)
     {
+        NSValue* rangeValue = [_ranges objectAtIndex:i];
         [adjustedRanges addObject:[NSValue valueWithRange:TRRangeByAddingOffset([rangeValue rangeValue], offset)]];
     }
 
@@ -419,12 +474,10 @@ using TRSetFindProgressCallbackFunc = void (*)(
 
 @end
 
-static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(
-    NSRangePointer ranges,
-    NSUInteger count,
-    NSRegularExpression* regularExpression)
+static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(NSRangePointer ranges, NSUInteger count, NSRegularExpression* regularExpression)
 {
-    return TR_AUTORELEASE([[TRRegularExpressionCheckingResult alloc] initWithRanges:ranges count:count regularExpression:regularExpression]);
+    return TR_AUTORELEASE([[TRRegularExpressionCheckingResult alloc] initWithRanges:ranges count:count
+                                                                  regularExpression:regularExpression]);
 }
 
 #if !TR_MACOS_OBJC_FRAGILE_RUNTIME
@@ -465,7 +518,9 @@ static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(
     return TREscapeString(string, @"\\$");
 }
 
-+ (instancetype)regularExpressionWithPattern:(NSString*)pattern options:(NSRegularExpressionOptions)options error:(NSError**)error
++ (instancetype)regularExpressionWithPattern:(NSString*)pattern
+                                     options:(NSRegularExpressionOptions)options
+                                       error:(NSError**)error
 {
     id realExpression = TRCallRealRegularExpressionFactory(pattern, options, error);
     if (realExpression != nil)
@@ -617,7 +672,8 @@ static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(
     NSError* error = nil;
     if ([coder allowsKeyedCoding])
     {
-        return [self initWithPattern:[coder decodeObjectForKey:@"NSPattern"] options:[coder decodeInt64ForKey:@"NSOptions"] error:&error];
+        return [self initWithPattern:[coder decodeObjectForKey:@"NSPattern"] options:[coder decodeInt64ForKey:@"NSOptions"]
+                               error:&error];
     }
 
     NSInteger const version = [coder versionForClassName:@"NSRegularExpression"];
@@ -638,7 +694,7 @@ static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(
 - (void)enumerateMatchesInString:(NSString*)string
                          options:(NSMatchingOptions)options
                            range:(NSRange)range
-                      usingBlock:(TRNSMatchingBlock)block
+                      usingBlock:(TR_LEGACY_REGEX_BLOCK_PARAMETER TRNSMatchingBlock)block
 {
     if (string == nil || block == nil)
     {
@@ -657,6 +713,7 @@ static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(
     URegularExpression* regex = nullptr;
     int32_t stringLength = 0;
     UChar* characters = nullptr;
+    NSUInteger resultOffset = 0;
 
     if (range.location > static_cast<NSUInteger>(INT32_MAX) || NSMaxRange(range) > static_cast<NSUInteger>(INT32_MAX))
     {
@@ -671,7 +728,12 @@ static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(
         goto completion;
     }
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    characters = TRCopyCharactersInRange(string, range, &stringLength);
+    resultOffset = range.location;
+#else
     characters = TRCopyCharacters(string, &stringLength);
+#endif
     if (characters == nullptr)
     {
         completionFlags |= NSMatchingInternalError;
@@ -681,6 +743,7 @@ static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(
 
     status = U_ZERO_ERROR;
     uregex_setText(regex, characters, stringLength, &status);
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
     uregex_setRegion(regex, static_cast<int32_t>(range.location), static_cast<int32_t>(NSMaxRange(range)), &status);
     if ((options & NSMatchingWithTransparentBounds) != 0)
     {
@@ -699,6 +762,11 @@ static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(
             findProgressCallback(regex, TRRegexFindProgressCallback, &context, &status);
         }
     }
+#else
+    // Tiger's ICU predates regions and match callbacks. Transmission uses options:0;
+    // matching the requested substring preserves used range/anchor behavior, and
+    // resultOffset restores ranges to the original NSString coordinate space.
+#endif
 
     if (status > U_ZERO_ERROR)
     {
@@ -706,7 +774,7 @@ static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(
     }
     else
     {
-        NSUInteger allowedStart = range.location;
+        NSUInteger allowedStart = range.location - resultOffset;
         NSUInteger const captureCount = [self numberOfCaptureGroups];
         NSUInteger const rangeCount = captureCount + 1;
 
@@ -762,7 +830,7 @@ static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(
                     int32_t const end = uregex_end(regex, static_cast<int32_t>(i), &status);
                     if (status <= U_ZERO_ERROR && start >= 0 && end >= start)
                     {
-                        ranges[i] = NSMakeRange(static_cast<NSUInteger>(start), static_cast<NSUInteger>(end - start));
+                        ranges[i] = NSMakeRange(resultOffset + static_cast<NSUInteger>(start), static_cast<NSUInteger>(end - start));
                     }
                     else
                     {
@@ -787,12 +855,14 @@ static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(
 
     if ((options & NSMatchingReportProgress) != 0)
     {
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
         status = U_ZERO_ERROR;
         uregex_setMatchCallback(regex, nullptr, nullptr, &status);
         if (TRSetFindProgressCallbackFunc findProgressCallback = TRGetSetFindProgressCallback())
         {
             findProgressCallback(regex, nullptr, nullptr, &status);
         }
+#endif
     }
 
     std::free(characters);
@@ -809,40 +879,41 @@ completion:
 - (NSArray*)matchesInString:(NSString*)string options:(NSMatchingOptions)options range:(NSRange)range
 {
     NSMutableArray* results = [NSMutableArray array];
-    [self enumerateMatchesInString:string options:(options & ~(NSMatchingReportProgress | NSMatchingReportCompletion)) range:range usingBlock:
-        ^(NSTextCheckingResult* result, NSMatchingFlags flags, BOOL* stop) {
-            (void)flags;
-            (void)stop;
-            if (result != nil)
-            {
-                [results addObject:result];
-            }
-        }];
+    [self enumerateMatchesInString:string options:(options & ~(NSMatchingReportProgress | NSMatchingReportCompletion))
+                             range:range usingBlock:^(NSTextCheckingResult* result, NSMatchingFlags flags, BOOL* stop) {
+                                 (void)flags;
+                                 (void)stop;
+                                 if (result != nil)
+                                 {
+                                     [results addObject:result];
+                                 }
+                             }];
     return results;
 }
 
 - (NSUInteger)numberOfMatchesInString:(NSString*)string options:(NSMatchingOptions)options range:(NSRange)range
 {
     __block NSUInteger count = 0;
-    [self enumerateMatchesInString:string options:(options & ~(NSMatchingReportProgress | NSMatchingReportCompletion)) | TRMatchingSkipResultObjects range:range usingBlock:
-        ^(NSTextCheckingResult* result, NSMatchingFlags flags, BOOL* stop) {
-            (void)result;
-            (void)flags;
-            (void)stop;
-            ++count;
-        }];
+    [self enumerateMatchesInString:string
+                           options:(options & ~(NSMatchingReportProgress | NSMatchingReportCompletion)) | TRMatchingSkipResultObjects
+                             range:range usingBlock:^(NSTextCheckingResult* result, NSMatchingFlags flags, BOOL* stop) {
+                                 (void)result;
+                                 (void)flags;
+                                 (void)stop;
+                                 ++count;
+                             }];
     return count;
 }
 
 - (NSTextCheckingResult*)firstMatchInString:(NSString*)string options:(NSMatchingOptions)options range:(NSRange)range
 {
     __block NSTextCheckingResult* firstMatch = nil;
-    [self enumerateMatchesInString:string options:(options & ~(NSMatchingReportProgress | NSMatchingReportCompletion)) range:range usingBlock:
-        ^(NSTextCheckingResult* result, NSMatchingFlags flags, BOOL* stop) {
-            (void)flags;
-            firstMatch = result;
-            *stop = YES;
-        }];
+    [self enumerateMatchesInString:string options:(options & ~(NSMatchingReportProgress | NSMatchingReportCompletion))
+                             range:range usingBlock:^(NSTextCheckingResult* result, NSMatchingFlags flags, BOOL* stop) {
+                                 (void)flags;
+                                 firstMatch = result;
+                                 *stop = YES;
+                             }];
     return firstMatch;
 }
 
@@ -924,7 +995,8 @@ completion:
         {
             break;
         }
-        markerRange = [replacement rangeOfCharacterFromSet:markerSet options:0 range:NSMakeRange(nextLocation, [replacement length] - nextLocation)];
+        markerRange = [replacement rangeOfCharacterFromSet:markerSet options:0
+                                                     range:NSMakeRange(nextLocation, [replacement length] - nextLocation)];
     }
 
     return replacement;
@@ -946,9 +1018,9 @@ completion:
 }
 
 - (NSUInteger)replaceMatchesInString:(NSMutableString*)string
-                              options:(NSMatchingOptions)options
-                                range:(NSRange)range
-                         withTemplate:(NSString*)templ
+                             options:(NSMatchingOptions)options
+                               range:(NSRange)range
+                        withTemplate:(NSString*)templ
 {
     if (string == nil || templ == nil)
     {
@@ -959,8 +1031,10 @@ completion:
     NSInteger offset = 0;
     NSUInteger replacementCount = 0;
 
-    for (NSTextCheckingResult* match in matches)
+    NSUInteger const nMatches = [matches count];
+    for (NSUInteger i = 0; i < nMatches; ++i)
     {
+        NSTextCheckingResult* match = [matches objectAtIndex:i];
         NSRange matchRange = [match range];
         NSString* replacement = [self replacementStringForResult:match inString:string offset:offset template:templ];
         matchRange.location += offset;
@@ -1002,8 +1076,10 @@ completion:
     NSArray* matches = [super matchesInString:string options:options range:range];
     NSMutableArray* linkMatches = [NSMutableArray arrayWithCapacity:[matches count]];
 
-    for (NSTextCheckingResult* match in matches)
+    NSUInteger const nMatches = [matches count];
+    for (NSUInteger i = 0; i < nMatches; ++i)
     {
+        NSTextCheckingResult* match = [matches objectAtIndex:i];
         NSRange matchRange = [match range];
         NSURL* url = [NSURL URLWithString:[string substringWithRange:matchRange]];
         if (url != nil)

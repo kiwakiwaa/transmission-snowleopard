@@ -6,6 +6,8 @@
 
 #include <libtransmission/macos-version.h>
 
+#import "LegacyFoundationTypes.h"
+
 #if TR_MACOS_SDK_BEFORE_10_7
 
 typedef NSUInteger NSRegularExpressionOptions;
@@ -53,7 +55,13 @@ typedef struct URegularExpression URegularExpression;
 
 typedef void (^TRNSMatchingBlock)(NSTextCheckingResult* result, NSMatchingFlags flags, BOOL* stop);
 
-@interface TRLegacyRegularExpression : NSObject <NSCopying, NSCoding>
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#define TR_LEGACY_REGEX_BLOCK_PARAMETER __unsafe_unretained
+#else
+#define TR_LEGACY_REGEX_BLOCK_PARAMETER
+#endif
+
+@interface TRLegacyRegularExpression : NSObject<NSCopying, NSCoding>
 #if TR_MACOS_OBJC_FRAGILE_RUNTIME
 {
   @private
@@ -64,7 +72,9 @@ typedef void (^TRNSMatchingBlock)(NSTextCheckingResult* result, NSMatchingFlags 
 #endif
 + (NSString*)escapedPatternForString:(NSString*)string;
 + (NSString*)escapedTemplateForString:(NSString*)string;
-+ (instancetype)regularExpressionWithPattern:(NSString*)pattern options:(NSRegularExpressionOptions)options error:(NSError**)error;
++ (instancetype)regularExpressionWithPattern:(NSString*)pattern
+                                     options:(NSRegularExpressionOptions)options
+                                       error:(NSError**)error;
 - (instancetype)initWithPattern:(NSString*)pattern options:(NSRegularExpressionOptions)options error:(NSError**)error;
 - (NSString*)pattern;
 - (NSRegularExpressionOptions)options;
@@ -72,7 +82,7 @@ typedef void (^TRNSMatchingBlock)(NSTextCheckingResult* result, NSMatchingFlags 
 - (void)enumerateMatchesInString:(NSString*)string
                          options:(NSMatchingOptions)options
                            range:(NSRange)range
-                      usingBlock:(TRNSMatchingBlock)block;
+                      usingBlock:(TR_LEGACY_REGEX_BLOCK_PARAMETER TRNSMatchingBlock)block;
 - (NSArray*)matchesInString:(NSString*)string options:(NSMatchingOptions)options range:(NSRange)range;
 - (NSUInteger)numberOfMatchesInString:(NSString*)string options:(NSMatchingOptions)options range:(NSRange)range;
 - (NSTextCheckingResult*)firstMatchInString:(NSString*)string options:(NSMatchingOptions)options range:(NSRange)range;
@@ -82,9 +92,9 @@ typedef void (^TRNSMatchingBlock)(NSTextCheckingResult* result, NSMatchingFlags 
                                         range:(NSRange)range
                                  withTemplate:(NSString*)templ;
 - (NSUInteger)replaceMatchesInString:(NSMutableString*)string
-                              options:(NSMatchingOptions)options
-                                range:(NSRange)range
-                         withTemplate:(NSString*)templ;
+                             options:(NSMatchingOptions)options
+                               range:(NSRange)range
+                        withTemplate:(NSString*)templ;
 - (NSString*)replacementStringForResult:(NSTextCheckingResult*)result
                                inString:(NSString*)string
                                  offset:(NSInteger)offset
