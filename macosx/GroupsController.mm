@@ -5,6 +5,7 @@
 #import "GroupsController.h"
 #import "CocoaCompatibility.h"
 #import "LegacyArchiving.h"
+#import "LegacyPredicateEditor.h"
 #import "NSImageAdditions.h"
 #import "NSMutableArrayAdditions.h"
 
@@ -89,6 +90,7 @@ static NSString* TRSupportedAnnouncedClientIdentity(NSString* value)
                                       NSColor.class,
                                       NSString.class,
                                       NSPredicate.class,
+                                      TRLegacyContainsPredicate.class,
                                       nil]);
         }
         else if ((data = [NSUserDefaults.standardUserDefaults dataForKey:@"Groups"])) //handle old groups

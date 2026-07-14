@@ -322,6 +322,8 @@ target_sources(${TR_NAME}-mac
         LegacyConstraints.mm
         LegacyFormatters.h
         LegacyFormatters.mm
+        LegacyPredicateEditor.h
+        LegacyPredicateEditor.mm
         LegacyPowerActivity.h
         LegacyPowerActivity.mm
         LegacyPopover.h

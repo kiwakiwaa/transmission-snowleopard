@@ -9,6 +9,7 @@
 #import "ExpandedPathToPathTransformer.h"
 #import "ExpandedPathToIconTransformer.h"
 #import "LegacyArchiving.h"
+#import "LegacyPredicateEditor.h"
 
 #include <libtransmission/transmission.h>
 
@@ -332,7 +333,7 @@ typedef NS_ENUM(NSInteger, SegmentTag) {
     }
 
     NSInteger index = [GroupsController.groups indexForRow:self.fTableView.selectedRow];
-    NSPredicate* predicate = [GroupsController.groups autoAssignRulesForIndex:index];
+    NSPredicate* predicate = TRNativePredicateFromLegacyContainsPredicate([GroupsController.groups autoAssignRulesForIndex:index]);
     self.ruleEditor.objectValue = predicate;
 
     if (self.ruleEditor.numberOfRows == 0)
@@ -372,6 +373,9 @@ typedef NS_ENUM(NSInteger, SegmentTag) {
 
 - (void)ruleEditorRowsDidChange:(NSNotification*)notification
 {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    return;
+#else
     NSScrollView* ruleEditorScrollView = self.ruleEditor.enclosingScrollView;
 
     CGFloat const rowHeight = self.ruleEditor.rowHeight;
@@ -382,6 +386,7 @@ typedef NS_ENUM(NSInteger, SegmentTag) {
 
     self.ruleEditorHeightConstraint.constant = MIN(requiredRowCount, maxVisibleRowCount) * rowHeight + bordersHeight;
     ruleEditorScrollView.hasVerticalScroller = requiredRowCount > maxVisibleRowCount;
+#endif
 }
 
 #pragma mark - Private

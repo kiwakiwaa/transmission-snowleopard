@@ -8,6 +8,23 @@
 
 - (NSPredicate*)predicateWithSubpredicates:(NSArray*)subpredicates
 {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    NSPredicate* predicate = [super predicateWithSubpredicates:subpredicates];
+    if ([predicate isKindOfClass:[TRLegacyContainsPredicate class]])
+    {
+        TRLegacyContainsPredicate* contains = (TRLegacyContainsPredicate*)predicate;
+        return [[TRLegacyContainsPredicate alloc] initWithKeyPath:contains.keyPath
+                                                           value:contains.value
+                                                        modifier:NSAnyPredicateModifier
+                                                         options:contains.options];
+    }
+
+    NSComparisonPredicate* comparison = (NSComparisonPredicate*)predicate;
+    return [NSComparisonPredicate predicateWithLeftExpression:comparison.leftExpression rightExpression:comparison.rightExpression
+                                                     modifier:NSAnyPredicateModifier
+                                                         type:comparison.predicateOperatorType
+                                                      options:comparison.options];
+#else
     //we only make NSComparisonPredicates
     NSComparisonPredicate* predicate = (NSComparisonPredicate*)[super predicateWithSubpredicates:subpredicates];
 
@@ -16,6 +33,7 @@
                                                      modifier:NSAnyPredicateModifier
                                                          type:predicate.predicateOperatorType
                                                       options:predicate.options];
+#endif
 }
 
 @end
