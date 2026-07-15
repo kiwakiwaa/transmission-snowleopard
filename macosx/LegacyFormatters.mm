@@ -7,6 +7,262 @@
 
 #include <libtransmission/macos-version.h>
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+
+#import "LegacyAssociatedObjects.h"
+
+#import <objc/objc-class.h>
+#import <objc/objc-runtime.h>
+
+namespace
+{
+
+char TRDoesRelativeDateFormattingKey;
+
+struct TRRelativeDateNames
+{
+    char const* locale;
+    char const* names[7]; // Day offsets -3 through +3. NULL means use the absolute date.
+};
+
+// These are the relative day names used by the Mac OS X 10.6 ICU data for
+// Transmission's supported locales. Some locales intentionally have gaps.
+TRRelativeDateNames const RelativeDateNames[] = {
+    { "da", { "for tre dage siden", "i forgårs", "i går", "i dag", "i morgen", "i overmorgen", "om tre dage" } },
+    { "de", { "Vor drei Tagen", "Vorgestern", "Gestern", "Heute", "Morgen", "Übermorgen", "In drei Tagen" } },
+    { "en", { NULL, NULL, "Yesterday", "Today", "Tomorrow", NULL, NULL } },
+    { "es", { NULL, "antes de ayer", "ayer", "hoy", "mañana", "pasado mañana", NULL } },
+    { "eu", { NULL, NULL, "Yesterday", "Today", "Tomorrow", NULL, NULL } },
+    { "fr", { "avant-avant-hier", "avant-hier", "hier", "aujourd’hui", "demain", "après-demain", "après-après-demain" } },
+    { "he", { "לפני שלושה ימים", "שלשום", "אתמול", "היום", "מחר", "מחרתיים", "בעוד שלושה ימים" } },
+    { "hu", { "három nappal ezelőtt", "tegnapelőtt", "tegnap", "ma", "holnap", "holnapután", "három nap múlva" } },
+    { "it", { "tre giorni fa", "l'altro ieri", "ieri", "oggi", "domani", "dopodomani", "tra tre giorni" } },
+    { "ja", { NULL, "一昨日", "昨日", "今日", "明日", "明後日", NULL } },
+    { "nl", { "Drie dagen geleden", "Eergisteren", "Gisteren", "Vandaag", "Morgen", "Overmorgen", "Over drie dagen" } },
+    { "pl", { "Trzy dni temu", "Przedwczoraj", "Wczoraj", "Dzisiaj", "Jutro", "Pojutrze", "Za trzy dni" } },
+    { "pt_BR", { "Três dias atrás", "Antes de ontem", "Ontem", "Hoje", "Amanhã", "Depois de amanhã", "Três dias a partir de hoje" } },
+    { "pt_PT", { "Trás-anteontem", "Anteontem", NULL, NULL, NULL, NULL, "Em três dias" } },
+    { "ru", { NULL, "Позавчера", "Вчера", "Сегодня", "Завтра", "Послезавтра", NULL } },
+    { "sv", { NULL, "i förrgår", "igår", "idag", "imorgon", "i övermorgon", NULL } },
+    { "tr", { "Üç gün önce", "Evvelsi gün", "Dün", "Bugün", "Yarın", "Yarından sonraki gün", "Üç gün sonra" } },
+    { "uk", { NULL, "Позавчора", "Вчора", "Сьогодні", "Завтра", "Післязавтра", NULL } },
+    { "zh_CN", { NULL, "前天", "昨天", "今天", "明天", "后天", NULL } },
+    { "zh_TW", { "大前天", NULL, NULL, NULL, NULL, "後天", "大後天" } },
+};
+
+NSString* TRRelativeDateLocaleIdentifier(NSLocale* locale)
+{
+    NSString* identifier = [locale localeIdentifier];
+    if (identifier == nil)
+    {
+        identifier = [[NSLocale currentLocale] localeIdentifier];
+    }
+
+    identifier = [[identifier componentsSeparatedByString:@"@"] objectAtIndex:0];
+    identifier = [[identifier componentsSeparatedByString:@"-"] componentsJoinedByString:@"_"];
+    NSArray* components = [identifier componentsSeparatedByString:@"_"];
+    NSString* language = [[components objectAtIndex:0] lowercaseString];
+
+    if ([language isEqualToString:@"iw"])
+    {
+        return @"he";
+    }
+    if ([language isEqualToString:@"pt"])
+    {
+        for (NSString* component in components)
+        {
+            if ([[component uppercaseString] isEqualToString:@"BR"])
+            {
+                return @"pt_BR";
+            }
+        }
+        return @"pt_PT";
+    }
+    if ([language isEqualToString:@"zh"])
+    {
+        for (NSString* component in components)
+        {
+            NSString* normalized = [component lowercaseString];
+            if ([normalized isEqualToString:@"tw"] || [normalized isEqualToString:@"hant"])
+            {
+                return @"zh_TW";
+            }
+        }
+        return @"zh_CN";
+    }
+    return language;
+}
+
+NSString* TRRelativeDateName(NSString* localeIdentifier, NSInteger dayOffset)
+{
+    if (dayOffset < -3 || dayOffset > 3)
+    {
+        return nil;
+    }
+
+    for (NSUInteger i = 0; i < sizeof(RelativeDateNames) / sizeof(RelativeDateNames[0]); ++i)
+    {
+        TRRelativeDateNames const& entry = RelativeDateNames[i];
+        if ([localeIdentifier isEqualToString:[NSString stringWithUTF8String:entry.locale]])
+        {
+            char const* name = entry.names[dayOffset + 3];
+            return name != NULL ? [NSString stringWithUTF8String:name] : nil;
+        }
+    }
+    return nil;
+}
+
+NSString* TRSnowLeopardShortTimeString(NSDateFormatter* formatter, NSDate* date, NSString* localeIdentifier)
+{
+    NSDateFormatter* timeOnlyFormatter = [[NSDateFormatter alloc] init];
+    [timeOnlyFormatter setFormatterBehavior:[formatter formatterBehavior]];
+    [timeOnlyFormatter setLocale:[formatter locale]];
+    [timeOnlyFormatter setCalendar:[formatter calendar]];
+    [timeOnlyFormatter setTimeZone:[formatter timeZone]];
+    [timeOnlyFormatter setDateStyle:NSDateFormatterNoStyle];
+    [timeOnlyFormatter setTimeStyle:NSDateFormatterShortStyle];
+
+    NSMutableString* time = [[timeOnlyFormatter stringFromDate:date] mutableCopy];
+    if ([localeIdentifier isEqualToString:@"it"])
+    {
+        // Tiger's ICU uses a colon here; Snow Leopard's short Italian time uses a period.
+        NSRange separator = [time rangeOfString:@":"];
+        if (separator.location != NSNotFound)
+        {
+            [time replaceCharactersInRange:separator withString:@"."];
+        }
+    }
+    else if ([localeIdentifier isEqualToString:@"zh_TW"])
+    {
+        // Tiger inserts a space after the day period; Snow Leopard does not.
+        NSRange spacing = [time rangeOfString:@" "];
+        if (spacing.location != NSNotFound)
+        {
+            [time deleteCharactersInRange:spacing];
+        }
+    }
+    return time;
+}
+
+NSInteger TRRelativeDateDayOffset(NSDateFormatter* formatter, NSDate* date)
+{
+    NSCalendar* calendar = [[formatter calendar] copy];
+    if (calendar == nil)
+    {
+        calendar = [[NSCalendar currentCalendar] copy];
+    }
+    if ([formatter timeZone] != nil)
+    {
+        [calendar setTimeZone:[formatter timeZone]];
+    }
+
+    NSUInteger const units = NSEraCalendarUnit | NSYearCalendarUnit | NSMonthCalendarUnit | NSDayCalendarUnit;
+    NSDateComponents* todayComponents = [calendar components:units fromDate:[NSDate date]];
+    NSDateComponents* dateComponents = [calendar components:units fromDate:date];
+    [todayComponents setHour:12];
+    [dateComponents setHour:12];
+
+    NSDate* today = [calendar dateFromComponents:todayComponents];
+    NSDate* target = [calendar dateFromComponents:dateComponents];
+    if (today == nil || target == nil)
+    {
+        return NSIntegerMax;
+    }
+    return [[calendar components:NSDayCalendarUnit fromDate:today toDate:target options:0] day];
+}
+
+NSString* TRRelativeDateString(NSDateFormatter* formatter, NSDate* date, NSString* absoluteString)
+{
+    if (![formatter doesRelativeDateFormatting] || [formatter dateStyle] == NSDateFormatterNoStyle)
+    {
+        return absoluteString;
+    }
+
+    NSString* localeIdentifier = TRRelativeDateLocaleIdentifier([formatter locale]);
+    NSString* relativeName = TRRelativeDateName(localeIdentifier, TRRelativeDateDayOffset(formatter, date));
+    if (relativeName == nil)
+    {
+        return absoluteString;
+    }
+
+    if ([formatter timeStyle] == NSDateFormatterNoStyle)
+    {
+        return relativeName;
+    }
+    if ([formatter timeStyle] != NSDateFormatterShortStyle)
+    {
+        return absoluteString; // Transmission has no relative formatter using another time style.
+    }
+
+    NSString* time = TRSnowLeopardShortTimeString(formatter, date, localeIdentifier);
+    // Every supported Snow Leopard relative-date + short-time pattern places the relative day first with one separating space.
+    return time != nil ? [NSString stringWithFormat:@"%@ %@", relativeName, time] : absoluteString;
+}
+
+using TRStringForObjectValueImplementation = NSString* (*)(id, SEL, id);
+TRStringForObjectValueImplementation OriginalStringForObjectValue = NULL;
+TRStringForObjectValueImplementation OriginalStringFromDate = NULL;
+
+NSString* TRStringForObjectValue(NSDateFormatter* formatter, SEL selector, id object)
+{
+    NSString* absoluteString = OriginalStringForObjectValue(formatter, selector, object);
+    if (![object isKindOfClass:[NSDate class]] || absoluteString == nil)
+    {
+        return absoluteString;
+    }
+    return TRRelativeDateString(formatter, object, absoluteString);
+}
+
+NSString* TRStringFromDate(NSDateFormatter* formatter, SEL selector, NSDate* date)
+{
+    NSString* absoluteString = OriginalStringFromDate(formatter, selector, date);
+    return date != nil && absoluteString != nil ? TRRelativeDateString(formatter, date, absoluteString) : absoluteString;
+}
+
+} // namespace
+
+@implementation NSDateFormatter (TRRelativeDateFormatting)
+
++ (void)load
+{
+    Method method = class_getInstanceMethod(self, @selector(stringForObjectValue:));
+    if (method != NULL)
+    {
+        OriginalStringForObjectValue = (TRStringForObjectValueImplementation)method->method_imp;
+        method->method_imp = (IMP)TRStringForObjectValue;
+    }
+
+    method = class_getInstanceMethod(self, @selector(stringFromDate:));
+    if (method != NULL)
+    {
+        OriginalStringFromDate = (TRStringForObjectValueImplementation)method->method_imp;
+        method->method_imp = (IMP)TRStringFromDate;
+    }
+}
+
+- (BOOL)doesRelativeDateFormatting
+{
+    if ([self formatterBehavior] != NSDateFormatterBehavior10_4)
+    {
+        return NO;
+    }
+    return [TRLegacyGetAssociatedObject(self, &TRDoesRelativeDateFormattingKey) boolValue];
+}
+
+- (void)setDoesRelativeDateFormatting:(BOOL)doesRelativeDateFormatting
+{
+    if ([self formatterBehavior] != NSDateFormatterBehavior10_4)
+    {
+        return;
+    }
+    NSNumber* value = doesRelativeDateFormatting ? [NSNumber numberWithBool:YES] : nil;
+    TRLegacySetAssociatedObject(self, &TRDoesRelativeDateFormattingKey, value, TRLegacyAssociationRetainNonatomic);
+}
+
+@end
+
+#endif
+
 static NSString* TRLegacyTimeRemainingString(NSTimeInterval interval)
 {
     NSInteger secondsTotal = MAX(0, (NSInteger)interval);

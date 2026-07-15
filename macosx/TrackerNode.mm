@@ -25,6 +25,9 @@
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         formatter = [[NSDateFormatter alloc] init];
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+        formatter.formatterBehavior = NSDateFormatterBehavior10_4;
+#endif
         formatter.dateStyle = NSDateFormatterFullStyle;
         formatter.timeStyle = NSDateFormatterShortStyle;
         formatter.doesRelativeDateFormatting = YES;

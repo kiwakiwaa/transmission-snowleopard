@@ -130,6 +130,11 @@ static void TRMoveLegacyInspectorSubview(NSView* subview, NSView* destinationVie
 - (void)awakeFromNib
 {
     [super awakeFromNib];
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    [(NSDateFormatter*)self.fDateAddedField.formatter setDoesRelativeDateFormatting:YES];
+    [(NSDateFormatter*)self.fDateCompletedField.formatter setDoesRelativeDateFormatting:YES];
+    [(NSDateFormatter*)self.fDateActivityField.formatter setDoesRelativeDateFormatting:YES];
+#endif
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_8
     [self upgradeLegacyFlatActivityViewIfNeeded];
 #endif
