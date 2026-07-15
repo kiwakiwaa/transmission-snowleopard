@@ -561,7 +561,7 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
 
     // If cannot trash, just delete it (will work if it's on a remote volume)
     NSError* localError;
-    if ([NSFileManager.defaultManager removeItemAtPath:path error:&localError])
+    if (TRRemoveItemAtPath(NSFileManager.defaultManager, path, &localError))
     {
         NSLog(@"Old removed %@", path);
         return YES;
@@ -663,11 +663,11 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
             [alert addButtonWithTitle:NSLocalizedString(@"OK", "Torrent disk space alert -> button")];
             [alert addButtonWithTitle:NSLocalizedString(@"Download Anyway", "Torrent disk space alert -> button")];
 
-            alert.showsSuppressionButton = YES;
-            alert.suppressionButton.title = NSLocalizedString(@"Do not check disk space again", "Torrent disk space alert -> button");
+            TRSetAlertShowsSuppressionButton(alert, YES);
+            TRAlertSuppressionButton(alert).title = NSLocalizedString(@"Do not check disk space again", "Torrent disk space alert -> button");
 
             NSInteger const result = [alert runModal];
-            if (alert.suppressionButton.state == NSControlStateValueOn)
+            if (TRAlertSuppressionButton(alert).state == NSControlStateValueOn)
             {
                 [self.fDefaults setBool:NO forKey:@"WarningRemainingSpace"];
             }

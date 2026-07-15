@@ -554,7 +554,7 @@ static NSString* TRFileOutlinePathTooltip(FileListNode* node)
 
     if (paths.count > 0)
     {
-        [NSWorkspace.sharedWorkspace activateFileViewerSelectingURLs:paths];
+        TRActivateFileViewerSelectingURLs(paths);
     }
 }
 

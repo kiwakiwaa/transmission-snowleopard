@@ -3,6 +3,7 @@
 // License text can be found in the licenses/ folder.
 
 #import "DragOverlayWindow.h"
+#import "CocoaCompatibility.h"
 #import "DragOverlayView.h"
 #import "NSStringAdditions.h"
 
@@ -72,8 +73,7 @@
 
     for (NSString* file in files)
     {
-        if ([[NSWorkspace.sharedWorkspace typeOfFile:file error:NULL] isEqualToString:@"org.bittorrent.torrent"] ||
-            [file.pathExtension caseInsensitiveCompare:@"torrent"] == NSOrderedSame)
+        if (TRIsTorrentFileAtPath(file))
         {
             auto metainfo = tr_torrent_metainfo{};
             if (metainfo.parse_torrent_file(file.UTF8String))

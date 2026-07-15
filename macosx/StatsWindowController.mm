@@ -102,7 +102,7 @@ static tr_session* fLib = NULL;
     self.window.title = NSLocalizedString(@"Statistics", "Stats window -> title");
 
     //disable fullscreen support
-    self.window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
+    TRSetWindowCollectionBehavior(self.window, NSWindowCollectionBehaviorFullScreenNone);
 
     //set label text
     self.fUploadedLabelField.stringValue = [NSLocalizedString(@"Uploaded", "Stats window -> label") stringByAppendingString:@":"];
@@ -147,10 +147,10 @@ static tr_session* fLib = NULL;
     alert.alertStyle = NSAlertStyleWarning;
     [alert addButtonWithTitle:NSLocalizedString(@"Reset", "Stats reset -> button")];
     [alert addButtonWithTitle:NSLocalizedString(@"Cancel", "Stats reset -> button")];
-    alert.showsSuppressionButton = YES;
+    TRSetAlertShowsSuppressionButton(alert, YES);
 
     [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse returnCode) {
-        if (alert.suppressionButton.state == NSControlStateValueOn)
+        if (TRAlertSuppressionButton(alert).state == NSControlStateValueOn)
         {
             [NSUserDefaults.standardUserDefaults setBool:NO forKey:@"WarningResetStats"];
         }

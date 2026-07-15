@@ -666,8 +666,7 @@ static NSString* const kWebSeedAnimationId = @"webSeed";
     //sort by IP after primary sort
     if (useSecond)
     {
-        NSSortDescriptor* secondDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"IP" ascending:asc
-                                                                            selector:@selector(compareNumeric:)];
+        NSSortDescriptor* secondDescriptor = TRSortDescriptorWithSelector(@"IP", asc, @selector(compareNumeric:));
         [descriptors addObject:secondDescriptor];
     }
 

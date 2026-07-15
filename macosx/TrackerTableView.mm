@@ -3,6 +3,7 @@
 // License text can be found in the licenses/ folder.
 
 #import "TrackerTableView.h"
+#import "CocoaCompatibility.h"
 #import "Torrent.h"
 #import "TrackerNode.h"
 
@@ -42,9 +43,7 @@
 
     NSString* text = [addresses componentsJoinedByString:@"\n"];
 
-    NSPasteboard* pb = NSPasteboard.generalPasteboard;
-    [pb clearContents];
-    [pb writeObjects:@[ text ]];
+    TRPasteboardWriteStrings([NSPasteboard generalPasteboard], @[ text ]);
 }
 
 - (void)paste:(id)sender
@@ -53,7 +52,7 @@
 
     BOOL added = NO;
 
-    NSArray* items = [NSPasteboard.generalPasteboard readObjectsForClasses:@[ [NSString class] ] options:nil];
+    NSArray* items = TRPasteboardReadStrings([NSPasteboard generalPasteboard]);
     NSAssert(items != nil, @"no string items to paste; should not be able to call this method");
 
     for (NSString* pbItem in items)
@@ -85,7 +84,7 @@
 
     if (action == @selector(paste:))
     {
-        return self.torrent && [NSPasteboard.generalPasteboard canReadObjectForClasses:@[ [NSString class] ] options:nil];
+        return self.torrent && TRPasteboardCanReadStrings([NSPasteboard generalPasteboard]);
     }
 
     return YES;

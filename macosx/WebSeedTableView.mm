@@ -3,6 +3,7 @@
 // License text can be found in the licenses/ folder.
 
 #import "WebSeedTableView.h"
+#import "CocoaCompatibility.h"
 
 @implementation WebSeedTableView
 
@@ -27,9 +28,7 @@
 
     NSString* text = [addresses componentsJoinedByString:@"\n"];
 
-    NSPasteboard* pb = NSPasteboard.generalPasteboard;
-    [pb clearContents];
-    [pb writeObjects:@[ text ]];
+    TRPasteboardWriteStrings([NSPasteboard generalPasteboard], @[ text ]);
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem*)menuItem

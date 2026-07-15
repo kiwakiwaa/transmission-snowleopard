@@ -1068,7 +1068,7 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
             return YES;
         }
 
-        NSArray* items = [NSPasteboard.generalPasteboard readObjectsForClasses:@[ [NSString class] ] options:nil];
+        NSArray* items = TRPasteboardReadStrings([NSPasteboard generalPasteboard]);
         if (items)
         {
             NSDataDetector* detector = [NSDataDetector dataDetectorWithTypes:NSTextCheckingTypeLink error:nil];
@@ -1212,7 +1212,7 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
     if (location)
     {
         NSURL* file = [NSURL fileURLWithPath:location];
-        [NSWorkspace.sharedWorkspace activateFileViewerSelectingURLs:@[ file ]];
+        TRActivateFileViewerSelectingURLs(@[ file ]);
     }
 }
 

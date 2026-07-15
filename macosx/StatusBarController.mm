@@ -3,6 +3,7 @@
 // License text can be found in the licenses/ folder.
 
 #import "StatusBarController.h"
+#import "CocoaCompatibility.h"
 #import "NSStringAdditions.h"
 #import "Utils.h"
 
@@ -28,7 +29,7 @@ static CGFloat const kSpeedFieldMinimumWidth = 82.0;
 static void TRPrepareStatusSpeedField(NSTextField* field)
 {
     NSTextFieldCell* cell = (NSTextFieldCell*)field.cell;
-    cell.usesSingleLineMode = YES;
+    TRSetCellUsesSingleLineMode(cell, YES);
     cell.lineBreakMode = NSLineBreakByClipping;
 
     [field addConstraint:[NSLayoutConstraint constraintWithItem:field

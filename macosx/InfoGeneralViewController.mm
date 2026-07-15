@@ -3,6 +3,7 @@
 // License text can be found in the licenses/ folder.
 
 #import "InfoGeneralViewController.h"
+#import "CocoaCompatibility.h"
 #import "NSStringAdditions.h"
 #import "Torrent.h"
 
@@ -100,7 +101,7 @@
     }
 
     NSURL* file = [NSURL fileURLWithPath:location];
-    [NSWorkspace.sharedWorkspace activateFileViewerSelectingURLs:@[ file ]];
+    TRActivateFileViewerSelectingURLs(@[ file ]);
 }
 
 #pragma mark - Private

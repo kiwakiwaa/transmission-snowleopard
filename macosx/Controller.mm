@@ -438,7 +438,7 @@ static void removeKeRangerRansomware()
             continue;
         }
 
-        if (![fileManager removeItemAtPath:krFilePath error:NULL])
+        if (!TRRemoveItemAtPath(fileManager, krFilePath, NULL))
         {
             NSLog(@"Unable to remove ransomware file at %@, please do so manually", krFilePath);
         }
@@ -832,7 +832,7 @@ static void removeKeRangerRansomware()
     self.fWindow.excludedFromWindowsMenu = YES;
 
     //make window primary view in fullscreen
-    self.fWindow.collectionBehavior = NSWindowCollectionBehaviorFullScreenPrimary;
+    TRSetWindowCollectionBehavior(self.fWindow, NSWindowCollectionBehaviorFullScreenPrimary);
 
     //set table size
     BOOL const small = [self.fDefaults boolForKey:@"SmallView"];
@@ -1179,10 +1179,10 @@ static void removeKeRangerRansomware()
 
             // hide the "don't show again" check the first time - give them time to try the app
             BOOL const allowNeverAgain = lastDonateDate != nil;
-            alert.showsSuppressionButton = allowNeverAgain;
+            TRSetAlertShowsSuppressionButton(alert, allowNeverAgain);
             if (allowNeverAgain)
             {
-                alert.suppressionButton.title = NSLocalizedString(@"Don't bug me about this ever again.", "Donation beg -> button");
+                TRAlertSuppressionButton(alert).title = NSLocalizedString(@"Don't bug me about this ever again.", "Donation beg -> button");
             }
 
             NSInteger const donateResult = [alert runModal];
@@ -1193,7 +1193,7 @@ static void removeKeRangerRansomware()
 
             if (allowNeverAgain)
             {
-                [self.fDefaults setBool:(alert.suppressionButton.state != NSControlStateValueOn) forKey:@"WarningDonate"];
+                [self.fDefaults setBool:(TRAlertSuppressionButton(alert).state != NSControlStateValueOn) forKey:@"WarningDonate"];
             }
         }
     }
@@ -1252,10 +1252,10 @@ static void removeKeRangerRansomware()
                                             active];
     [alert addButtonWithTitle:NSLocalizedString(@"Quit", "Confirm Quit panel -> button")];
     [alert addButtonWithTitle:NSLocalizedString(@"Cancel", "Confirm Quit panel -> button")];
-    alert.showsSuppressionButton = YES;
+    TRSetAlertShowsSuppressionButton(alert, YES);
 
     [alert beginSheetModalForWindow:self.fWindow completionHandler:^(NSModalResponse returnCode) {
-        if (alert.suppressionButton.state == NSControlStateValueOn)
+        if (TRAlertSuppressionButton(alert).state == NSControlStateValueOn)
         {
             [self.fDefaults setBool:NO forKey:@"CheckQuit"];
         }
@@ -1422,7 +1422,7 @@ static void removeKeRangerRansomware()
 
     NSString* path = [NSTemporaryDirectory() stringByAppendingPathComponent:name];
     NSError* error = nil;
-    [[NSFileManager defaultManager] moveItemAtPath:location.path toPath:path error:&error];
+    TRMoveItemAtPath(NSFileManager.defaultManager, location.path, path, &error);
     if (error)
     {
         [self showTorrentDownloadError:error originalURLString:originalURLString currentURLString:originalURLString];
@@ -1431,7 +1431,7 @@ static void removeKeRangerRansomware()
 
     dispatch_async(dispatch_get_main_queue(), ^{
         [self openFiles:@[ path ] addType:AddTypeURL forcePath:nil];
-        [[NSFileManager defaultManager] removeItemAtPath:path error:NULL];
+        TRRemoveItemAtPath(NSFileManager.defaultManager, path, NULL);
     });
 }
 
@@ -1813,7 +1813,7 @@ static void removeKeRangerRansomware()
 
     panel.allowedFileTypes = @[ @"org.bittorrent.torrent", @"torrent" ];
 
-    [panel beginSheetModalForWindow:self.fWindow completionHandler:^(NSInteger result) {
+    TRBeginPanelSheetModalForWindow(panel, self.fWindow, ^(NSInteger result) {
         if (result == NSModalResponseOK)
         {
             NSMutableArray* filenames = [NSMutableArray arrayWithCapacity:panel.URLs.count];
@@ -1824,13 +1824,13 @@ static void removeKeRangerRansomware()
 
             NSDictionary* dictionary = @{
                 @"Filenames" : filenames,
-                @"AddType" : sender == self.fOpenIgnoreDownloadFolder ? @(AddTypeShowOptions) : @(AddTypeManual)
+                @"AddType" : [NSNumber numberWithInt:sender == self.fOpenIgnoreDownloadFolder ? AddTypeShowOptions : AddTypeManual]
             };
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self openFilesWithDict:dictionary];
             });
         }
-    }];
+    });
 }
 
 - (void)invalidOpenAlert:(NSString*)filename
@@ -1849,7 +1849,7 @@ static void removeKeRangerRansomware()
     [alert addButtonWithTitle:NSLocalizedString(@"OK", "Open invalid alert -> button")];
 
     [alert runModal];
-    if (alert.suppressionButton.state == NSControlStateValueOn)
+    if (TRAlertSuppressionButton(alert).state == NSControlStateValueOn)
     {
         [self.fDefaults setBool:NO forKey:@"WarningInvalidOpen"];
     }
@@ -1873,7 +1873,7 @@ static void removeKeRangerRansomware()
     [alert addButtonWithTitle:NSLocalizedString(@"OK", "Magnet link failed -> button")];
 
     [alert runModal];
-    if (alert.suppressionButton.state == NSControlStateValueOn)
+    if (TRAlertSuppressionButton(alert).state == NSControlStateValueOn)
     {
         [self.fDefaults setBool:NO forKey:@"WarningInvalidOpen"];
     }
@@ -1895,10 +1895,10 @@ static void removeKeRangerRansomware()
 
     alert.alertStyle = NSAlertStyleWarning;
     [alert addButtonWithTitle:NSLocalizedString(@"OK", "Open duplicate alert -> button")];
-    alert.showsSuppressionButton = YES;
+    TRSetAlertShowsSuppressionButton(alert, YES);
 
     [alert runModal];
-    if (alert.suppressionButton.state)
+    if (TRAlertSuppressionButton(alert).state)
     {
         [self.fDefaults setBool:NO forKey:@"WarningDuplicate"];
     }
@@ -1928,10 +1928,10 @@ static void removeKeRangerRansomware()
                          address];
     alert.alertStyle = NSAlertStyleWarning;
     [alert addButtonWithTitle:NSLocalizedString(@"OK", "Open duplicate magnet alert -> button")];
-    alert.showsSuppressionButton = YES;
+    TRSetAlertShowsSuppressionButton(alert, YES);
 
     [alert runModal];
-    if (alert.suppressionButton.state)
+    if (TRAlertSuppressionButton(alert).state)
     {
         [self.fDefaults setBool:NO forKey:@"WarningDuplicate"];
     }
@@ -2059,7 +2059,7 @@ static void removeKeRangerRansomware()
 - (void)openPasteboard
 {
     // 1. If Pasteboard contains URL objects, we treat those and only those
-    NSArray* arrayOfURLs = [NSPasteboard.generalPasteboard readObjectsForClasses:@[ [NSURL class] ] options:nil];
+    NSArray* arrayOfURLs = TRPasteboardReadURLs(NSPasteboard.generalPasteboard);
 
     if (arrayOfURLs.count > 0)
     {
@@ -2071,7 +2071,7 @@ static void removeKeRangerRansomware()
     }
 
     // 2. If Pasteboard contains String objects, we'll search for both links and magnets
-    NSArray* arrayOfStrings = [NSPasteboard.generalPasteboard readObjectsForClasses:@[ [NSString class] ] options:nil];
+    NSArray* arrayOfStrings = TRPasteboardReadStrings(NSPasteboard.generalPasteboard);
     if (arrayOfStrings.count == 0)
     {
         return;
@@ -2475,10 +2475,10 @@ static void removeKeRangerRansomware()
         alert.alertStyle = NSAlertStyleWarning;
         [alert addButtonWithTitle:NSLocalizedString(@"Remove", "Remove completed confirm panel -> button")];
         [alert addButtonWithTitle:NSLocalizedString(@"Cancel", "Remove completed confirm panel -> button")];
-        alert.showsSuppressionButton = YES;
+        TRSetAlertShowsSuppressionButton(alert, YES);
 
         NSInteger const returnCode = [alert runModal];
-        if (alert.suppressionButton.state)
+        if (TRAlertSuppressionButton(alert).state)
         {
             [self.fDefaults setBool:NO forKey:@"WarningRemoveCompleted"];
         }
@@ -2520,7 +2520,7 @@ static void removeKeRangerRansomware()
                                       count];
     }
 
-    [panel beginSheetModalForWindow:self.fWindow completionHandler:^(NSInteger result) {
+    TRBeginPanelSheetModalForWindow(panel, self.fWindow, ^(NSInteger result) {
         if (result == NSModalResponseOK)
         {
             for (Torrent* torrent in torrents)
@@ -2528,7 +2528,7 @@ static void removeKeRangerRansomware()
                 [torrent moveTorrentDataFileTo:[(NSURL*)[panel.URLs objectAtIndex:0] path]];
             }
         }
-    }];
+    });
 }
 
 - (void)copyTorrentFiles:(id)sender
@@ -2551,9 +2551,9 @@ static void removeKeRangerRansomware()
         panel.allowedFileTypes = @[ @"org.bittorrent.torrent", @"torrent" ];
         panel.extensionHidden = NO;
 
-        panel.nameFieldStringValue = torrent.name;
+        TRSavePanelSetNameFieldStringValue(panel, torrent.name);
 
-        [panel beginSheetModalForWindow:self.fWindow completionHandler:^(NSInteger result) {
+        TRBeginSavePanelSheetModalForWindow(panel, self.fWindow, torrent.name, ^(NSInteger result) {
             //copy torrent to new location with name of data file
             if (result == NSModalResponseOK)
             {
@@ -2564,7 +2564,7 @@ static void removeKeRangerRansomware()
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self copyTorrentFileForTorrents:torrents];
             });
-        }];
+        });
     }
     else
     {
@@ -2608,7 +2608,7 @@ static void removeKeRangerRansomware()
 
     if (paths.count > 0)
     {
-        [NSWorkspace.sharedWorkspace activateFileViewerSelectingURLs:paths];
+        TRActivateFileViewerSelectingURLs(paths);
     }
 }
 
@@ -2958,7 +2958,7 @@ static void removeKeRangerRansomware()
     }
     if (location)
     {
-        [NSWorkspace.sharedWorkspace activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:location] ]];
+        TRActivateFileViewerSelectingURLs(@[ [NSURL fileURLWithPath:location] ]);
     }
 }
 
@@ -2987,7 +2987,11 @@ static void removeKeRangerRansomware()
                                                       }];
             if (parent)
             {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+                [self.fTableView expandItem:parent];
+#else
                 [[self.fTableView animator] expandItem:parent];
+#endif
                 row = [self.fTableView rowForItem:torrent];
             }
         }
@@ -3014,7 +3018,11 @@ static void removeKeRangerRansomware()
                                                           }];
                 if (parent)
                 {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+                    [self.fTableView expandItem:parent];
+#else
                     [[self.fTableView animator] expandItem:parent];
+#endif
                     row = [self.fTableView rowForItem:torrent];
                 }
             }
@@ -3349,6 +3357,7 @@ static void removeKeRangerRansomware()
 
                                                          return NSOrderedSame;
                                                      }];
+#endif
 
         if (insertIndex != currentIndex)
         {
@@ -3940,7 +3949,7 @@ static void removeKeRangerRansomware()
 {
     if (menu == self.fGroupsSetMenu || menu == self.fGroupsSetContextMenu)
     {
-        [menu removeAllItems];
+        TRMenuRemoveAllItems(menu);
 
         NSMenu* groupMenu = [GroupsController.groups groupMenuWithTarget:self action:@selector(setGroup:) isSmall:NO];
 
@@ -3954,7 +3963,7 @@ static void removeKeRangerRansomware()
     }
     else if (menu == self.fShareMenu || menu == self.fShareContextMenu)
     {
-        [menu removeAllItems];
+        TRMenuRemoveAllItems(menu);
 
         for (NSMenuItem* item in ShareTorrentFileHelper.sharedHelper.menuItems)
         {
@@ -4068,7 +4077,7 @@ static void removeKeRangerRansomware()
     path = path.stringByExpandingTildeInPath;
 
     NSArray* importedNames;
-    if (!(importedNames = [NSFileManager.defaultManager contentsOfDirectoryAtPath:path error:NULL]))
+    if (!(importedNames = TRContentsOfDirectoryAtPath(NSFileManager.defaultManager, path, NULL)))
     {
         return;
     }
@@ -4095,14 +4104,12 @@ static void removeKeRangerRansomware()
 
         NSString* fullFile = [path stringByAppendingPathComponent:file];
 
-        if (!([[NSWorkspace.sharedWorkspace typeOfFile:fullFile error:NULL] isEqualToString:@"org.bittorrent.torrent"] ||
-              [fullFile.pathExtension caseInsensitiveCompare:@"torrent"] == NSOrderedSame))
+        if (!TRIsTorrentFileAtPath(fullFile))
         {
             continue;
         }
 
-        NSDictionary* fileAttributes = [NSFileManager.defaultManager attributesOfItemAtPath:fullFile
-                                                                                                              error:nil];
+        NSDictionary* fileAttributes = TRAttributesOfItemAtPath(NSFileManager.defaultManager, fullFile, nil);
         if (fileAttributes.fileSize == 0)
         {
             // Workaround for Firefox downloads happening in two steps: first time being an empty file
@@ -4368,12 +4375,15 @@ static void removeKeRangerRansomware()
     {
         //check if any torrent files can be added
         BOOL torrent = NO;
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+        NSArray* files = TRPasteboardReadURLs(pasteboard);
+#else
         NSArray* files = [pasteboard readObjectsForClasses:@[ NSURL.class ]
                                                    options:@{ NSPasteboardURLReadingFileURLsOnlyKey : [NSNumber numberWithBool:YES] }];
+#endif
         for (NSURL* fileToParse in files)
         {
-            if ([[NSWorkspace.sharedWorkspace typeOfFile:fileToParse.path error:NULL] isEqualToString:@"org.bittorrent.torrent"] ||
-                [fileToParse.pathExtension caseInsensitiveCompare:@"torrent"] == NSOrderedSame)
+            if (TRIsTorrentFileAtPath(fileToParse.path))
             {
                 torrent = YES;
                 auto metainfo = tr_torrent_metainfo{};
@@ -4442,13 +4452,16 @@ static void removeKeRangerRansomware()
         BOOL torrent = NO, accept = YES;
 
         //create an array of files that can be opened
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+        NSArray* files = TRPasteboardReadURLs(pasteboard);
+#else
         NSArray* files = [pasteboard readObjectsForClasses:@[ NSURL.class ]
                                                    options:@{ NSPasteboardURLReadingFileURLsOnlyKey : [NSNumber numberWithBool:YES] }];
+#endif
         NSMutableArray* filesToOpen = [NSMutableArray arrayWithCapacity:files.count];
         for (NSURL* file in files)
         {
-            if ([[NSWorkspace.sharedWorkspace typeOfFile:file.path error:NULL] isEqualToString:@"org.bittorrent.torrent"] ||
-                [file.pathExtension caseInsensitiveCompare:@"torrent"] == NSOrderedSame)
+            if (TRIsTorrentFileAtPath(file.path))
             {
                 torrent = YES;
                 auto metainfo = tr_torrent_metainfo{};

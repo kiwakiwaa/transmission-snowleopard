@@ -52,7 +52,7 @@ static NSTimeInterval const kFullWait = 60 * 60 * 24 * 7;
     NSDate* lastUpdateDate = [NSUserDefaults.standardUserDefaults objectForKey:@"BlocklistNewLastUpdate"];
     if (lastUpdateDate)
     {
-        lastUpdateDate = [lastUpdateDate dateByAddingTimeInterval:kFullWait];
+        lastUpdateDate = TRDateByAddingTimeInterval(lastUpdateDate, kFullWait);
     }
     NSDate* closeDate = [NSDate dateWithTimeIntervalSinceNow:kSmallDelay];
 
@@ -64,7 +64,7 @@ static NSTimeInterval const kFullWait = 60 * 60 * 24 * 7;
     });
 
     //current run loop usually means a second update won't work
-    NSRunLoop* loop = NSRunLoop.mainRunLoop;
+    NSRunLoop* loop = TRMainRunLoop();
     [loop addTimer:self.fTimer forMode:NSDefaultRunLoopMode];
     [loop addTimer:self.fTimer forMode:NSModalPanelRunLoopMode];
     [loop addTimer:self.fTimer forMode:NSEventTrackingRunLoopMode];

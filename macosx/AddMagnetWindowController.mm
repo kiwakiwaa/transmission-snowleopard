@@ -3,6 +3,7 @@
 // License text can be found in the licenses/ folder.
 
 #import "AddMagnetWindowController.h"
+#import "CocoaCompatibility.h"
 #import "Controller.h"
 #import "ExpandedPathToIconTransformer.h"
 #import "GroupsController.h"
@@ -75,7 +76,7 @@ typedef NS_ENUM(NSUInteger, PopupPriority) {
     self.fNameField.toolTip = name;
 
     //disable fullscreen support
-    self.window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
+    TRSetWindowCollectionBehavior(self.window, NSWindowCollectionBehaviorFullScreenNone);
 
     [self setGroupsMenu];
     [self.fGroupPopUp selectItemWithTag:self.fGroupValue];
@@ -139,7 +140,7 @@ typedef NS_ENUM(NSUInteger, PopupPriority) {
     panel.message = [NSString stringWithFormat:NSLocalizedString(@"Select the download folder for \"%@\"", "Add -> select destination folder"),
                                                self.torrent.name];
 
-    [panel beginSheetModalForWindow:self.window completionHandler:^(NSInteger result) {
+    TRBeginPanelSheetModalForWindow(panel, self.window, ^(NSInteger result) {
         if (result == NSModalResponseOK)
         {
             [self setDestinationPath:[(NSURL*)[panel.URLs objectAtIndex:0] path] determinationType:TorrentDeterminationUserSpecified];
@@ -153,7 +154,7 @@ typedef NS_ENUM(NSUInteger, PopupPriority) {
                 });
             }
         }
-    }];
+    });
 }
 
 - (void)add:(id)sender
@@ -170,10 +171,10 @@ typedef NS_ENUM(NSUInteger, PopupPriority) {
         alert.alertStyle = NSAlertStyleWarning;
         [alert addButtonWithTitle:NSLocalizedString(@"Cancel", "Add torrent -> same name -> button")];
         [alert addButtonWithTitle:NSLocalizedString(@"Add", "Add torrent -> same name -> button")];
-        alert.showsSuppressionButton = YES;
+        TRSetAlertShowsSuppressionButton(alert, YES);
 
         [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse returnCode) {
-            if (alert.suppressionButton.state == NSControlStateValueOn)
+            if (TRAlertSuppressionButton(alert).state == NSControlStateValueOn)
             {
                 [NSUserDefaults.standardUserDefaults setBool:NO forKey:@"WarningFolderDataSameName"];
             }

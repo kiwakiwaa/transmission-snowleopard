@@ -244,7 +244,7 @@ typedef NS_ENUM(NSInteger, SegmentTag) {
     panel.canChooseDirectories = YES;
     panel.canCreateDirectories = YES;
 
-    [panel beginSheetModalForWindow:self.fCustomLocationPopUp.window completionHandler:^(NSInteger result) {
+    TRBeginPanelSheetModalForWindow(panel, self.fCustomLocationPopUp.window, ^(NSInteger result) {
         NSInteger const index = [GroupsController.groups indexForRow:self.fTableView.selectedRow];
         if (result == NSModalResponseOK)
         {
@@ -263,7 +263,7 @@ typedef NS_ENUM(NSInteger, SegmentTag) {
         [self refreshCustomLocationWithSingleGroup];
 
         [self.fCustomLocationPopUp selectItemAtIndex:0];
-    }];
+    });
 }
 
 - (IBAction)toggleUseCustomDownloadLocation:(id)sender

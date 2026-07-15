@@ -2,6 +2,7 @@
 // It may be used under the MIT (SPDX: MIT) license.
 // License text can be found in the licenses/ folder.
 
+#import "CocoaCompatibility.h"
 #import "InfoTrackersViewController.h"
 #import "Torrent.h"
 #import "TrackerCell.h"
@@ -438,10 +439,10 @@ typedef NS_ENUM(NSInteger, TrackerSegmentTag) {
         [alert addButtonWithTitle:NSLocalizedString(@"Remove", "Remove trackers alert -> button")];
         [alert addButtonWithTitle:NSLocalizedString(@"Cancel", "Remove trackers alert -> button")];
 
-        alert.showsSuppressionButton = YES;
+        TRSetAlertShowsSuppressionButton(alert, YES);
 
         NSInteger result = [alert runModal];
-        if (alert.suppressionButton.state == NSControlStateValueOn)
+        if (TRAlertSuppressionButton(alert).state == NSControlStateValueOn)
         {
             [NSUserDefaults.standardUserDefaults setBool:NO forKey:@"WarningRemoveTrackers"];
         }

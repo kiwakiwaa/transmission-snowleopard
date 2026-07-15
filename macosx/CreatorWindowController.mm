@@ -191,12 +191,12 @@ static NSMutableSet* creatorWindowControllerSet;
     [super awakeFromNib];
     self.window.restorationClass = [self class];
 
-    NSString* name = self.fPath.lastPathComponent;
+    NSString* name = TRURLLastPathComponent(self.fPath);
 
     self.window.title = name;
 
     //disable fullscreen support
-    self.window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
+    TRSetWindowCollectionBehavior(self.window, NSWindowCollectionBehaviorFullScreenNone);
 
     self.fNameField.stringValue = name;
     self.fNameField.toolTip = self.fPath.path;
@@ -204,7 +204,7 @@ static NSMutableSet* creatorWindowControllerSet;
     auto const is_folder = self.fBuilder->file_count() > 1 || tr_strv_contains(self.fBuilder->path(0), '/');
 
     NSImage* icon = [NSWorkspace.sharedWorkspace
-        iconForFileType:is_folder ? NSFileTypeForHFSTypeCode(kGenericFolderIcon) : self.fPath.pathExtension];
+        iconForFileType:is_folder ? NSFileTypeForHFSTypeCode(kGenericFolderIcon) : TRURLPathExtension(self.fPath)];
     icon.size = self.fIconView.frame.size;
     self.fIconView.image = icon;
 
@@ -222,8 +222,8 @@ static NSMutableSet* creatorWindowControllerSet;
     [self updatePiecesField];
     self.fPieceSizeStepper.intValue = static_cast<int>(log2(self.fBuilder->piece_size()));
 
-    self.fLocation = [[self.fDefaults URLForKey:@"CreatorLocationURL"]
-        URLByAppendingPathComponent:[name stringByAppendingPathExtension:@"torrent"]];
+    self.fLocation = TRURLByAppendingPathComponent(TRUserDefaultsURLForKey(self.fDefaults, @"CreatorLocationURL"),
+                                                   [name stringByAppendingPathExtension:@"torrent"]);
     if (!self.fLocation)
     {
         //Compatibility with Transmission 2.5 and earlier,
@@ -264,7 +264,7 @@ static NSMutableSet* creatorWindowControllerSet;
                   completionHandler:(void (^)(NSWindow*, NSError*))completionHandler
 {
     NSURL* path = [state decodeObjectForKey:@"TRCreatorPath"];
-    if (!path || ![path checkResourceIsReachableAndReturnError:nil])
+    if (!path || !TRURLCheckResourceIsReachable(path, nil))
     {
         completionHandler(nil, [NSError errorWithDomain:NSURLErrorDomain code:NSURLErrorCannotOpenFile userInfo:nil]);
         return;
@@ -279,8 +279,8 @@ static NSMutableSet* creatorWindowControllerSet;
     [state encodeObject:self.fPath forKey:@"TRCreatorPath"];
     [state encodeObject:self.fLocation forKey:@"TRCreatorLocation"];
     [state encodeObject:self.fTrackers forKey:@"TRCreatorTrackers"];
-    [state encodeInteger:self.fOpenCheck.state forKey:@"TRCreatorOpenCheck"];
-    [state encodeInteger:self.fPrivateCheck.state forKey:@"TRCreatorPrivateCheck"];
+    TRCoderEncodeInteger(state, self.fOpenCheck.state, @"TRCreatorOpenCheck");
+    TRCoderEncodeInteger(state, self.fPrivateCheck.state, @"TRCreatorPrivateCheck");
     [state encodeObject:self.fSource.stringValue forKey:@"TRCreatorSource"];
     [state encodeObject:self.fCommentView.string forKey:@"TRCreatorPrivateComment"];
 }
@@ -293,8 +293,8 @@ static NSMutableSet* creatorWindowControllerSet;
     self.fTrackers = [coder decodeObjectForKey:@"TRCreatorTrackers"];
     [self.fTrackerTable reloadData];
 
-    self.fOpenCheck.state = [coder decodeIntegerForKey:@"TRCreatorOpenCheck"];
-    self.fPrivateCheck.state = [coder decodeIntegerForKey:@"TRCreatorPrivateCheck"];
+    self.fOpenCheck.state = TRCoderDecodeInteger(coder, @"TRCreatorOpenCheck");
+    self.fPrivateCheck.state = TRCoderDecodeInteger(coder, @"TRCreatorPrivateCheck");
     self.fSource.stringValue = [coder decodeObjectForKey:@"TRCreatorSource"];
     self.fCommentView.string = [coder decodeObjectForKey:@"TRCreatorPrivateComment"];
 }
@@ -309,16 +309,16 @@ static NSMutableSet* creatorWindowControllerSet;
     panel.allowedFileTypes = @[ @"org.bittorrent.torrent", @"torrent" ];
     panel.canSelectHiddenExtension = YES;
 
-    panel.directoryURL = self.fLocation.URLByDeletingLastPathComponent;
-    panel.nameFieldStringValue = self.fLocation.lastPathComponent;
+    TRSavePanelSetDirectoryURL(panel, TRURLByDeletingLastPathComponent(self.fLocation));
+    TRSavePanelSetNameFieldStringValue(panel, TRURLLastPathComponent(self.fLocation));
 
-    [panel beginSheetModalForWindow:self.window completionHandler:^(NSInteger result) {
+    TRBeginSavePanelSheetModalForWindow(panel, self.window, TRURLLastPathComponent(self.fLocation), ^(NSInteger result) {
         if (result == NSModalResponseOK)
         {
             self.fLocation = panel.URL;
             [self updateLocationField];
         }
-    }];
+    });
 }
 
 - (IBAction)create:(id)sender
@@ -349,10 +349,10 @@ static NSMutableSet* creatorWindowControllerSet;
         alert.informativeText = infoString;
         [alert addButtonWithTitle:NSLocalizedString(@"Create", "Create torrent -> blank address -> button")];
         [alert addButtonWithTitle:NSLocalizedString(@"Cancel", "Create torrent -> blank address -> button")];
-        alert.showsSuppressionButton = YES;
+        TRSetAlertShowsSuppressionButton(alert, YES);
 
         [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse returnCode) {
-            if (alert.suppressionButton.state == NSControlStateValueOn)
+            if (TRAlertSuppressionButton(alert).state == NSControlStateValueOn)
             {
                 [NSUserDefaults.standardUserDefaults setBool:NO forKey:@"WarningCreatorBlankAddress"]; //set regardless of private/public
                 if (self.fPrivateCheck.state == NSControlStateValueOn)
@@ -476,8 +476,7 @@ static NSMutableSet* creatorWindowControllerSet;
     NSString* text = [addresses componentsJoinedByString:@"\n"];
 
     NSPasteboard* pb = NSPasteboard.generalPasteboard;
-    [pb clearContents];
-    [pb writeObjects:@[ text ]];
+    TRPasteboardWriteStrings(pb, @[ text ]);
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem*)menuItem
@@ -492,7 +491,7 @@ static NSMutableSet* creatorWindowControllerSet;
     if (action == @selector(paste:))
     {
         return self.window.firstResponder == self.fTrackerTable &&
-            [NSPasteboard.generalPasteboard canReadObjectForClasses:@[ [NSString class] ] options:nil];
+            TRPasteboardCanReadStrings(NSPasteboard.generalPasteboard);
     }
 
     return YES;
@@ -502,7 +501,7 @@ static NSMutableSet* creatorWindowControllerSet;
 {
     NSMutableArray* tempTrackers = [NSMutableArray array];
 
-    NSArray* items = [NSPasteboard.generalPasteboard readObjectsForClasses:@[ [NSString class] ] options:nil];
+    NSArray* items = TRPasteboardReadStrings(NSPasteboard.generalPasteboard);
     NSAssert(items != nil, @"no string items to paste; should not be able to call this method");
 
     for (NSString* pbItem in items)
@@ -589,7 +588,7 @@ static NSMutableSet* creatorWindowControllerSet;
 - (void)createReal
 {
     //check if the location currently exists
-    if (![self.fLocation.URLByDeletingLastPathComponent checkResourceIsReachableAndReturnError:NULL])
+    if (!TRURLCheckResourceIsReachable(TRURLByDeletingLastPathComponent(self.fLocation), NULL))
     {
         NSAlert* alert = [[NSAlert alloc] init];
         [alert addButtonWithTitle:NSLocalizedString(@"OK", "Create torrent -> directory doesn't exist warning -> button")];
@@ -598,7 +597,7 @@ static NSMutableSet* creatorWindowControllerSet;
                                                                @"The directory \"%@\" does not currently exist. "
                                                                 "Create this directory or choose a different one to create the torrent file.",
                                                                "Create torrent -> directory doesn't exist warning -> warning"),
-                                                           self.fLocation.URLByDeletingLastPathComponent.path];
+                                                           TRURLByDeletingLastPathComponent(self.fLocation).path];
         alert.alertStyle = NSAlertStyleWarning;
 
         [alert beginSheetModalForWindow:self.window completionHandler:nil];
@@ -606,9 +605,9 @@ static NSMutableSet* creatorWindowControllerSet;
     }
 
     //check if a file with the same name and location already exists
-    if ([self.fLocation checkResourceIsReachableAndReturnError:NULL])
+    if (TRURLCheckResourceIsReachable(self.fLocation, NULL))
     {
-        NSArray* pathComponents = self.fLocation.pathComponents;
+        NSArray* pathComponents = TRURLPathComponents(self.fLocation);
         NSInteger count = pathComponents.count;
 
         NSAlert* alert = [[NSAlert alloc] init];
@@ -643,7 +642,7 @@ static NSMutableSet* creatorWindowControllerSet;
     [self.fDefaults setBool:self.fOpenCheck.state == NSControlStateValueOn forKey:@"CreatorOpen"];
     self.fOpenWhenCreated = self.fOpenCheck.state ==
         NSControlStateValueOn; //need this since the check box might not exist, and value in prefs might have changed from another creator window
-    [self.fDefaults setURL:self.fLocation.URLByDeletingLastPathComponent forKey:@"CreatorLocationURL"];
+    TRUserDefaultsSetURL(self.fDefaults, TRURLByDeletingLastPathComponent(self.fLocation), @"CreatorLocationURL");
 
     self.window.restorable = NO;
 
@@ -724,7 +723,7 @@ static NSMutableSet* creatorWindowControllerSet;
         auto* const alert = [[NSAlert alloc] init];
         [alert addButtonWithTitle:NSLocalizedString(@"OK", "Create torrent -> failed -> button")];
         alert.messageText = [NSString stringWithFormat:NSLocalizedString(@"Creation of \"%@\" failed.", "Create torrent -> failed -> title"),
-                                                       self.fLocation.lastPathComponent];
+                                                       TRURLLastPathComponent(self.fLocation)];
         alert.alertStyle = NSAlertStyleWarning;
 
         alert.informativeText = [NSString
@@ -737,7 +736,7 @@ static NSMutableSet* creatorWindowControllerSet;
     {
         if (self.fOpenWhenCreated)
         {
-            NSDictionary* dict = @{ @"File" : self.fLocation.path, @"Path" : self.fPath.URLByDeletingLastPathComponent.path };
+            NSDictionary* dict = @{ @"File" : self.fLocation.path, @"Path" : TRURLByDeletingLastPathComponent(self.fPath).path };
             [NSNotificationCenter.defaultCenter postNotificationName:@"OpenCreatedTorrentFile" object:self userInfo:dict];
         }
 

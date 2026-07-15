@@ -272,7 +272,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     self.window.restorationClass = [self class];
 
     //disable fullscreen support
-    self.window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
+    TRSetWindowCollectionBehavior(self.window, NSWindowCollectionBehaviorFullScreenNone);
 
     NSToolbar* toolbar = [[NSToolbar alloc] initWithIdentifier:@"Preferences Toolbar"];
     toolbar.delegate = self;
@@ -1075,7 +1075,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     panel.canChooseDirectories = YES;
     panel.canCreateDirectories = YES;
 
-    [panel beginSheetModalForWindow:self.window completionHandler:^(NSInteger result) {
+    TRBeginPanelSheetModalForWindow(panel, self.window, ^(NSInteger result) {
         if (result == NSModalResponseOK)
         {
             [self.fFolderPopUp selectItemAtIndex:DownloadPopupIndexFolder];
@@ -1094,7 +1094,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
             [self.fFolderPopUp selectItemAtIndex:[self.fDefaults boolForKey:@"DownloadLocationConstant"] ? DownloadPopupIndexFolder :
                                                                                                            DownloadPopupIndexTorrent];
         }
-    }];
+    });
 }
 
 - (void)incompleteFolderSheetShow:(id)sender
@@ -1107,7 +1107,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     panel.canChooseDirectories = YES;
     panel.canCreateDirectories = YES;
 
-    [panel beginSheetModalForWindow:self.window completionHandler:^(NSInteger result) {
+    TRBeginPanelSheetModalForWindow(panel, self.window, ^(NSInteger result) {
         if (result == NSModalResponseOK)
         {
             NSString* folder = [(NSURL*)[panel.URLs objectAtIndex:0] path];
@@ -1117,7 +1117,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
             tr_sessionSetIncompleteDir(self.fHandle, folder.fileSystemRepresentation);
         }
         [self.fIncompleteFolderPopUp selectItemAtIndex:0];
-    }];
+    });
 }
 
 - (void)doneScriptSheetShow:(id)sender
@@ -1130,7 +1130,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     panel.canChooseDirectories = NO;
     panel.canCreateDirectories = NO;
 
-    [panel beginSheetModalForWindow:self.window completionHandler:^(NSInteger result) {
+    TRBeginPanelSheetModalForWindow(panel, self.window, ^(NSInteger result) {
         if (result == NSModalResponseOK)
         {
             NSString* filePath = [(NSURL*)[panel.URLs objectAtIndex:0] path];
@@ -1144,7 +1144,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
             tr_sessionSetScriptEnabled(self.fHandle, TR_SCRIPT_ON_TORRENT_DONE, YES);
         }
         [self.fDoneScriptPopUp selectItemAtIndex:0];
-    }];
+    });
 }
 
 - (void)setUseIncompleteFolder:(id)sender
@@ -1227,7 +1227,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     panel.canChooseDirectories = YES;
     panel.canCreateDirectories = YES;
 
-    [panel beginSheetModalForWindow:self.window completionHandler:^(NSInteger result) {
+    TRBeginPanelSheetModalForWindow(panel, self.window, ^(NSInteger result) {
         if (result == NSModalResponseOK)
         {
             VDKQueue* watcherQueue = ((Controller*)[NSApp delegate]).fileWatcherQueue;
@@ -1247,7 +1247,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
         }
 
         [self.fImportFolderPopUp selectItemAtIndex:0];
-    }];
+    });
 }
 
 - (void)setAutoSize:(id)sender

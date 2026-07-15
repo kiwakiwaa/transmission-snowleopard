@@ -5,6 +5,7 @@
 #include <libtransmission/version.h>
 
 #import "AboutWindowController.h"
+#import "CocoaCompatibility.h"
 
 @interface AboutWindowController ()
 
@@ -50,7 +51,7 @@ static AboutWindowController* fAboutBoxInstance = nil;
                                                                             table:@"InfoPlist"];
 
     NSAttributedString* credits = [[NSAttributedString alloc]
-               initWithURL:[NSBundle.mainBundle URLForResource:@"Credits" withExtension:@"rtf"]
+               initWithURL:TRURLForResource(NSBundle.mainBundle, @"Credits", @"rtf")
                    options:@{ NSDocumentTypeDocumentAttribute : NSRTFTextDocumentType }
         documentAttributes:nil
                      error:nil];

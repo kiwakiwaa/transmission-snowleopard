@@ -8,6 +8,7 @@
 
 #import "BlocklistDownloaderViewController.h"
 #import "BlocklistScheduler.h"
+#import "CocoaCompatibility.h"
 #import "Controller.h"
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
@@ -187,7 +188,7 @@ static BlocklistDownloader* fBLDownloader = nil;
     NSString* blocklistFile = [tempDir stringByAppendingPathComponent:@"transmission-blocklist"];
 
     NSString* sourcePath = location.path;
-    [NSFileManager.defaultManager moveItemAtPath:sourcePath toPath:tempFile error:nil];
+    TRMoveItemAtPath(NSFileManager.defaultManager, sourcePath, tempFile, nil);
 
     if ([@"text/plain" isEqualToString:response.MIMEType])
     {
@@ -198,14 +199,14 @@ static BlocklistDownloader* fBLDownloader = nil;
         NSURL* tempURL = [NSURL fileURLWithPath:tempFile];
         NSURL* blocklistURL = [NSURL fileURLWithPath:blocklistFile];
         [self decompressFrom:tempURL to:blocklistURL error:nil];
-        [NSFileManager.defaultManager removeItemAtPath:tempFile error:nil];
+        TRRemoveItemAtPath(NSFileManager.defaultManager, tempFile, nil);
     }
 
     dispatch_async(dispatch_get_main_queue(), ^{
         Controller* controller = (Controller*)[NSApp delegate];
         auto const count = tr_blocklistSetContent(controller.sessionHandle, blocklistFile.UTF8String);
 
-        [NSFileManager.defaultManager removeItemAtPath:blocklistFile error:nil];
+        TRRemoveItemAtPath(NSFileManager.defaultManager, blocklistFile, nil);
 
         if (count)
         {
@@ -314,7 +315,7 @@ static BlocklistDownloader* fBLDownloader = nil;
     // If it doesn't look like archive just copy it to destination
     else
     {
-        return [NSFileManager.defaultManager copyItemAtURL:file toURL:destination error:error];
+        return TRCopyItemAtURL(NSFileManager.defaultManager, file, destination, error);
     }
 }
 
@@ -368,7 +369,7 @@ static BlocklistDownloader* fBLDownloader = nil;
 
         NSString* output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 
-        filename = [[output componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] objectAtIndex:0];
+        filename = TRFirstLineFromString(output);
     }
     @catch (NSException* exception)
     {
@@ -381,7 +382,7 @@ static BlocklistDownloader* fBLDownloader = nil;
         return NO;
     }
 
-    NSURL* destinationDir = destination.URLByDeletingLastPathComponent;
+    NSURL* destinationDir = TRURLByDeletingLastPathComponent(destination);
 
     NSTask* untar = [[NSTask alloc] init];
     untar.launchPath = @"/usr/bin/tar";
@@ -403,15 +404,15 @@ static BlocklistDownloader* fBLDownloader = nil;
         return NO;
     }
 
-    NSURL* result = [destinationDir URLByAppendingPathComponent:filename];
+    NSURL* result = TRURLByAppendingPathComponent(destinationDir, filename);
 
-    [NSFileManager.defaultManager moveItemAtURL:result toURL:destination error:nil];
+    TRMoveItemAtURL(NSFileManager.defaultManager, result, destination, nil);
     return YES;
 }
 
 - (BOOL)gunzipFrom:(NSURL*)file to:(NSURL*)destination
 {
-    NSURL* destinationDir = destination.URLByDeletingLastPathComponent;
+    NSURL* destinationDir = TRURLByDeletingLastPathComponent(destination);
 
     NSTask* gunzip = [[NSTask alloc] init];
     gunzip.launchPath = @"/usr/bin/gunzip";
@@ -433,9 +434,9 @@ static BlocklistDownloader* fBLDownloader = nil;
         return NO;
     }
 
-    NSURL* result = file.URLByDeletingPathExtension;
+    NSURL* result = TRURLByDeletingPathExtension(file);
 
-    [NSFileManager.defaultManager moveItemAtURL:result toURL:destination error:nil];
+    TRMoveItemAtURL(NSFileManager.defaultManager, result, destination, nil);
     return YES;
 }
 
@@ -467,7 +468,7 @@ static BlocklistDownloader* fBLDownloader = nil;
 
         NSString* output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 
-        filename = [[output componentsSeparatedByCharactersInSet:NSCharacterSet.newlineCharacterSet] objectAtIndex:0];
+        filename = TRFirstLineFromString(output);
     }
     @catch (NSException* exception)
     {
@@ -480,7 +481,7 @@ static BlocklistDownloader* fBLDownloader = nil;
         return NO;
     }
 
-    NSURL* destinationDir = destination.URLByDeletingLastPathComponent;
+    NSURL* destinationDir = TRURLByDeletingLastPathComponent(destination);
 
     NSTask* unzip = [[NSTask alloc] init];
     unzip.launchPath = @"/usr/bin/unzip";
@@ -502,9 +503,9 @@ static BlocklistDownloader* fBLDownloader = nil;
         return NO;
     }
 
-    NSURL* result = [destinationDir URLByAppendingPathComponent:filename];
+    NSURL* result = TRURLByAppendingPathComponent(destinationDir, filename);
 
-    [NSFileManager.defaultManager moveItemAtURL:result toURL:destination error:nil];
+    TRMoveItemAtURL(NSFileManager.defaultManager, result, destination, nil);
     return YES;
 }
 

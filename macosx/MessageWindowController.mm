@@ -89,7 +89,7 @@ static NSUInteger const kMaxQueueLength = 10000U;
     self.window.title = NSLocalizedString(@"Message Log", "Message window -> title");
 
     //disable fullscreen support
-    window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
+    TRSetWindowCollectionBehavior(window, NSWindowCollectionBehaviorFullScreenNone);
 
     //set images and text for popup button items
     [self.fLevelButton itemAtIndex:LevelButtonLevelError].title = NSLocalizedString(@"Error", "Message window -> level string");
@@ -414,8 +414,7 @@ static NSUInteger const kMaxQueueLength = 10000U;
     NSString* messageString = [messageStrings componentsJoinedByString:@"\n"];
 
     NSPasteboard* pb = NSPasteboard.generalPasteboard;
-    [pb clearContents];
-    [pb writeObjects:@[ messageString ]];
+    TRPasteboardWriteStrings(pb, @[ messageString ]);
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem*)menuItem
@@ -513,9 +512,9 @@ static NSUInteger const kMaxQueueLength = 10000U;
     panel.allowedFileTypes = @[ @"txt" ];
     panel.canSelectHiddenExtension = YES;
 
-    panel.nameFieldStringValue = NSLocalizedString(@"untitled", "Save log panel -> default file name");
+    TRSavePanelSetNameFieldStringValue(panel, NSLocalizedString(@"untitled", "Save log panel -> default file name"));
 
-    [panel beginSheetModalForWindow:self.window completionHandler:^(NSInteger result) {
+    TRBeginSavePanelSheetModalForWindow(panel, self.window, NSLocalizedString(@"untitled", "Save log panel -> default file name"), ^(NSInteger result) {
         if (result == NSModalResponseOK)
         {
             //make the array sorted by date
@@ -545,7 +544,7 @@ static NSUInteger const kMaxQueueLength = 10000U;
                 [alert runModal];
             }
         }
-    }];
+    });
 }
 
 #pragma mark - Private

@@ -28,7 +28,7 @@ typedef NS_ENUM(NSUInteger, PopupPriority) {
 static void TRPrepareLegacySettingsLabel(NSTextField* label)
 {
     NSTextFieldCell* cell = (NSTextFieldCell*)label.cell;
-    cell.usesSingleLineMode = YES;
+    TRSetCellUsesSingleLineMode(cell, YES);
     cell.lineBreakMode = NSLineBreakByTruncatingTail;
 }
 
@@ -156,7 +156,7 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
     self.fNameField.toolTip = name;
 
     //disable fullscreen support
-    self.window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
+    TRSetWindowCollectionBehavior(self.window, NSWindowCollectionBehaviorFullScreenNone);
 
     self.fIconView.image = self.torrent.icon;
 
@@ -361,7 +361,7 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
     panel.message = [NSString stringWithFormat:NSLocalizedString(@"Select the download folder for \"%@\"", "Add -> select destination folder"),
                                                self.torrent.name];
 
-    [panel beginSheetModalForWindow:self.window completionHandler:^(NSInteger result) {
+    TRBeginPanelSheetModalForWindow(panel, self.window, ^(NSInteger result) {
         if (result == NSModalResponseOK)
         {
             self.fLockDestination = YES;
@@ -376,7 +376,7 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
                 });
             }
         }
-    }];
+    });
 }
 
 - (void)add:(id)sender
@@ -393,10 +393,10 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
         alert.alertStyle = NSAlertStyleWarning;
         [alert addButtonWithTitle:NSLocalizedString(@"Cancel", "Add torrent -> same name -> button")];
         [alert addButtonWithTitle:NSLocalizedString(@"Add", "Add torrent -> same name -> button")];
-        alert.showsSuppressionButton = YES;
+        TRSetAlertShowsSuppressionButton(alert, YES);
 
         [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse returnCode) {
-            if (alert.suppressionButton.state == NSControlStateValueOn)
+            if (TRAlertSuppressionButton(alert).state == NSControlStateValueOn)
             {
                 [NSUserDefaults.standardUserDefaults setBool:NO forKey:@"WarningFolderDataSameName"];
             }
