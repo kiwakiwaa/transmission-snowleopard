@@ -5,9 +5,69 @@
 #import "ProgressGradients.h"
 #import "NSApplicationAdditions.h"
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+
+static void TRProgressGradientEvaluate(void* info, CGFloat const* input, CGFloat* output)
+{
+    CGFloat const* components = static_cast<CGFloat const*>(info);
+    CGFloat const position = input[0];
+    CGFloat const fraction = position <= 0.5 ? position * 2.0 : (position - 0.5) * 2.0;
+    NSUInteger const start = position <= 0.5 ? 0 : 8;
+    NSUInteger const end = position <= 0.5 ? 4 : 0;
+    for (NSUInteger component = 0; component < 4; ++component)
+    {
+        output[component] = components[start + component] + (components[end + component] - components[start + component]) * fraction;
+    }
+}
+
+@implementation TRProgressGradient
+
+- (instancetype)initWithRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue alpha:(CGFloat)alpha
+{
+    if ((self = [super init]))
+    {
+        CGFloat const baseComponents[] = { red, green, blue, alpha };
+        for (NSUInteger component = 0; component < 4; ++component)
+        {
+            fComponents[component] = baseComponents[component];
+            fComponents[4 + component] = component == 3 ? alpha : baseComponents[component] * 0.95;
+            fComponents[8 + component] = component == 3 ? alpha : baseComponents[component] * 0.85;
+        }
+    }
+    return self;
+}
+
+- (void)drawInRect:(NSRect)rect angle:(CGFloat)angle
+{
+    NSAssert(angle == 90.0, @"TRProgressGradient implements only Transmission's 90-degree gradient path");
+
+    static CGFloat const domain[] = { 0.0, 1.0 };
+    static CGFloat const range[] = { 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0 };
+    CGFunctionCallbacks callbacks = { 0, TRProgressGradientEvaluate, NULL };
+    CGFunctionRef function = CGFunctionCreate(fComponents, 1, domain, 4, range, &callbacks);
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
+    CGPoint const start = CGPointMake(NSMinX(rect), NSMinY(rect));
+    CGPoint const end = CGPointMake(NSMinX(rect), NSMaxY(rect));
+    CGShadingRef shading = CGShadingCreateAxial(colorSpace, start, end, function, false, false);
+
+    NSGraphicsContext* graphicsContext = [NSGraphicsContext currentContext];
+    [graphicsContext saveGraphicsState];
+    [NSBezierPath clipRect:rect];
+    CGContextDrawShading((CGContextRef)[graphicsContext graphicsPort], shading);
+    [graphicsContext restoreGraphicsState];
+
+    CGShadingRelease(shading);
+    CGColorSpaceRelease(colorSpace);
+    CGFunctionRelease(function);
+}
+
+@end
+
+#endif
+
 @implementation ProgressGradients
 
-+ (NSGradient*)progressWhiteGradient
++ (TRProgressGradient*)progressWhiteGradient
 {
     if ([NSApp isDarkMode])
     {
@@ -19,7 +79,7 @@
     }
 }
 
-+ (NSGradient*)progressGrayGradient
++ (TRProgressGradient*)progressGrayGradient
 {
     if ([NSApp isDarkMode])
     {
@@ -31,7 +91,7 @@
     }
 }
 
-+ (NSGradient*)progressLightGrayGradient
++ (TRProgressGradient*)progressLightGrayGradient
 {
     if ([NSApp isDarkMode])
     {
@@ -43,7 +103,7 @@
     }
 }
 
-+ (NSGradient*)progressBlueGradient
++ (TRProgressGradient*)progressBlueGradient
 {
     if ([NSApp isDarkMode])
     {
@@ -55,7 +115,7 @@
     }
 }
 
-+ (NSGradient*)progressDarkBlueGradient
++ (TRProgressGradient*)progressDarkBlueGradient
 {
     if ([NSApp isDarkMode])
     {
@@ -67,7 +127,7 @@
     }
 }
 
-+ (NSGradient*)progressGreenGradient
++ (TRProgressGradient*)progressGreenGradient
 {
     if ([NSApp isDarkMode])
     {
@@ -79,7 +139,7 @@
     }
 }
 
-+ (NSGradient*)progressLightGreenGradient
++ (TRProgressGradient*)progressLightGreenGradient
 {
     if ([NSApp isDarkMode])
     {
@@ -91,7 +151,7 @@
     }
 }
 
-+ (NSGradient*)progressDarkGreenGradient
++ (TRProgressGradient*)progressDarkGreenGradient
 {
     if ([NSApp isDarkMode])
     {
@@ -103,7 +163,7 @@
     }
 }
 
-+ (NSGradient*)progressRedGradient
++ (TRProgressGradient*)progressRedGradient
 {
     if ([NSApp isDarkMode])
     {
@@ -115,7 +175,7 @@
     }
 }
 
-+ (NSGradient*)progressYellowGradient
++ (TRProgressGradient*)progressYellowGradient
 {
     if ([NSApp isDarkMode])
     {
@@ -129,19 +189,20 @@
 
 #pragma mark - Private
 
-+ (NSGradient*)progressGradientForRed:(CGFloat)redComponent green:(CGFloat)greenComponent blue:(CGFloat)blueComponent
++ (TRProgressGradient*)progressGradientForRed:(CGFloat)redComponent green:(CGFloat)greenComponent blue:(CGFloat)blueComponent
 {
     CGFloat const alpha = [NSUserDefaults.standardUserDefaults boolForKey:@"SmallView"] ? 0.27 : 1.0;
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    return [[TRProgressGradient alloc] initWithRed:redComponent green:greenComponent blue:blueComponent alpha:alpha];
+#else
     NSColor* baseColor = [NSColor colorWithCalibratedRed:redComponent green:greenComponent blue:blueComponent alpha:alpha];
-
     NSColor* color2 = [NSColor colorWithCalibratedRed:redComponent * 0.95 green:greenComponent * 0.95 blue:blueComponent * 0.95
                                                 alpha:alpha];
-
     NSColor* color3 = [NSColor colorWithCalibratedRed:redComponent * 0.85 green:greenComponent * 0.85 blue:blueComponent * 0.85
                                                 alpha:alpha];
-
     return [[NSGradient alloc] initWithColorsAndLocations:baseColor, 0.0, color2, 0.5, color3, 0.5, baseColor, 1.0, nil];
+#endif
 }
 
 @end

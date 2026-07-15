@@ -4,6 +4,9 @@
 
 #import <Foundation/Foundation.h>
 
+#include <libtransmission/macos-version.h>
+
+@class LegacyDockTile;
 @class Torrent;
 
 @interface Badger : NSObject
@@ -11,6 +14,9 @@
 {
   @private
     NSMutableSet* _fHashes;
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    LegacyDockTile* _fLegacyDockTile;
+#endif
 }
 #endif
 

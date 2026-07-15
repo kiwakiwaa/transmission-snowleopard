@@ -493,6 +493,15 @@ set(RESOURCES
     Credits.rtf
     ../COPYING
     Images/TransmissionDocument.icns)
+if(TR_MACOS_DEPLOYMENT_BEFORE_10_5)
+    list(APPEND RESOURCES
+        Images/ActionGear.png
+        Images/ActionGearTiger.png
+        Images/Network.png
+        Images/Peers.png
+        Images/Preferences.png
+        Images/TortoiseBlueTiger.png)
+endif()
 if(TR_ENABLE_SPARKLE AND TR_MACOS_DEPLOYMENT_BEFORE_10_7)
     list(APPEND RESOURCES
         sparkle_snow_dsa_pub.pem)
@@ -629,15 +638,27 @@ else()
 endif()
 
 if(TR_MACOS_USE_SOURCE_IMAGE_ASSETS)
+    if(TR_MACOS_DEPLOYMENT_BEFORE_10_5)
+        set(TR_APPICON_COMMAND
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${CMAKE_CURRENT_SOURCE_DIR}/Images/Transmission.icns"
+                "${CMAKE_CURRENT_BINARY_DIR}/${APPICON_NAME}.icns")
+        set(TR_APPICON_DEPENDENCY
+            "${CMAKE_CURRENT_SOURCE_DIR}/Images/Transmission.icns")
+    else()
+        set(TR_APPICON_COMMAND
+            COMMAND
+                ${SIPS_EXECUTABLE}
+                -s format icns
+                "${CMAKE_CURRENT_SOURCE_DIR}/${APPICONSET_DIR}/icon_512x512.png"
+                --out "${CMAKE_CURRENT_BINARY_DIR}/${APPICON_NAME}.icns")
+        set(TR_APPICON_DEPENDENCY)
+    endif()
     add_custom_command(
         OUTPUT ${COMPILED_IMAGE_ASSETS}
-        COMMAND
-            ${SIPS_EXECUTABLE}
-            -s format icns
-            "${CMAKE_CURRENT_SOURCE_DIR}/${APPICONSET_DIR}/icon_512x512.png"
-            --out "${CMAKE_CURRENT_BINARY_DIR}/${APPICON_NAME}.icns"
+        ${TR_APPICON_COMMAND}
         ${TR_LEGACY_IMAGE_ASSET_COMMANDS}
-        DEPENDS ${IMAGE_ASSETS} ${LEGACY_ICON_ASSETS}
+        DEPENDS ${IMAGE_ASSETS} ${LEGACY_ICON_ASSETS} ${TR_APPICON_DEPENDENCY}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         VERBATIM)
     source_group("Generated Files"

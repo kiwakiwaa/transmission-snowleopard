@@ -687,8 +687,13 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
 
     if (!self.fIcon)
     {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+        self.fIcon = [NSWorkspace.sharedWorkspace
+            iconForFileType:self.folder ? NSFileTypeForHFSTypeCode(kGenericFolderIcon) : self.name.pathExtension];
+#else
         self.fIcon = self.folder ? [NSImage imageNamed:NSImageNameFolder] :
                                    [NSWorkspace.sharedWorkspace iconForFileType:self.name.pathExtension];
+#endif
     }
     return self.fIcon;
 }

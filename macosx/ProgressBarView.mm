@@ -234,10 +234,17 @@ static NSInteger const kMaxPieces = 18 * 18;
     torrent.previousFinishedPieces = finishedIndexes.count > 0 ? finishedIndexes : nil; //don't bother saving if none are complete
 
     //actually draw image
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    NSImage* image = [[NSImage alloc] initWithSize:NSMakeSize(pieceCount, 1.0)];
+    [image addRepresentation:bitmap];
+    [image drawInRect:barRect fromRect:NSMakeRect(0.0, 0.0, pieceCount, 1.0) operation:NSCompositingOperationSourceOver
+             fraction:minimal ? 0.25 : 1.0];
+#else
     [bitmap drawInRect:barRect fromRect:NSMakeRect(0.0, 0.0, pieceCount, 1.0) operation:NSCompositingOperationSourceOver
               fraction:minimal ? 0.25 : 1.0
         respectFlipped:YES
                  hints:nil];
+#endif
 }
 
 @end

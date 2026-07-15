@@ -1011,7 +1011,11 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     {
         if (numberSelected > 0)
         {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+            self.fImageView.image = [NSImage imageNamed:@"NSMultipleDocuments"];
+#else
             self.fImageView.image = [NSImage imageNamed:NSImageNameMultipleDocuments];
+#endif
 
             self.fNameField.stringValue = [NSString
                 localizedStringWithFormat:NSLocalizedString(@"%lu Torrents Selected", "Inspector -> selected torrents"), numberSelected];
@@ -1088,7 +1092,11 @@ typedef NS_ENUM(NSUInteger, TabTag) {
         }
         else
         {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+            self.fImageView.image = [NSImage imageNamed:@"NSApplicationIcon"];
+#else
             self.fImageView.image = [NSImage imageNamed:NSImageNameApplicationIcon];
+#endif
             self.fNoneSelectedField.hidden = NO;
 
             self.fNameField.hidden = YES;

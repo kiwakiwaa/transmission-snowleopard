@@ -525,6 +525,9 @@ static void removeKeRangerRansomware()
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
 - (void)updateLegacySpeedLimitButton;
 #endif
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+- (void)updateTigerSpeedLimitButton;
+#endif
 
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_9
 @property(nonatomic) NSURLSession* fSession;
@@ -628,6 +631,10 @@ static void removeKeRangerRansomware()
 {
     if (self != [Controller self])
         return;
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    TRInstallTigerNamedImageFallbacks();
+#endif
 
     removeKeRangerRansomware();
 
@@ -856,6 +863,10 @@ static void removeKeRangerRansomware()
     [[self.fTotalTorrentsField cell] setBackgroundStyle:NSBackgroundStyleRaised];
 
     self.fActionButton.toolTip = NSLocalizedString(@"Shortcuts for changing global settings.", "Main window -> 1st bottom left button (action) tooltip");
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    // Tiger decodes the unknown NSActionTemplate nib resource as a non-nil empty placeholder.
+    self.fActionButton.image = [NSImage imageNamed:@"ActionGearTiger"];
+#endif
 #if !TR_MACOS_SDK_BEFORE_10_11
     if (@available(macOS 26.0, *))
     {
@@ -869,6 +880,9 @@ static void removeKeRangerRansomware()
     self.fSpeedLimitButton.toolTip = NSLocalizedString(
         @"Speed Limit overrides the total bandwidth limits with its own limits.",
         "Main window -> 2nd bottom left button (turtle) tooltip");
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    [self updateTigerSpeedLimitButton];
+#endif
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
     [self.fSpeedLimitButton unbind:NSValueBinding];
     NSImage* speedLimitImage = self.fSpeedLimitButton.image.copy;
@@ -4010,6 +4024,9 @@ static void removeKeRangerRansomware()
 {
     tr_sessionUseAltSpeed(self.fLib, [self.fDefaults boolForKey:@"SpeedLimit"]);
     [self.fStatusBar updateSpeedFieldsToolTips];
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    [self updateTigerSpeedLimitButton];
+#endif
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
     [self updateLegacySpeedLimitButton];
 #endif
@@ -4021,6 +4038,9 @@ static void removeKeRangerRansomware()
 
     [self.fDefaults setBool:isLimited forKey:@"SpeedLimit"];
     [self.fStatusBar updateSpeedFieldsToolTips];
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    [self updateTigerSpeedLimitButton];
+#endif
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
     [self updateLegacySpeedLimitButton];
 #endif
@@ -4030,6 +4050,16 @@ static void removeKeRangerRansomware()
         [self deliverSpeedLimitChangedNotificationIsLimited:isLimited];
     }
 }
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+- (void)updateTigerSpeedLimitButton
+{
+    BOOL const enabled = [self.fDefaults boolForKey:@"SpeedLimit"];
+    self.fSpeedLimitButton.state = enabled ? NSControlStateValueOn : NSControlStateValueOff;
+    self.fSpeedLimitButton.image = [NSImage imageNamed:enabled ? @"TortoiseBlueTiger" : @"TortoiseTemplate"];
+    [self.fSpeedLimitButton setNeedsDisplay:YES];
+}
+#endif
 
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_7 && TR_MACOS_DEPLOYMENT_BEFORE_10_10
 - (void)updateLegacySpeedLimitButton

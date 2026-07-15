@@ -394,7 +394,11 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     {
         item.label = NSLocalizedString(@"General", "Preferences -> toolbar item title");
 #if TR_MACOS_DEPLOYMENT_BEFORE_11_0
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+        item.image = [NSImage imageNamed:@"Preferences"];
+#else
         item.image = [NSImage imageNamed:NSImageNamePreferencesGeneral];
+#endif
 #else
         item.image = TRImageForSystemSymbol(@"gearshape", nil);
 #endif
@@ -442,7 +446,11 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     {
         item.label = NSLocalizedString(@"Peers", "Preferences -> toolbar item title");
 #if TR_MACOS_DEPLOYMENT_BEFORE_11_0
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+        item.image = [NSImage imageNamed:@"Peers"];
+#else
         item.image = [NSImage imageNamed:NSImageNameUserGroup];
+#endif
 #else
         item.image = TRImageForSystemSymbol(@"person.2", nil);
 #endif
@@ -454,7 +462,11 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
     {
         item.label = NSLocalizedString(@"Network", "Preferences -> toolbar item title");
 #if TR_MACOS_DEPLOYMENT_BEFORE_11_0
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+        item.image = [NSImage imageNamed:@"Network"];
+#else
         item.image = [NSImage imageNamed:NSImageNameNetwork];
+#endif
 #else
         item.image = TRImageForSystemSymbol(@"network", nil);
 #endif
