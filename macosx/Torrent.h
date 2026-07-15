@@ -3,7 +3,10 @@
 // License text can be found in the licenses/ folder.
 
 #import <Foundation/Foundation.h>
+#include <libtransmission/macos-version.h>
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
 #import <Quartz/Quartz.h>
+#endif
 
 #include <libtransmission/transmission.h>
 
@@ -13,7 +16,12 @@ typedef NS_ENUM(NSUInteger, TorrentDeterminationType) { TorrentDeterminationAuto
 
 extern NSString* const kTorrentDidChangeGroupNotification;
 
-@interface Torrent : NSObject<NSCopying, QLPreviewItem>
+@interface Torrent : NSObject<NSCopying
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+                              ,
+                              QLPreviewItem
+#endif
+                              >
 #if TR_MACOS_OBJC_FRAGILE_RUNTIME
 {
     tr_torrent* _fHandle;

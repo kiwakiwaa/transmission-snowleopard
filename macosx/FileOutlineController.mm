@@ -435,10 +435,12 @@ static NSString* TRFileOutlinePathTooltip(FileListNode* node)
 - (void)outlineViewSelectionDidChange:(NSNotification*)notification
 {
     [self reloadVisibleRows];
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
     if ([QLPreviewPanel sharedPreviewPanelExists] && [[QLPreviewPanel sharedPreviewPanel] isVisible])
     {
         [[QLPreviewPanel sharedPreviewPanel] reloadData];
     }
+#endif
 }
 
 - (CGFloat)outlineView:(NSOutlineView*)outlineView heightOfRowByItem:(id)item

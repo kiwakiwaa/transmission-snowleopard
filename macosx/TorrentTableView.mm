@@ -1325,7 +1325,11 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
         scrollOrigin.y = 0;
     }
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    [self.superview setBoundsOrigin:scrollOrigin];
+#else
     [[self.superview animator] setBoundsOrigin:scrollOrigin];
+#endif
 }
 
 #pragma mark - Private

@@ -107,12 +107,14 @@ static NSString* const kWebSeedAnimationId = @"webSeed";
     //prepare for animating peer table and web seed table
     self.fViewTopMargin = self.fWebSeedTableTopConstraint.constant;
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
     CABasicAnimation* webSeedTableAnimation = [CABasicAnimation animation];
     webSeedTableAnimation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear];
     webSeedTableAnimation.duration = 0.125;
     webSeedTableAnimation.delegate = self;
     [webSeedTableAnimation setValue:kWebSeedAnimationId forKey:kAnimationIdKey];
     self.fWebSeedTableTopConstraint.animations = @{ @"constant" : webSeedTableAnimation };
+#endif
 
     [self setWebSeedTableHidden:YES animate:NO];
 }
@@ -575,6 +577,7 @@ static NSString* const kWebSeedAnimationId = @"webSeed";
     return nil;
 }
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
 - (void)animationDidStart:(CAAnimation*)animation
 {
     if (![[animation valueForKey:kAnimationIdKey] isEqualToString:kWebSeedAnimationId])
@@ -594,6 +597,7 @@ static NSString* const kWebSeedAnimationId = @"webSeed";
 
     self.fWebSeedTable.enclosingScrollView.hidden = finished && self.fWebSeedTableTopConstraint.constant < 0;
 }
+#endif
 
 #pragma mark - Private
 
@@ -636,6 +640,9 @@ static NSString* const kWebSeedAnimationId = @"webSeed";
 
 - (void)setWebSeedTableHidden:(BOOL)hide animate:(BOOL)animate
 {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    animate = NO;
+#endif
     if (animate && (!self.view.window || ![self.view.window isVisible]))
     {
         animate = NO;

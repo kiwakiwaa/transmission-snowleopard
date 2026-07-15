@@ -3,13 +3,14 @@
 // License text can be found in the licenses/ folder.
 
 #import <AppKit/AppKit.h>
+#include <libtransmission/macos-version.h>
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
 #import <Quartz/Quartz.h>
+#endif
 
 #ifndef TR_ENABLE_SPARKLE
 #define TR_ENABLE_SPARKLE 1
 #endif
-
-#include <libtransmission/macos-version.h>
 
 #if TR_ENABLE_SPARKLE
 #if TR_MACOS_SDK_BEFORE_10_11
@@ -61,8 +62,10 @@ typedef NS_ENUM(NSUInteger, AddType) { //
                             NSSoundDelegate,
                             NSToolbarDelegate,
                             NSWindowDelegate,
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
                             QLPreviewPanelDataSource,
                             QLPreviewPanelDelegate,
+#endif
                             VDKQueueDelegate
 #if TR_ENABLE_SPARKLE
                             ,
@@ -101,7 +104,9 @@ typedef NS_ENUM(NSUInteger, AddType) { //
     NSTimer* _fTimer;
     StatusBarController* _fStatusBar;
     FilterBarController* _fFilterBar;
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5 // disable QuickLook for 10.4
     QLPreviewPanel* _fPreviewPanel;
+#endif
     BOOL _fQuitting;
     BOOL _fQuitRequested;
     BOOL _fPauseOnLaunch;

@@ -84,7 +84,9 @@ static NSUInteger const kMaxQueueLength = 10000U;
                                                name:NSTableViewColumnDidResizeNotification
                                              object:self.fMessageTable];
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
     [window setContentBorderThickness:NSMinY(self.fMessageTable.enclosingScrollView.frame) forEdge:NSMinYEdge];
+#endif
 
     self.window.title = NSLocalizedString(@"Message Log", "Message window -> title");
 

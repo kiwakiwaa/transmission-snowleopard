@@ -133,18 +133,20 @@
 
 - (void)keyDown:(NSEvent*)event
 {
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
     unichar const firstChar = [event.charactersIgnoringModifiers characterAtIndex:0];
-
     if (firstChar == ' ')
     {
         [self toggleQuickLook:nil];
     }
     else
+#endif
     {
         [super keyDown:event];
     }
 }
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
 - (void)toggleQuickLook:(id)sender
 {
     if ([[QLPreviewPanel sharedPreviewPanel] isVisible])
@@ -232,6 +234,7 @@
 
     return NSZeroRect;
 }
+#endif
 
 #pragma mark - Private
 
@@ -268,10 +271,12 @@
     self.fSet = YES;
 }
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
 - (BOOL)canQuickLookFile:(FileListNode*)item
 {
     Torrent* torrent = self.fTorrents[0];
     return (item.isFolder || [torrent fileProgress:item] >= 1.0) && [torrent fileLocation:item];
 }
+#endif
 
 @end

@@ -1880,11 +1880,13 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
     return self.fHandle;
 }
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
 - (NSURL*)previewItemURL
 {
     NSString* location = self.dataLocation;
     return location ? [NSURL fileURLWithPath:location] : nil;
 }
+#endif
 
 #pragma mark - Private
 

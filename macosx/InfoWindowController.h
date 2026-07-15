@@ -3,9 +3,10 @@
 // License text can be found in the licenses/ folder.
 
 #import <AppKit/AppKit.h>
-#import <Quartz/Quartz.h>
-
 #include <libtransmission/macos-version.h>
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#import <Quartz/Quartz.h>
+#endif
 
 #import "InfoWindow.h"
 
@@ -50,8 +51,10 @@
 }
 #endif
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
 @property(nonatomic, readonly) NSArray* quickLookURLs;
 @property(nonatomic, readonly) BOOL canQuickLook;
+#endif
 
 - (void)setInfoForTorrents:(NSArray*)torrents;
 - (void)removeTorrentsFromInfo:(NSArray*)torrents;
@@ -63,6 +66,8 @@
 - (void)setNextTab;
 - (void)setPreviousTab;
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
 - (NSRect)quickLookSourceFrameForPreviewItem:(id<QLPreviewItem>)item;
+#endif
 
 @end
