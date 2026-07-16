@@ -4,7 +4,9 @@
 
 #include <libtransmission/string-utils.h>
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_7
 #import <Security/SecItem.h>
+#endif
 #import <Security/SecKeychain.h>
 #import <Security/SecKeychainItem.h>
 
@@ -205,6 +207,16 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
             [_fDefaults setObject:blocklistDate forKey:@"BlocklistNewLastUpdate"];
             [_fDefaults removeObjectForKey:@"BlocklistLastUpdate"];
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+            NSString* applicationsDirectory = [NSSearchPathForDirectoriesInDomains(NSApplicationDirectory, NSUserDomainMask, YES)
+                objectAtIndex:0];
+            NSString* blocklistDir = [applicationsDirectory stringByAppendingPathComponent:@"Transmission/blocklists/"];
+            TRMoveItemAtPath(
+                NSFileManager.defaultManager,
+                [blocklistDir stringByAppendingPathComponent:@"level1.bin"],
+                [blocklistDir stringByAppendingPathComponent:[NSString stringWithUTF8String:TrDefaultBlocklistFilename.data()]],
+                nil);
+#else
             NSURL* blocklistDir = [[NSFileManager.defaultManager URLsForDirectory:NSApplicationDirectory inDomains:NSUserDomainMask][0]
                 URLByAppendingPathComponent:@"Transmission/blocklists/"];
             [NSFileManager.defaultManager
@@ -212,6 +224,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
                         toURL:[blocklistDir
                                   URLByAppendingPathComponent:[NSString stringWithUTF8String:TrDefaultBlocklistFilename.data()]]
                         error:nil];
+#endif
         }
 
         //save a new random port
@@ -626,7 +639,8 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
 {
     NSMutableArray* sounds = [NSMutableArray array];
 
-    NSArray* directories = NSSearchPathForDirectoriesInDomains(NSAllLibrariesDirectory, NSUserDomainMask | NSLocalDomainMask | NSSystemDomainMask, YES);
+    NSSearchPathDomainMask const domains = (NSSearchPathDomainMask)(NSUserDomainMask | NSLocalDomainMask | NSSystemDomainMask);
+    NSArray* directories = NSSearchPathForDirectoriesInDomains(NSAllLibrariesDirectory, domains, YES);
 
     for (__strong NSString* directory in directories)
     {
@@ -635,7 +649,7 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
         BOOL isDirectory;
         if ([NSFileManager.defaultManager fileExistsAtPath:directory isDirectory:&isDirectory] && isDirectory)
         {
-            NSArray* directoryContents = [NSFileManager.defaultManager contentsOfDirectoryAtPath:directory error:NULL];
+            NSArray* directoryContents = TRContentsOfDirectoryAtPath(NSFileManager.defaultManager, directory, NULL);
             for (__strong NSString* sound in directoryContents)
             {
                 sound = sound.stringByDeletingPathExtension;
@@ -743,8 +757,16 @@ static NSString* const kWebUIURLFormat = @"http://localhost:%ld/";
 
         if (updatedDate)
         {
-            updatedDateString = [NSDateFormatter localizedStringFromDate:updatedDate dateStyle:NSDateFormatterFullStyle
-                                                               timeStyle:NSDateFormatterShortStyle];
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+            NSDateFormatter* formatter = [[NSDateFormatter alloc] init];
+            formatter.dateStyle = NSDateFormatterFullStyle;
+            formatter.timeStyle = NSDateFormatterShortStyle;
+            updatedDateString = [formatter stringFromDate:updatedDate];
+#else
+            updatedDateString = [NSDateFormatter localizedStringFromDate:updatedDate
+                                                                dateStyle:NSDateFormatterFullStyle
+                                                                timeStyle:NSDateFormatterShortStyle];
+#endif
         }
         else
         {

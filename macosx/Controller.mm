@@ -36,6 +36,7 @@
 #endif
 
 #include <atomic> /* atomic, atomic_fetch_add_explicit, memory_order_relaxed */
+#include <unistd.h>
 
 #include <libtransmission/transmission.h>
 
@@ -1821,7 +1822,7 @@ static void removeKeRangerRansomware()
 //called on by applescript
 - (void)open:(NSArray*)files
 {
-    NSDictionary* dict = @{ @"Filenames" : files, @"AddType" : @(AddTypeManual) };
+    NSDictionary* dict = @{ @"Filenames" : files, @"AddType" : [NSNumber numberWithInt:AddTypeManual] };
     dispatch_async(dispatch_get_main_queue(), ^{
         [self openFilesWithDict:dict];
     });

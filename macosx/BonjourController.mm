@@ -39,8 +39,19 @@ static BonjourController* fDefaultController = nil;
 {
     [self stop];
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+    NSString* hostName = [[NSHost currentHost] name];
+    if (hostName == nil)
+    {
+        hostName = @"Mac";
+    }
+
+    NSMutableString* serviceName = [NSMutableString
+        stringWithFormat:@"Transmission (%@ - %@)", NSUserName(), hostName];
+#else
     NSMutableString* serviceName = [NSMutableString
         stringWithFormat:@"Transmission (%@ - %@)", NSUserName(), [NSHost currentHost].localizedName];
+#endif
     if (serviceName.length > kBonjourServiceNameMaxLength)
     {
         [serviceName deleteCharactersInRange:NSMakeRange(kBonjourServiceNameMaxLength, serviceName.length - kBonjourServiceNameMaxLength)];
@@ -60,12 +71,20 @@ static BonjourController* fDefaultController = nil;
 
 - (void)netService:(NSNetService*)sender didNotPublish:(NSDictionary*)errorDict
 {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    NSLog(@"Failed to publish the web interface service %@, with error: %@", [sender name], errorDict);
+#else
     NSLog(@"Failed to publish the web interface service on port %ld, with error: %@", sender.port, errorDict);
+#endif
 }
 
 - (void)netService:(NSNetService*)sender didNotResolve:(NSDictionary*)errorDict
 {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    NSLog(@"Failed to resolve the web interface service %@, with error: %@", [sender name], errorDict);
+#else
     NSLog(@"Failed to resolve the web interface service on port %ld, with error: %@", sender.port, errorDict);
+#endif
 }
 
 @end

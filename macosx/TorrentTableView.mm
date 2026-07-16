@@ -1048,8 +1048,13 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
     }
     NSPasteboard* pasteBoard = NSPasteboard.generalPasteboard;
     NSString* links = [[selectedTorrents valueForKeyPath:@"magnetLink"] componentsJoinedByString:@"\n"];
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+    [pasteBoard declareTypes:@[ NSStringPboardType ] owner:nil];
+    [pasteBoard setString:links forType:NSStringPboardType];
+#else
     [pasteBoard declareTypes:@[ NSPasteboardTypeString ] owner:nil];
     [pasteBoard setString:links forType:NSPasteboardTypeString];
+#endif
 }
 
 - (void)paste:(id)sender

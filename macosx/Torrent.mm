@@ -682,7 +682,11 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
 
     while (status == TR_LOC_MOVING) //block while moving (for now)
     {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+        [NSThread sleepUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.05]];
+#else
         [NSThread sleepForTimeInterval:0.05];
+#endif
     }
 
     if (status == TR_LOC_DONE)
@@ -705,7 +709,11 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
 
 - (void)copyTorrentFileTo:(NSString*)path
 {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    [NSFileManager.defaultManager copyPath:self.torrentLocation toPath:path handler:nil];
+#else
     [NSFileManager.defaultManager copyItemAtPath:self.torrentLocation toPath:path error:NULL];
+#endif
 }
 
 - (BOOL)alertForRemainingDiskSpace
@@ -717,7 +725,11 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
 
     NSString* downloadFolder = self.currentDirectory;
     NSDictionary* systemAttributes;
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    if ((systemAttributes = [NSFileManager.defaultManager fileSystemAttributesAtPath:downloadFolder]))
+#else
     if ((systemAttributes = [NSFileManager.defaultManager attributesOfFileSystemForPath:downloadFolder error:NULL]))
+#endif
     {
         uint64_t const remainingSpace = ((NSNumber*)systemAttributes[NSFileSystemFreeSize]).unsignedLongLongValue;
 
@@ -2220,6 +2232,7 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
             NSDictionary* statusInfo = @{@"Status" : @(status), @"WasRunning" : @(wasRunning)};
             [NSNotificationCenter.defaultCenter postNotificationName:@"TorrentFinishedDownloading" object:self userInfo:statusInfo];
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
             //quarantine the finished data
             NSString* dataLocation = [self.currentDirectory stringByAppendingPathComponent:self.name];
             NSURL* dataLocationUrl = [NSURL fileURLWithPath:dataLocation];
@@ -2231,6 +2244,7 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
             {
                 NSLog(@"Failed to quarantine %@: %@", dataLocation, error.description);
             }
+#endif
             break;
         }
     case TR_LEECH:
@@ -2407,6 +2421,7 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
 
 - (void)setTimeMachineExclude:(BOOL)exclude
 {
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
     NSString* path;
     if ((path = self.dataLocation))
     {
@@ -2415,6 +2430,9 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
             CSBackupSetItemExcluded(url, exclude, false);
         });
     }
+#else
+    (void)exclude;
+#endif
 }
 
 // For backward compatibility for previously saved Group Predicates.
