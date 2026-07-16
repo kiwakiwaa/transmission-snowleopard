@@ -21,6 +21,8 @@
 
 #import "VDKQueue.h"
 
+#include <errno.h>
+#include <stdint.h>
 #import <unistd.h>
 #import <fcntl.h>
 #include <sys/stat.h>
@@ -119,11 +121,23 @@ NSString const* VDKQueueAccessRevocationNotification = @"VDKQueueAccessWasRevoke
     self = [super init];
     if (self)
     {
+        _coreQueueFD = -1;
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+        _shutdownPipeFDs[0] = -1;
+        _shutdownPipeFDs[1] = -1;
+#endif
         _coreQueueFD = kqueue();
         if (_coreQueueFD == -1)
         {
             return nil;
         }
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+        if (![self installShutdownEventSource])
+        {
+            [self closeCoreQueue];
+            return nil;
+        }
+#endif
         _watchedPathEntries = [[NSMutableDictionary alloc] init];
     }
     return self;
@@ -131,15 +145,114 @@ NSString const* VDKQueueAccessRevocationNotification = @"VDKQueueAccessWasRevoke
 
 - (void)dealloc
 {
-    // Close our kqueue's file descriptor
-    if (close(_coreQueueFD) == -1)
+    [self closeCoreQueue];
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+    [self closeShutdownEventSource];
+#endif
+}
+
+#pragma mark -
+#pragma mark PRIVATE METHODS
+
+- (void)closeCoreQueue
+{
+    int const fd = _coreQueueFD;
+    _coreQueueFD = -1;
+    if (fd >= 0 && close(fd) == -1)
     {
         NSLog(@"VDKQueue watcherThread: Couldn't close main kqueue (%d)", errno);
     }
 }
 
-#pragma mark -
-#pragma mark PRIVATE METHODS
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+- (BOOL)installShutdownEventSource
+{
+    if (pipe(_shutdownPipeFDs) == -1)
+    {
+        return NO;
+    }
+
+    for (int fdIndex = 0; fdIndex < 2; ++fdIndex)
+    {
+        int const flags = fcntl(_shutdownPipeFDs[fdIndex], F_GETFL, 0);
+        if (flags == -1 || fcntl(_shutdownPipeFDs[fdIndex], F_SETFL, flags | O_NONBLOCK) == -1)
+        {
+            [self closeShutdownEventSource];
+            return NO;
+        }
+    }
+
+    struct timespec nullts = { 0, 0 };
+    struct kevent ev;
+    EV_SET(&ev, _shutdownPipeFDs[0], EVFILT_READ, EV_ADD | EV_ENABLE | EV_CLEAR, 0, 0, NULL);
+    if (kevent(_coreQueueFD, &ev, 1, NULL, 0, &nullts) == -1)
+    {
+        [self closeShutdownEventSource];
+        return NO;
+    }
+
+    return YES;
+}
+
+- (void)closeShutdownEventSource
+{
+    for (int fdIndex = 0; fdIndex < 2; ++fdIndex)
+    {
+        if (_shutdownPipeFDs[fdIndex] >= 0)
+        {
+            close(_shutdownPipeFDs[fdIndex]);
+            _shutdownPipeFDs[fdIndex] = -1;
+        }
+    }
+}
+
+- (void)drainShutdownEventSource
+{
+    char buffer[64];
+    while (read(_shutdownPipeFDs[0], buffer, sizeof(buffer)) > 0)
+    {
+    }
+}
+
+- (void)wakeWatcherThread
+{
+    uint8_t byte = 0;
+    if (_shutdownPipeFDs[1] >= 0 && write(_shutdownPipeFDs[1], &byte, sizeof(byte)) == -1 && errno != EAGAIN)
+    {
+        NSLog(@"VDKQueue watcherThread: Couldn't wake shutdown pipe (%d)", errno);
+    }
+}
+#else
+- (void)wakeWatcherThread
+{
+    struct timespec nullts = { 0, 0 };
+    struct kevent stopEvent = { 0, EVFILT_USER, EV_ADD | EV_ONESHOT, NOTE_TRIGGER, 0, NULL };
+    kevent(_coreQueueFD, &stopEvent, 1, NULL, 0, &nullts);
+}
+#endif
+
+- (void)deliverNotifications:(NSArray*)notes forPath:(NSString*)fpath
+{
+    auto nNotes = [notes count];
+    for (decltype(nNotes) index = 0; index < nNotes; ++index)
+    {
+        NSString* note = [notes objectAtIndex:index];
+        [self->_delegate VDKQueue:self receivedNotification:note forPath:fpath];
+
+        if (!self->_delegate || self->_alwaysPostNotifications)
+        {
+            [NSNotificationCenter.defaultCenter postNotificationName:note object:self
+                                                            userInfo:[NSDictionary dictionaryWithObject:fpath forKey:@"path"]];
+        }
+    }
+}
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+- (void)deliverNotificationInfo:(NSDictionary*)notificationInfo
+{
+    [self deliverNotifications:[notificationInfo objectForKey:@"notes"] forPath:[notificationInfo objectForKey:@"path"]];
+}
+#endif
 
 - (VDKQueuePathEntry*)addPathToQueue:(NSString*)path notifyingAbout:(u_int)flags
 {
@@ -192,7 +305,9 @@ NSString const* VDKQueueAccessRevocationNotification = @"VDKQueueAccessWasRevoke
     NSLog(@"watcherThread started.");
 #endif
 
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_6
     NSThread.currentThread.name = @"VDKQueue";
+#endif
 
     struct kevent ev;
     int const theFD = _coreQueueFD;
@@ -202,7 +317,18 @@ NSString const* VDKQueueAccessRevocationNotification = @"VDKQueueAccessWasRevoke
     while (_keepWatcherThreadRunning)
     {
         int n = kevent(theFD, NULL, 0, &ev, 1, NULL);
-        if (n <= 0 || ev.filter != EVFILT_VNODE || !ev.fflags)
+        if (n <= 0)
+        {
+            continue;
+        }
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+        if (ev.filter == EVFILT_READ && ev.ident == (uintptr_t)_shutdownPipeFDs[0])
+        {
+            [self drainShutdownEventSource];
+            continue;
+        }
+#endif
+        if (ev.filter != EVFILT_VNODE || !ev.fflags)
         {
             continue;
         }
@@ -256,17 +382,14 @@ NSString const* VDKQueueAccessRevocationNotification = @"VDKQueueAccessWasRevoke
         NSArray* notes = [[NSArray alloc] initWithArray:notesToPost];
 
         // Post the notifications (or call the delegate method) on the main thread.
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+        NSDictionary* notificationInfo = [NSDictionary dictionaryWithObjectsAndKeys:notes, @"notes", fpath, @"path", nil];
+        [self performSelectorOnMainThread:@selector(deliverNotificationInfo:) withObject:notificationInfo waitUntilDone:NO];
+#else
         dispatch_async(dispatch_get_main_queue(), ^{
-            for (NSString* note in notes)
-            {
-                [self->_delegate VDKQueue:self receivedNotification:note forPath:fpath];
-
-                if (!self->_delegate || self->_alwaysPostNotifications)
-                {
-                    [NSNotificationCenter.defaultCenter postNotificationName:note object:self userInfo:@{ @"path" : fpath }];
-                }
-            }
+            [self deliverNotifications:notes forPath:fpath];
         });
+#endif
     }
 
 #if DEBUG_LOG_THREAD_LIFETIME
@@ -316,9 +439,7 @@ NSString const* VDKQueueAccessRevocationNotification = @"VDKQueueAccessWasRevoke
     _keepWatcherThreadRunning = NO;
 
     // Trigger a custom event to stop the thread.
-    struct timespec nullts = { 0, 0 };
-    struct kevent stopEvent = { 0, EVFILT_USER, EV_ADD | EV_ONESHOT, NOTE_TRIGGER, 0, NULL };
-    kevent(_coreQueueFD, &stopEvent, 1, NULL, 0, &nullts);
+    [self wakeWatcherThread];
 }
 
 - (void)removePath:(NSString*)aPath

@@ -92,6 +92,8 @@
 
 #import <Foundation/Foundation.h>
 
+#include "../../libtransmission/macos-version.h"
+
 #import "../ObjectiveCCompatibility.h"
 
 #include <sys/types.h>
@@ -138,6 +140,9 @@ extern NSString const* VDKQueueAccessRevocationNotification;
 {
   @private
     int _coreQueueFD;
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+    int _shutdownPipeFDs[2];
+#endif
     NSMutableDictionary* _watchedPathEntries;
     BOOL _keepWatcherThreadRunning;
     __weak id<VDKQueueDelegate> _delegate;
