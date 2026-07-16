@@ -948,7 +948,11 @@ static NSString* TRFileOutlinePathTooltip(FileListNode* node)
     __block NSUInteger retIndex = NSNotFound;
 
     using FindFileNode = void (^)(FileListNode*, NSArray*, NSIndexSet*, FileListNode*);
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    __block __unsafe_unretained FindFileNode weakFindFileNode;
+#else
     __block __weak FindFileNode weakFindFileNode;
+#endif
     FindFileNode findFileNode;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wshadow"

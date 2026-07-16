@@ -59,7 +59,6 @@ static dispatch_queue_t timeMachineExcludeQueue;
 
 - (void)renameFinished:(BOOL)success
                  nodes:(NSArray*)nodes
-     completionHandler:(void (^)(BOOL))completionHandler
                oldPath:(NSString*)oldPath
                newName:(NSString*)newName;
 
@@ -67,6 +66,64 @@ static dispatch_queue_t timeMachineExcludeQueue;
 @property(nonatomic, readonly) NSString* etaString;
 
 @end
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+extern "C" void* _Block_copy(void const* block);
+extern "C" void _Block_release(void const* block);
+
+@interface TigerRenameContext : NSObject
+{
+    Torrent* _torrent;
+    NSArray* _nodes;
+    void* _completionHandler;
+}
+
+- (instancetype)initWithTorrent:(Torrent*)torrent nodes:(NSArray*)nodes completionHandler:(void const*)completionHandler;
+@property(nonatomic, readonly) Torrent* torrent;
+@property(nonatomic, readonly) NSArray* nodes;
+- (void)invokeCompletionHandler:(BOOL)didRename;
+
+@end
+
+
+@implementation TigerRenameContext
+
+- (instancetype)initWithTorrent:(Torrent*)torrent nodes:(NSArray*)nodes completionHandler:(void const*)completionHandler
+{
+    if ((self = [super init]))
+    {
+        _torrent = torrent;
+        _nodes = nodes;
+        _completionHandler = _Block_copy(completionHandler);
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    if (_completionHandler != nullptr)
+    {
+        _Block_release(_completionHandler);
+    }
+}
+
+- (Torrent*)torrent
+{
+    return _torrent;
+}
+
+- (NSArray*)nodes
+{
+    return _nodes;
+}
+
+- (void)invokeCompletionHandler:(BOOL)didRename
+{
+    ((__bridge void (^)(BOOL))_completionHandler)(didRename);
+}
+
+@end
+#endif
 
 [[nodiscard]]
 static bool canChangeDownloadCheck(tr_file_view const& file)
@@ -97,6 +154,25 @@ static bool trashDataFile(std::string_view const filename, tr_error* error)
     return true;
 }
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+static tr_torrent_rename_done_func makeRenameDoneCallback(TigerRenameContext* contextInfo)
+{
+    return [contextInfo](tr_torrent_id_t const /*tor_id*/, std::string_view const oldpath, std::string_view const newname, tr_error const& error)
+    {
+        @autoreleasepool
+        {
+            NSString* const oldPath = tr_strv_to_utf8_nsstring(oldpath);
+            NSString* const newName = tr_strv_to_utf8_nsstring(newname);
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+                BOOL const success = error.code() == 0;
+                [contextInfo.torrent renameFinished:success nodes:contextInfo.nodes oldPath:oldPath newName:newName];
+                [contextInfo invokeCompletionHandler:success];
+            });
+        }
+    };
+}
+#else
 static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextInfo)
 {
     return [contextInfo](tr_torrent_id_t const /*tor_id*/, std::string_view const oldpath, std::string_view const newname, tr_error const& error)
@@ -108,15 +184,14 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
 
             dispatch_async(dispatch_get_main_queue(), ^{
                 Torrent* torrentObject = [contextInfo objectForKey:@"Torrent"];
-                [torrentObject renameFinished:error.code() == 0
-                                        nodes:[contextInfo objectForKey:@"Nodes"]
-                            completionHandler:[contextInfo objectForKey:@"CompletionHandler"]
-                                      oldPath:oldPath
-                                      newName:newName];
+                BOOL const success = error.code() == 0;
+                [torrentObject renameFinished:success nodes:[contextInfo objectForKey:@"Nodes"] oldPath:oldPath newName:newName];
+                ((void (^)(BOOL))[contextInfo objectForKey:@"CompletionHandler"])(success);
             });
         }
     };
 }
+#endif
 
 @implementation Torrent
 
@@ -922,7 +997,13 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
     }
 
     void (^handler)(BOOL) = completionHandler ?: ^(BOOL /*didRename*/) {};
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    TigerRenameContext* contextInfo = [[TigerRenameContext alloc] initWithTorrent:self
+                                                                            nodes:nil
+                                                                completionHandler:(__bridge void const*)handler];
+#else
     NSDictionary* contextInfo = @{ @"Torrent" : self, @"CompletionHandler" : [handler copy] };
+#endif
 
     tr_torrentRenamePath(self.fHandle, tr_torrentName(self.fHandle), newName.UTF8String, makeRenameDoneCallback(contextInfo));
 }
@@ -945,7 +1026,13 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
     }
 
     void (^handler)(BOOL) = completionHandler ?: ^(BOOL /*didRename*/) {};
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    TigerRenameContext* contextInfo = [[TigerRenameContext alloc] initWithTorrent:self
+                                                                            nodes:@[ node ]
+                                                                completionHandler:(__bridge void const*)handler];
+#else
     NSDictionary* contextInfo = @{ @"Torrent" : self, @"Nodes" : @[ node ], @"CompletionHandler" : [handler copy] };
+#endif
 
     NSString* oldPath = [node.path stringByAppendingPathComponent:node.name];
     tr_torrentRenamePath(self.fHandle, oldPath.UTF8String, newName.UTF8String, makeRenameDoneCallback(contextInfo));
@@ -2212,11 +2299,9 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
 
 - (void)renameFinished:(BOOL)success
                  nodes:(NSArray*)nodes
-     completionHandler:(void (^)(BOOL))completionHandler
                oldPath:(NSString*)oldPath
                newName:(NSString*)newName
 {
-    NSParameterAssert(completionHandler != nil);
     NSParameterAssert(oldPath != nil);
     NSParameterAssert(newName != nil);
 
@@ -2227,7 +2312,11 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
         NSString* oldName = oldPath.lastPathComponent;
 
         using UpdateNodeAndChildrenForRename = void (^)(FileListNode*);
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+        __block __unsafe_unretained UpdateNodeAndChildrenForRename weakUpdateNodeAndChildrenForRename;
+#else
         __block __weak UpdateNodeAndChildrenForRename weakUpdateNodeAndChildrenForRename;
+#endif
         UpdateNodeAndChildrenForRename updateNodeAndChildrenForRename;
         weakUpdateNodeAndChildrenForRename = updateNodeAndChildrenForRename = ^(FileListNode* node) {
             [node updateFromOldName:oldName toNewName:newName inPath:path];
@@ -2264,8 +2353,6 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
     {
         NSLog(@"Error renaming %@ to %@", oldPath, [path stringByAppendingPathComponent:newName]);
     }
-
-    completionHandler(success);
 }
 
 - (BOOL)shouldShowEta

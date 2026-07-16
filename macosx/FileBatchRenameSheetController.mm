@@ -149,6 +149,17 @@ typedef NS_ENUM(NSInteger, BatchRenameRulePopupTag) {
 #endif
 }
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+- (void)prepareForTigerSheetControllerRelease
+{
+    self.tableView.delegate = nil;
+    self.tableView.dataSource = nil;
+    [self.tableView unregisterDraggedTypes];
+    self.window.delegate = nil;
+    [self close];
+}
+#endif
+
 + (void)presentSheetForFileListNodes:(NSArray*)nodes
                        modalForWindow:(NSWindow*)window
                     completionHandler:(void (^)(BOOL didRename, NSArray* operations))completionHandler
@@ -166,6 +177,9 @@ typedef NS_ENUM(NSInteger, BatchRenameRulePopupTag) {
         {
             strongController.completionHandler(returnCode == NSModalResponseOK, strongController.completedOperations);
         }
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+        [strongController prepareForTigerSheetControllerRelease];
+#endif
         strongController = nil;
     }];
 }
