@@ -308,7 +308,7 @@ static NSUInteger const kMaxQueueLength = 10000U;
         NSDictionary* message = @{
             @"Message" : [NSString convertedStringFromCString:currentMessage.message.c_str()],
             @"Date" : [NSDate dateWithTimeIntervalSince1970:secs_since_1970],
-            @"Index" : @(currentIndex++), //more accurate when sorting by date
+            @"Index" : [NSNumber numberWithUnsignedLong:currentIndex++], //more accurate when sorting by date
             @"Level" : @(currentMessage.level),
             @"Name" : name,
             @"File" : file
@@ -520,7 +520,7 @@ static NSUInteger const kMaxQueueLength = 10000U;
         if (result == NSModalResponseOK)
         {
             //make the array sorted by date
-            NSSortDescriptor* descriptor = [NSSortDescriptor sortDescriptorWithKey:@"Index" ascending:YES];
+            NSSortDescriptor* descriptor = [[NSSortDescriptor alloc] initWithKey:@"Index" ascending:YES];
             NSArray* descriptors = @[ descriptor ];
             NSArray* sortedMessages = [self.fDisplayedMessages sortedArrayUsingDescriptors:descriptors];
 
@@ -564,7 +564,7 @@ static NSUInteger const kMaxQueueLength = 10000U;
         return YES;
     }
 
-    NSStringCompareOptions const searchOptions = NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch;
+    NSUInteger const searchOptions = NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch;
     return [message[@"Name"] rangeOfString:filterString options:searchOptions].location != NSNotFound ||
         [message[@"Message"] rangeOfString:filterString options:searchOptions].location != NSNotFound;
 }

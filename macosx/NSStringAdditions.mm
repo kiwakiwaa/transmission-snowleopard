@@ -188,13 +188,36 @@ static NSString* TRStringForFileSize(uint64_t size, BOOL includeUnit)
 
 - (NSComparisonResult)compareNumeric:(NSString*)string
 {
-    NSStringCompareOptions const comparisonOptions = NSNumericSearch | NSForcedOrderingSearch;
+    NSUInteger const comparisonOptions = NSNumericSearch
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+        | NSForcedOrderingSearch
+#endif
+        ;
     return [self compare:string options:comparisonOptions range:NSMakeRange(0, self.length) locale:NSLocale.currentLocale];
 }
 
 - (NSArray*)nonEmptyComponentsSeparatedByCharactersInSet:(NSCharacterSet*)separators
 {
     NSMutableArray* components = [NSMutableArray array];
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+    NSUInteger componentStart = 0;
+    while (componentStart < self.length)
+    {
+        NSRange const separatorRange = [self rangeOfCharacterFromSet:separators
+                                                             options:0
+                                                               range:NSMakeRange(componentStart, self.length - componentStart)];
+        NSUInteger const componentEnd = separatorRange.location == NSNotFound ? self.length : separatorRange.location;
+        if (componentEnd > componentStart)
+        {
+            [components addObject:[self substringWithRange:NSMakeRange(componentStart, componentEnd - componentStart)]];
+        }
+        if (separatorRange.location == NSNotFound)
+        {
+            break;
+        }
+        componentStart = NSMaxRange(separatorRange);
+    }
+#else
     for (NSString* evaluatedObject in [self componentsSeparatedByCharactersInSet:separators])
     {
         if (evaluatedObject.length > 0)
@@ -202,6 +225,7 @@ static NSString* TRStringForFileSize(uint64_t size, BOOL includeUnit)
             [components addObject:evaluatedObject];
         }
     }
+#endif
     return components;
 }
 

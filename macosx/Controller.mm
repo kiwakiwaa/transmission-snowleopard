@@ -939,8 +939,8 @@ static void removeKeRangerRansomware()
         }
     }
 
-    [sortMenuItems sortUsingDescriptors:@[ [NSSortDescriptor sortDescriptorWithKey:@"title" ascending:YES
-                                                                          selector:@selector(localizedCompare:)] ]];
+    NSSortDescriptor* titleSortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"title" ascending:YES selector:@selector(localizedCompare:)];
+    [sortMenuItems sortUsingDescriptors:@[ titleSortDescriptor ]];
 
     for (NSMenuItem* item in sortMenuItems)
     {
@@ -3263,59 +3263,58 @@ static void removeKeRangerRansomware()
     BOOL const asc = ![self.fDefaults boolForKey:@"SortReverse"];
 
     NSArray* descriptors;
-    NSSortDescriptor* nameDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"name" ascending:asc
-                                                                      selector:@selector(localizedStandardCompare:)];
+    NSSortDescriptor* nameDescriptor = TRSortDescriptorWithSelector(@"name", asc, @selector(localizedStandardCompare:));
 
     NSString* sortType = [self.fDefaults stringForKey:@"Sort"];
     if ([sortType isEqualToString:SortTypeState])
     {
-        NSSortDescriptor* stateDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"stateSortKey" ascending:!asc];
-        NSSortDescriptor* progressDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"progress" ascending:!asc];
-        NSSortDescriptor* ratioDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"ratio" ascending:!asc];
+        NSSortDescriptor* stateDescriptor = TRSortDescriptor(@"stateSortKey", !asc);
+        NSSortDescriptor* progressDescriptor = TRSortDescriptor(@"progress", !asc);
+        NSSortDescriptor* ratioDescriptor = TRSortDescriptor(@"ratio", !asc);
 
         descriptors = @[ stateDescriptor, progressDescriptor, ratioDescriptor, nameDescriptor ];
     }
     else if ([sortType isEqualToString:SortTypeProgress])
     {
-        NSSortDescriptor* progressDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"progress" ascending:asc];
-        NSSortDescriptor* ratioProgressDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"progressStopRatio" ascending:asc];
-        NSSortDescriptor* ratioDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"ratio" ascending:asc];
+        NSSortDescriptor* progressDescriptor = TRSortDescriptor(@"progress", asc);
+        NSSortDescriptor* ratioProgressDescriptor = TRSortDescriptor(@"progressStopRatio", asc);
+        NSSortDescriptor* ratioDescriptor = TRSortDescriptor(@"ratio", asc);
 
         descriptors = @[ progressDescriptor, ratioProgressDescriptor, ratioDescriptor, nameDescriptor ];
     }
     else if ([sortType isEqualToString:SortTypeETA])
     {
-        NSSortDescriptor* etaDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"eta" ascending:asc];
+        NSSortDescriptor* etaDescriptor = TRSortDescriptor(@"eta", asc);
         // falling back on sort by progress
-        NSSortDescriptor* progressDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"progress" ascending:asc];
-        NSSortDescriptor* ratioProgressDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"progressStopRatio" ascending:asc];
-        NSSortDescriptor* ratioDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"ratio" ascending:asc];
+        NSSortDescriptor* progressDescriptor = TRSortDescriptor(@"progress", asc);
+        NSSortDescriptor* ratioProgressDescriptor = TRSortDescriptor(@"progressStopRatio", asc);
+        NSSortDescriptor* ratioDescriptor = TRSortDescriptor(@"ratio", asc);
 
         descriptors = @[ etaDescriptor, progressDescriptor, ratioProgressDescriptor, ratioDescriptor, nameDescriptor ];
     }
     else if ([sortType isEqualToString:SortTypeTracker])
     {
-        NSSortDescriptor* trackerDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"trackerSortKey" ascending:asc
-                                                                             selector:@selector(localizedCaseInsensitiveCompare:)];
+        NSSortDescriptor* trackerDescriptor = TRSortDescriptorWithSelector(
+            @"trackerSortKey", asc, @selector(localizedCaseInsensitiveCompare:));
 
         descriptors = @[ trackerDescriptor, nameDescriptor ];
     }
     else if ([sortType isEqualToString:SortTypeActivity])
     {
-        NSSortDescriptor* rateDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"totalRate" ascending:asc];
-        NSSortDescriptor* activityDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"dateActivityOrAdd" ascending:asc];
+        NSSortDescriptor* rateDescriptor = TRSortDescriptor(@"totalRate", asc);
+        NSSortDescriptor* activityDescriptor = TRSortDescriptor(@"dateActivityOrAdd", asc);
 
         descriptors = @[ rateDescriptor, activityDescriptor, nameDescriptor ];
     }
     else if ([sortType isEqualToString:SortTypeDate])
     {
-        NSSortDescriptor* dateDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"dateAdded" ascending:asc];
+        NSSortDescriptor* dateDescriptor = TRSortDescriptor(@"dateAdded", asc);
 
         descriptors = @[ dateDescriptor, nameDescriptor ];
     }
     else if ([sortType isEqualToString:SortTypeSize])
     {
-        NSSortDescriptor* sizeDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"totalSizeSelected" ascending:asc];
+        NSSortDescriptor* sizeDescriptor = TRSortDescriptor(@"totalSizeSelected", asc);
 
         descriptors = @[ sizeDescriptor, nameDescriptor ];
     }
@@ -3332,7 +3331,7 @@ static void removeKeRangerRansomware()
             return;
         }
 
-        NSSortDescriptor* orderDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"queuePosition" ascending:asc];
+        NSSortDescriptor* orderDescriptor = TRSortDescriptor(@"queuePosition", asc);
 
         descriptors = @[ orderDescriptor ];
     }
@@ -3369,6 +3368,28 @@ static void removeKeRangerRansomware()
     for (NSUInteger currentIndex = 1; currentIndex < rearrangeArray.count; ++currentIndex)
     {
         //manually do the sorting in-place
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+        id currentObject = rearrangeArray[currentIndex];
+        NSUInteger insertIndex = currentIndex;
+        for (NSUInteger candidateIndex = 0; candidateIndex < currentIndex; ++candidateIndex)
+        {
+            NSComparisonResult result = NSOrderedSame;
+            for (NSSortDescriptor* descriptor in descriptors)
+            {
+                result = [descriptor compareObject:currentObject toObject:rearrangeArray[candidateIndex]];
+                if (result != NSOrderedSame)
+                {
+                    break;
+                }
+            }
+
+            if (result == NSOrderedAscending)
+            {
+                insertIndex = candidateIndex;
+                break;
+            }
+        }
+#else
         NSUInteger const insertIndex = [rearrangeArray indexOfObject:rearrangeArray[currentIndex]
                                                        inSortedRange:NSMakeRange(0, currentIndex)
                                                              options:(NSBinarySearchingInsertionIndex | NSBinarySearchingLastEqual)
@@ -3695,7 +3716,7 @@ static void removeKeRangerRansomware()
         NSMutableDictionary* groupsByIndex = [NSMutableDictionary dictionaryWithCapacity:self.fDisplayedTorrents.count];
         for (TorrentGroup* group in self.fDisplayedTorrents)
         {
-            groupsByIndex[@(group.groupIndex)] = group;
+            [groupsByIndex setObject:group forKey:[NSNumber numberWithInt:group.groupIndex]];
         }
 
         NSUInteger const originalGroupCount = self.fDisplayedTorrents.count;
@@ -3724,11 +3745,12 @@ static void removeKeRangerRansomware()
                     NSInteger const groupValue = torrent.groupValue;
                     if (groupValue != group.groupIndex)
                     {
-                        TorrentGroup* newGroup = groupsByIndex[@(groupValue)];
+                        NSNumber* groupKey = [NSNumber numberWithInt:groupValue];
+                        TorrentGroup* newGroup = groupsByIndex[groupKey];
                         if (!newGroup)
                         {
                             newGroup = [[TorrentGroup alloc] initWithGroup:groupValue];
-                            groupsByIndex[@(groupValue)] = newGroup;
+                            groupsByIndex[groupKey] = newGroup;
                             [self.fDisplayedTorrents addObject:newGroup];
 
                             [self.fTableView insertItemsAtIndexes:[NSIndexSet indexSetWithIndex:self.fDisplayedTorrents.count - 1]
@@ -3774,11 +3796,12 @@ static void removeKeRangerRansomware()
         for (Torrent* torrent in [allTorrents objectsAtIndexes:unusedAllTorrentsIndexes])
         {
             NSInteger const groupValue = torrent.groupValue;
-            TorrentGroup* group = groupsByIndex[@(groupValue)];
+            NSNumber* groupKey = [NSNumber numberWithInt:groupValue];
+            TorrentGroup* group = groupsByIndex[groupKey];
             if (!group)
             {
                 group = [[TorrentGroup alloc] initWithGroup:groupValue];
-                groupsByIndex[@(groupValue)] = group;
+                groupsByIndex[groupKey] = group;
                 [self.fDisplayedTorrents addObject:group];
 
                 [self.fTableView insertItemsAtIndexes:[NSIndexSet indexSetWithIndex:self.fDisplayedTorrents.count - 1] inParent:nil
@@ -3807,7 +3830,7 @@ static void removeKeRangerRansomware()
         }
 
         //now that all groups are there, sort them - don't insert on the fly in case groups were reordered in prefs
-        NSSortDescriptor* groupDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"groupOrderValue" ascending:YES];
+        NSSortDescriptor* groupDescriptor = TRSortDescriptor(@"groupOrderValue", YES);
         [self rearrangeTorrentTableArray:self.fDisplayedTorrents forParent:nil withSortDescriptors:@[ groupDescriptor ]
                         beganTableUpdate:&beganUpdates];
     }
@@ -3835,11 +3858,12 @@ static void removeKeRangerRansomware()
             for (Torrent* torrent in allTorrents)
             {
                 NSInteger const groupValue = torrent.groupValue;
-                TorrentGroup* group = groupsByIndex[@(groupValue)];
+                NSNumber* groupKey = [NSNumber numberWithInt:groupValue];
+                TorrentGroup* group = groupsByIndex[groupKey];
                 if (!group)
                 {
                     group = [[TorrentGroup alloc] initWithGroup:groupValue];
-                    groupsByIndex[@(groupValue)] = group;
+                    groupsByIndex[groupKey] = group;
                 }
 
                 [group.torrents addObject:torrent];
@@ -3848,7 +3872,7 @@ static void removeKeRangerRansomware()
             [self.fDisplayedTorrents setArray:groupsByIndex.allValues];
 
             //we need the groups to be sorted, and we can do it without moving items in the table, too!
-            NSSortDescriptor* groupDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"groupOrderValue" ascending:YES];
+            NSSortDescriptor* groupDescriptor = TRSortDescriptor(@"groupOrderValue", YES);
             [self.fDisplayedTorrents sortUsingDescriptors:@[ groupDescriptor ]];
         }
         else
@@ -6263,7 +6287,7 @@ static void removeKeRangerRansomware()
 {
     [Torrent updateTorrents:self.fTorrents];
 
-    NSSortDescriptor* descriptor = [NSSortDescriptor sortDescriptorWithKey:@"queuePosition" ascending:YES];
+    NSSortDescriptor* descriptor = TRSortDescriptor(@"queuePosition", YES);
     NSArray* descriptors = @[ descriptor ];
     [self.fTorrents sortUsingDescriptors:descriptors];
 

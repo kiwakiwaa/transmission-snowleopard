@@ -2105,8 +2105,12 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
 
 - (void)sortFileList:(NSMutableArray*)fileNodes
 {
-    NSSortDescriptor* descriptor = [NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES
-                                                                  selector:@selector(localizedStandardCompare:)];
+    NSSortDescriptor* descriptor = [[NSSortDescriptor alloc] initWithKey:@"name" ascending:YES
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+                                                                 selector:@selector(compare:)];
+#else
+                                                                 selector:@selector(localizedStandardCompare:)];
+#endif
     [fileNodes sortUsingDescriptors:@[ descriptor ]];
 
     [fileNodes enumerateObjectsWithOptions:NSEnumerationConcurrent usingBlock:^(FileListNode* node, NSUInteger /*idx*/, BOOL* /*stop*/) {
