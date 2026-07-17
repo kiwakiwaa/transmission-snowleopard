@@ -469,6 +469,10 @@ static void removeKeRangerRansomware()
 @property(nonatomic) NSLayoutConstraint* fFixedHeightConstraint;
 @property(nonatomic) IBOutlet TorrentTableView* fTableView;
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+- (TorrentGroup*)parentGroupForTorrent:(Torrent*)torrent;
+#endif
+
 @property(nonatomic) IBOutlet NSMenuItem* fOpenIgnoreDownloadFolder;
 @property(nonatomic) IBOutlet NSButton* fActionButton;
 @property(nonatomic) IBOutlet NSButton* fSpeedLimitButton;
@@ -3094,6 +3098,26 @@ static void removeKeRangerRansomware()
     return torrent;
 }
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+- (TorrentGroup*)parentGroupForTorrent:(Torrent*)torrent
+{
+    if (torrent == nil)
+    {
+        return nil;
+    }
+
+    for (TorrentGroup* group in self.fDisplayedTorrents)
+    {
+        if ([group isKindOfClass:[TorrentGroup class]] && [group.torrents containsObject:torrent])
+        {
+            return group;
+        }
+    }
+
+    return nil;
+}
+#endif
+
 - (void)torrentFinishedDownloading:(NSNotification*)notification
 {
     Torrent* torrent = notification.object;
@@ -4291,7 +4315,11 @@ static void removeKeRangerRansomware()
             {
                 if ([item isKindOfClass:[Torrent class]])
                 {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+                    TorrentGroup* group = [self parentGroupForTorrent:item];
+#else
                     TorrentGroup* group = [self.fTableView parentForItem:item];
+#endif
                     index = [group.torrents indexOfObject:item] + 1;
                     item = group;
                 }
@@ -4300,7 +4328,11 @@ static void removeKeRangerRansomware()
             {
                 if ([item isKindOfClass:[Torrent class]])
                 {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+                    item = [self parentGroupForTorrent:item];
+#else
                     item = [self.fTableView parentForItem:item];
+#endif
                 }
                 index = NSOutlineViewDropOnItemIndex;
             }
@@ -4396,7 +4428,11 @@ static void removeKeRangerRansomware()
 
             for (Torrent* torrent in movingTorrents)
             {
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+                TorrentGroup* oldParent = item ? [self parentGroupForTorrent:torrent] : nil;
+#else
                 TorrentGroup* oldParent = item ? [self.fTableView parentForItem:torrent] : nil;
+#endif
                 NSMutableArray* oldTorrents = oldParent ? oldParent.torrents : self.fDisplayedTorrents;
                 NSUInteger const oldIndex = [oldTorrents indexOfObject:torrent];
 
