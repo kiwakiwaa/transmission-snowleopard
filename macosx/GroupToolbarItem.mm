@@ -101,7 +101,7 @@
     for (NSInteger i = 0; i < count; i++)
     {
         NSToolbarItem* item = [self.subitems objectAtIndex:i];
-        [menuItem.submenu itemAtIndex:i].enabled = [self.target validateToolbarItem:item];
+        [[[menuItem submenu] itemAtIndex:i] setEnabled:[self.target validateToolbarItem:item]];
     }
 
     return menuItem;
