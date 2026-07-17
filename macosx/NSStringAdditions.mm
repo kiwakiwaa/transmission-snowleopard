@@ -196,6 +196,30 @@ static NSString* TRStringForFileSize(uint64_t size, BOOL includeUnit)
     return [self compare:string options:comparisonOptions range:NSMakeRange(0, self.length) locale:NSLocale.currentLocale];
 }
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6
+- (NSComparisonResult)localizedStandardCompare:(NSString*)string
+{
+    // NSWidthInsensitiveSearch and NSForcedOrderingSearch are unavailable in the Tiger SDK.
+    NSUInteger const widthInsensitiveSearch = 1U << 8U;
+    NSUInteger const forcedOrderingSearch = 1U << 9U;
+    NSUInteger const comparisonOptions = NSCaseInsensitiveSearch | NSNumericSearch | widthInsensitiveSearch | forcedOrderingSearch;
+    NSRange const range = NSMakeRange(0, self.length);
+    NSComparisonResult result = [self compare:string options:comparisonOptions range:range locale:NSLocale.currentLocale];
+
+    // Tiger ignores the forced-ordering bit. Reproduce Snow Leopard's stable tie-break for canonical and width variants.
+    if (result == NSOrderedSame && ![self isEqualToString:string])
+    {
+        result = [self compare:string options:NSLiteralSearch range:range locale:NSLocale.currentLocale];
+        if (result == NSOrderedSame)
+        {
+            result = [self compare:string options:NSLiteralSearch range:range locale:nil];
+        }
+    }
+
+    return result;
+}
+#endif
+
 - (NSArray*)nonEmptyComponentsSeparatedByCharactersInSet:(NSCharacterSet*)separators
 {
     NSMutableArray* components = [NSMutableArray array];

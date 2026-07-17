@@ -4,6 +4,8 @@
 
 #import <Foundation/Foundation.h>
 
+#include <libtransmission/macos-version.h>
+
 @interface NSString (NSStringAdditions)
 
 @property(nonatomic, class, readonly) NSString* ellipsis;
@@ -24,6 +26,10 @@
 
 // simple compare method for strings with numbers (works for IP addresses)
 - (NSComparisonResult)compareNumeric:(NSString*)string;
+
+#if TR_MACOS_SDK_BEFORE_10_6
+- (NSComparisonResult)localizedStandardCompare:(NSString*)string;
+#endif
 
 // like componentsSeparatedByCharactersInSet:, but excludes blank values
 - (NSArray*)nonEmptyComponentsSeparatedByCharactersInSet:(NSCharacterSet*)separators;
