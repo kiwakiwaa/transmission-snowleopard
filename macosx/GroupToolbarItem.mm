@@ -16,6 +16,9 @@
 #if TR_MACOS_OBJC_FRAGILE_RUNTIME
 @synthesize fEnabled = _fEnabled;
 @synthesize fHasEnabledState = _fHasEnabledState;
+#if TR_MACOS_SDK_BEFORE_10_5 || TR_MACOS_DEPLOYMENT_BEFORE_10_5
+@synthesize subitems = _subitems;
+#endif
 #endif
 
 - (void)applyStateToControl
