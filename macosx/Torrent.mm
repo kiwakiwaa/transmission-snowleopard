@@ -2308,7 +2308,7 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
     }
 
     NSString* identity = [GroupsController.groups announcedClientIdentityForIndex:self.groupValue];
-    tr_torrentSetAnnouncedClientIdentity(self.fHandle, identity.length > 0 ? identity.UTF8String : nullptr);
+    (void)tr_torrentSetAnnouncedClientIdentity(self.fHandle, identity.length > 0 ? identity.UTF8String : nullptr);
 }
 
 - (void)renameFinished:(BOOL)success
