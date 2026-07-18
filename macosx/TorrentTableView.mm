@@ -359,7 +359,7 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 - (void)configureLegacyTorrentColumn
 {
     NSTableColumn* torrentColumn = [self tableColumnWithIdentifier:@"Torrent"];
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
     // Snow's main XIB currently uses "Torrent"; these fallbacks keep older or edited legacy XIBs cell-renderable.
     if (torrentColumn == nil)
     {
@@ -377,7 +377,7 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
         return;
     }
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_7
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_8
     self.outlineTableColumn = torrentColumn;
 
     NSArray* columns = [self.tableColumns copy];
