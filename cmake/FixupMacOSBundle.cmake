@@ -18,3 +18,19 @@ if(DEFINED TR_DEP_LINK_PREFIX)
 endif()
 
 tr_fixup_bundle_item("${TR_BUNDLE_DIR}" "${TR_BUNDLE_ITEMS}" "${TR_DEP_DIRS}")
+
+set(TR_BUNDLED_LIBCXX "${TR_BUNDLE_DIR}/Contents/Frameworks/libc++.1.dylib")
+set(TR_BUNDLED_LIBCXXABI "${TR_BUNDLE_DIR}/Contents/Frameworks/libc++abi.1.dylib")
+if(EXISTS "${TR_BUNDLED_LIBCXX}" AND EXISTS "${TR_BUNDLED_LIBCXXABI}")
+    get_filename_component(TR_BUNDLED_LIBCXX_REALPATH "${TR_BUNDLED_LIBCXX}" REALPATH)
+    execute_process(
+        COMMAND install_name_tool
+            -change /usr/lib/libc++abi.dylib
+            @loader_path/libc++abi.1.dylib
+            "${TR_BUNDLED_LIBCXX_REALPATH}"
+        RESULT_VARIABLE TR_BUNDLED_LIBCXX_FIXUP_RESULT
+        ERROR_VARIABLE TR_BUNDLED_LIBCXX_FIXUP_ERROR)
+    if(NOT TR_BUNDLED_LIBCXX_FIXUP_RESULT EQUAL 0)
+        message(FATAL_ERROR "Could not fix bundled libc++ dependency: ${TR_BUNDLED_LIBCXX_FIXUP_ERROR}")
+    endif()
+endif()
