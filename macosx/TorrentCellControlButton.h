@@ -7,6 +7,7 @@
 #include <libtransmission/macos-version.h>
 
 @class TorrentCell;
+@class Torrent;
 
 @interface TorrentCellControlButton : NSButton
 #if TR_MACOS_OBJC_FRAGILE_RUNTIME
@@ -19,6 +20,9 @@
 #endif
 }
 #endif
+
++ (NSImage*)imageForTorrent:(Torrent*)torrent suffix:(NSString*)suffix optionKeyDown:(BOOL)optionKeyDown;
++ (NSString*)descriptionForTorrent:(Torrent*)torrent optionKeyDown:(BOOL)optionKeyDown;
 
 - (void)resetImage;
 

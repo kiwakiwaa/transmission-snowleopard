@@ -24,6 +24,11 @@ extern CGFloat const kGroupSeparatorHeight;
     NSView* _fPositioningView;
     NSDictionary* _fHoverEventDict;
     NSMutableIndexSet* _fPendingSelectionReloadRows;
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+    NSTrackingArea* _fLegacyTrackingArea;
+    NSInteger _fLegacyPressedRow;
+    NSInteger _fLegacyPressedButton;
+#endif
 }
 #endif
 

@@ -42,6 +42,46 @@ TR_LEGACY_WEAK_REFERENCE_ACCESSORS(TorrentCell, torrentCell, setTorrentCell, _to
 #endif
 #endif
 
++ (NSImage*)imageForTorrent:(Torrent*)torrent suffix:(NSString*)suffix optionKeyDown:(BOOL)optionKeyDown
+{
+    NSString* imageName;
+    if (torrent.active)
+    {
+        imageName = @"Pause";
+    }
+    else if (optionKeyDown)
+    {
+        imageName = @"ResumeNoWait";
+    }
+    else if (torrent.waitingToStart)
+    {
+        imageName = @"Pause";
+    }
+    else
+    {
+        imageName = @"Resume";
+    }
+
+    return [NSImage imageNamed:[imageName stringByAppendingString:suffix]];
+}
+
++ (NSString*)descriptionForTorrent:(Torrent*)torrent optionKeyDown:(BOOL)optionKeyDown
+{
+    if (torrent.active)
+    {
+        return NSLocalizedString(@"Pause the transfer", "Torrent Table -> tooltip");
+    }
+    if (optionKeyDown)
+    {
+        return NSLocalizedString(@"Resume the transfer right away", "Torrent cell -> button info");
+    }
+    if (torrent.waitingToStart)
+    {
+        return NSLocalizedString(@"Stop waiting to start", "Torrent cell -> button info");
+    }
+    return NSLocalizedString(@"Resume the transfer", "Torrent cell -> button info");
+}
+
 - (TorrentTableView*)torrentTableView
 {
     return self.torrentCell.fTorrentTableView;
@@ -93,28 +133,10 @@ TR_LEGACY_WEAK_REFERENCE_ACCESSORS(TorrentCell, torrentCell, setTorrentCell, _to
 
 - (void)updateImage
 {
-    NSImage* controlImage;
     Torrent* torrent = [self.torrentTableView itemAtRow:[self.torrentTableView rowForView:self]];
-    if (torrent.active)
-    {
-        controlImage = [NSImage imageNamed:[@"Pause" stringByAppendingString:self.controlImageSuffix]];
-    }
-    else
-    {
-        if ([NSAppCurrentEvent() modifierFlags] & NSEventModifierFlagOption)
-        {
-            controlImage = [NSImage imageNamed:[@"ResumeNoWait" stringByAppendingString:self.controlImageSuffix]];
-        }
-        else if (torrent.waitingToStart)
-        {
-            controlImage = [NSImage imageNamed:[@"Pause" stringByAppendingString:self.controlImageSuffix]];
-        }
-        else
-        {
-            controlImage = [NSImage imageNamed:[@"Resume" stringByAppendingString:self.controlImageSuffix]];
-        }
-    }
-    self.image = controlImage;
+    self.image = [TorrentCellControlButton imageForTorrent:torrent
+                                                   suffix:self.controlImageSuffix
+                                            optionKeyDown:([NSAppCurrentEvent() modifierFlags] & NSEventModifierFlagOption) != 0];
 }
 
 - (void)updateTrackingAreas

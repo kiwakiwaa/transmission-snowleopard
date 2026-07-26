@@ -29,15 +29,244 @@ static CGFloat const kGroupDisclosureWidth = 18.0;
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
 #import "ProgressBarView.h"
 
-@interface LegacyTorrentTableCell : NSCell
-#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+typedef NS_ENUM(NSInteger, LegacyTorrentButton)
+{
+    LegacyTorrentButtonNone,
+    LegacyTorrentButtonAction,
+    LegacyTorrentButtonControl,
+    LegacyTorrentButtonReveal,
+};
+
+typedef struct
+{
+    NSRect groupIndicator;
+    NSRect icon;
+    NSRect action;
+    NSRect title;
+    NSRect priority;
+    NSRect progressText;
+    NSRect progressBar;
+    NSRect status;
+    NSRect control;
+    NSRect reveal;
+} LegacyTorrentRowLayout;
+
+static LegacyTorrentRowLayout LegacyTorrentRowLayoutForFrame(NSRect frame, BOOL small, BOOL showCompactButtons)
+{
+    LegacyTorrentRowLayout layout = {};
+    CGFloat const minX = NSMinX(frame);
+    CGFloat const minY = NSMinY(frame);
+    CGFloat const maxX = NSMaxX(frame);
+    CGFloat const midY = NSMidY(frame);
+
+    layout.reveal = NSMakeRect(maxX - 22.0, floor(midY - 7.0), 14.0, 14.0);
+    layout.control = NSMakeRect(NSMinX(layout.reveal) - 17.0, NSMinY(layout.reveal), 14.0, 14.0);
+
+    if (small)
+    {
+        layout.groupIndicator = NSMakeRect(minX, floor(midY - 3.0), 6.0, 6.0);
+        layout.icon = NSMakeRect(minX + 14.0, floor(midY - 8.0), 16.0, 16.0);
+        layout.action = layout.icon;
+
+        CGFloat const left = minX + 45.0;
+        CGFloat const right = showCompactButtons ? NSMinX(layout.control) - 12.0 : maxX - 8.0;
+        CGFloat const contentWidth = MAX(40.0, right - left);
+        CGFloat const statusWidth = 130.0;
+        CGFloat const titleWidth = MAX(40.0, MIN(240.0, contentWidth - statusWidth));
+        layout.title = NSMakeRect(left, floor(midY - 7.5), titleWidth, 15.0);
+        layout.priority = NSMakeRect(NSMaxX(layout.title) - 12.0, floor(midY - 6.0), 12.0, 12.0);
+        layout.status = NSMakeRect(
+            NSMaxX(layout.title) + 4.0,
+            floor(midY - 7.0),
+            MAX(40.0, right - NSMaxX(layout.title) - 4.0),
+            14.0);
+        layout.progressBar = NSMakeRect(left, floor(midY - 9.0), contentWidth, 18.0);
+        return layout;
+    }
+
+    layout.groupIndicator = NSMakeRect(minX + 2.0, minY + 26.0, 10.0, 10.0);
+    layout.icon = NSMakeRect(minX + 13.0, minY + 13.0, 36.0, 36.0);
+    layout.action = NSMakeRect(NSMinX(layout.icon) + 10.0, NSMinY(layout.icon) + 10.0, 16.0, 16.0);
+
+    CGFloat const left = minX + 65.0;
+    CGFloat const right = NSMinX(layout.control) - 14.0;
+    CGFloat const contentWidth = MAX(80.0, right - left);
+    layout.title = NSMakeRect(left, minY + 3.0, contentWidth, 16.0);
+    layout.priority = NSMakeRect(NSMaxX(layout.title) - 12.0, minY + 5.0, 12.0, 12.0);
+    layout.progressText = NSMakeRect(left - 2.0, minY + 21.0, contentWidth + 4.0, 13.0);
+    layout.progressBar = NSMakeRect(left, minY + 36.0, contentWidth, 14.0);
+    layout.status = NSMakeRect(left - 2.0, minY + 50.0, contentWidth + 4.0, 13.0);
+    // The view-based row puts both buttons on the progress bar's baseline.
+    layout.control.origin.y = floor(NSMidY(layout.progressBar) - NSHeight(layout.control) * 0.5);
+    layout.reveal.origin.y = layout.control.origin.y;
+    return layout;
+}
+
+@interface TorrentTableView (LegacyTorrentCell)
+- (NSInteger)legacyHoveredRow;
+- (LegacyTorrentButton)legacyHoveredButton;
+- (NSInteger)legacyPressedRow;
+- (LegacyTorrentButton)legacyPressedButton;
+- (void)performLegacyButton:(LegacyTorrentButton)button forTorrent:(Torrent*)torrent;
+@end
+
+@interface LegacyTorrentAccessibilityButton : NSObject
 {
     TorrentTableView* __weak _tableView;
-    id _legacyObjectValue;
+    Torrent* _torrent;
+    LegacyTorrentButton _button;
 }
+- (instancetype)initWithTableView:(TorrentTableView*)tableView torrent:(Torrent*)torrent button:(LegacyTorrentButton)button;
+@end
+
+@implementation LegacyTorrentAccessibilityButton
+
+- (instancetype)initWithTableView:(TorrentTableView*)tableView torrent:(Torrent*)torrent button:(LegacyTorrentButton)button
+{
+    if ((self = [super init]))
+    {
+        _tableView = tableView;
+        _torrent = torrent;
+        _button = button;
+    }
+    return self;
+}
+
+- (BOOL)accessibilityIsIgnored
+{
+    return NO;
+}
+
+- (NSArray*)accessibilityAttributeNames
+{
+    return @[
+        NSAccessibilityRoleAttribute,
+        NSAccessibilityRoleDescriptionAttribute,
+        NSAccessibilityTitleAttribute,
+        NSAccessibilityHelpAttribute,
+        NSAccessibilityParentAttribute,
+        NSAccessibilityPositionAttribute,
+        NSAccessibilitySizeAttribute,
+        NSAccessibilityEnabledAttribute,
+    ];
+}
+
+- (NSString*)accessibilityTitle
+{
+    if (_button == LegacyTorrentButtonAction)
+    {
+        return NSLocalizedString(@"Change transfer settings", "Torrent Table -> tooltip");
+    }
+    if (_button == LegacyTorrentButtonReveal)
+    {
+        return NSLocalizedString(@"Show the data file in Finder", "Torrent cell -> button info");
+    }
+    return [TorrentCellControlButton descriptionForTorrent:_torrent optionKeyDown:NO];
+}
+
+- (NSRect)buttonRect
+{
+    NSInteger const row = [_tableView rowForItem:_torrent];
+    if (row < 0)
+    {
+        return NSZeroRect;
+    }
+    LegacyTorrentRowLayout layout = LegacyTorrentRowLayoutForFrame(
+        [_tableView rectOfRow:row], [NSUserDefaults.standardUserDefaults boolForKey:@"SmallView"], YES);
+    return _button == LegacyTorrentButtonAction ? layout.action :
+        (_button == LegacyTorrentButtonControl ? layout.control : layout.reveal);
+}
+
+- (id)accessibilityAttributeValue:(NSString*)attribute
+{
+    if ([attribute isEqualToString:NSAccessibilityRoleAttribute])
+    {
+        return NSAccessibilityButtonRole;
+    }
+    if ([attribute isEqualToString:NSAccessibilityRoleDescriptionAttribute])
+    {
+        return NSAccessibilityRoleDescription(NSAccessibilityButtonRole, nil);
+    }
+    if ([attribute isEqualToString:NSAccessibilityTitleAttribute] || [attribute isEqualToString:NSAccessibilityHelpAttribute])
+    {
+        return self.accessibilityTitle;
+    }
+    if ([attribute isEqualToString:NSAccessibilityParentAttribute])
+    {
+        return NSAccessibilityUnignoredAncestor(_tableView);
+    }
+    if ([attribute isEqualToString:NSAccessibilityPositionAttribute])
+    {
+        NSPoint point = [_tableView convertPoint:[self buttonRect].origin toView:nil];
+        point = [_tableView.window convertBaseToScreen:point];
+        return [NSValue valueWithPoint:point];
+    }
+    if ([attribute isEqualToString:NSAccessibilitySizeAttribute])
+    {
+        return [NSValue valueWithSize:[self buttonRect].size];
+    }
+    if ([attribute isEqualToString:NSAccessibilityEnabledAttribute])
+    {
+        return @([_tableView rowForItem:_torrent] >= 0);
+    }
+    return nil;
+}
+
+- (NSArray*)accessibilityActionNames
+{
+    return @[ NSAccessibilityPressAction ];
+}
+
+- (NSString*)accessibilityActionDescription:(NSString*)action
+{
+    return [action isEqualToString:NSAccessibilityPressAction] ? NSAccessibilityActionDescription(action) : nil;
+}
+
+- (void)accessibilityPerformAction:(NSString*)action
+{
+    if ([action isEqualToString:NSAccessibilityPressAction])
+    {
+        [_tableView performLegacyButton:_button forTorrent:_torrent];
+    }
+}
+
+@end
+
+@interface LegacyTorrentTableCell : NSCell
+{
+    NSButtonCell* _controlButtonCell;
+    NSButtonCell* _revealButtonCell;
+    NSButtonCell* _actionButtonCell;
+#if TR_MACOS_OBJC_FRAGILE_RUNTIME
+    TorrentTableView* __weak _tableView;
+    id _legacyObjectValue;
 #endif
+}
 @property(nonatomic, weak) TorrentTableView* tableView;
 @property(nonatomic, strong) id legacyObjectValue;
+
+- (void)drawRegularTorrent:(Torrent*)torrent
+                   inFrame:(NSRect)cellFrame
+                       row:(NSInteger)row
+                  selected:(BOOL)selected
+           titleAttributes:(NSDictionary*)titleAttrs
+          detailAttributes:(NSDictionary*)detailAttrs;
+- (void)drawSmallTorrent:(Torrent*)torrent
+                 inFrame:(NSRect)cellFrame
+                     row:(NSInteger)row
+                selected:(BOOL)selected
+         titleAttributes:(NSDictionary*)titleAttrs
+        detailAttributes:(NSDictionary*)detailAttrs;
+- (void)drawTitleForTorrent:(Torrent*)torrent
+                   inLayout:(LegacyTorrentRowLayout)layout
+                   selected:(BOOL)selected
+                 attributes:(NSDictionary*)titleAttrs;
+- (NSString*)legacyHoverTextForTorrent:(Torrent*)torrent;
+- (void)drawLegacyButtonsForTorrent:(Torrent*)torrent
+                                row:(NSInteger)row
+                             layout:(LegacyTorrentRowLayout)layout
+                 showControlButtons:(BOOL)showControlButtons
+                             inView:(NSView*)view;
 @end
 
 @implementation LegacyTorrentTableCell
@@ -48,13 +277,26 @@ static CGFloat const kGroupDisclosureWidth = 18.0;
 #endif
 
 static CGFloat const kLegacyGroupStatusWidth = 170.0;
-static CGFloat const kLegacySmallStatusWidth = 130.0;
 
 - (instancetype)init
 {
     if ((self = [super init]))
     {
         self.lineBreakMode = NSLineBreakByTruncatingMiddle;
+
+        _controlButtonCell = [[NSButtonCell alloc] initImageCell:[NSImage imageNamed:@"ResumeOff"]];
+        _revealButtonCell = [[NSButtonCell alloc] initImageCell:[NSImage imageNamed:@"RevealOff"]];
+        _actionButtonCell = [[NSButtonCell alloc] initImageCell:[NSImage imageNamed:@"ActionHover"]];
+
+        for (NSButtonCell* buttonCell in @[ _controlButtonCell, _revealButtonCell, _actionButtonCell ])
+        {
+            buttonCell.bordered = NO;
+            buttonCell.imagePosition = NSImageOnly;
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+            buttonCell.imageScaling = NSImageScaleProportionallyDown;
+#endif
+            [buttonCell setButtonType:NSMomentaryChangeButton];
+        }
     }
     return self;
 }
@@ -65,9 +307,15 @@ static CGFloat const kLegacySmallStatusWidth = 130.0;
     LegacyTorrentTableCell* copy = [super copyWithZone:zone];
 
     // Fragile-runtime NSCell copies bitwise-copy ARC object slots; clear copied slots before ARC stores into them.
+    TRClearCopiedObjectPointer(&copy->_controlButtonCell);
+    TRClearCopiedObjectPointer(&copy->_revealButtonCell);
+    TRClearCopiedObjectPointer(&copy->_actionButtonCell);
     TRClearCopiedObjectPointer(&copy->_tableView);
     TRClearCopiedObjectPointer(&copy->_legacyObjectValue);
 
+    copy->_controlButtonCell = _controlButtonCell;
+    copy->_revealButtonCell = _revealButtonCell;
+    copy->_actionButtonCell = _actionButtonCell;
     copy.tableView = self.tableView;
     copy.legacyObjectValue = self.legacyObjectValue;
 
@@ -127,11 +375,21 @@ static CGFloat const kLegacySmallStatusWidth = 130.0;
         BOOL const small = [NSUserDefaults.standardUserDefaults boolForKey:@"SmallView"];
         if (small)
         {
-            [self drawSmallTorrent:torrent inFrame:cellFrame selected:selected titleAttributes:titleAttrs detailAttributes:detailAttrs];
+            [self drawSmallTorrent:torrent
+                           inFrame:cellFrame
+                               row:row
+                          selected:selected
+                   titleAttributes:titleAttrs
+                  detailAttributes:detailAttrs];
         }
         else
         {
-            [self drawRegularTorrent:torrent inFrame:cellFrame titleAttributes:titleAttrs detailAttributes:detailAttrs];
+            [self drawRegularTorrent:torrent
+                             inFrame:cellFrame
+                                 row:row
+                            selected:selected
+                     titleAttributes:titleAttrs
+                    detailAttributes:detailAttrs];
         }
     }
     else if ([item isKindOfClass:[TorrentGroup class]])
@@ -144,14 +402,17 @@ static CGFloat const kLegacySmallStatusWidth = 130.0;
 
 - (void)drawRegularTorrent:(Torrent*)torrent
                    inFrame:(NSRect)cellFrame
+                       row:(NSInteger)row
+                  selected:(BOOL)selected
            titleAttributes:(NSDictionary*)titleAttrs
           detailAttributes:(NSDictionary*)detailAttrs
 {
+    LegacyTorrentRowLayout layout = LegacyTorrentRowLayoutForFrame(cellFrame, NO, YES);
     NSInteger const groupValue = torrent.groupValue;
     if (groupValue != -1 && ![NSUserDefaults.standardUserDefaults boolForKey:@"SortByGroup"])
     {
         [[NSImage discIconWithColor:[GroupsController.groups colorForIndex:groupValue]
-                        insetFactor:0] drawInRect:NSMakeRect(NSMinX(cellFrame) + 2.0, NSMinY(cellFrame) + 26.0, 10.0, 10.0)
+                        insetFactor:0] drawInRect:layout.groupIndicator
                                          fromRect:NSZeroRect
                                         operation:NSCompositingOperationSourceOver
                                          fraction:1.0
@@ -159,34 +420,42 @@ static CGFloat const kLegacySmallStatusWidth = 130.0;
                                             hints:nil];
     }
 
-    NSImage* icon = torrent.anyErrorOrWarning ? [NSImage imageNamed:NSImageNameCaution] : torrent.icon;
-    [icon drawInRect:NSMakeRect(NSMinX(cellFrame) + 13.0, NSMinY(cellFrame) + 13.0, 36.0, 36.0) fromRect:NSZeroRect
-             operation:NSCompositingOperationSourceOver
-              fraction:1.0
-        respectFlipped:YES
-                 hints:nil];
+    [torrent.icon drawInRect:layout.icon fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1.0 respectFlipped:YES hints:nil];
+    if (torrent.anyErrorOrWarning)
+    {
+        NSImage* cautionImage = [NSImage imageNamed:NSImageNameCaution];
+        [cautionImage drawInRect:NSMakeRect(NSMinX(layout.icon), NSMinY(layout.icon), 20.0, 20.0)
+                       fromRect:NSZeroRect
+                      operation:NSCompositingOperationSourceOver
+                       fraction:1.0
+                 respectFlipped:YES
+                          hints:nil];
+    }
 
-    CGFloat const left = NSMinX(cellFrame) + 65.0;
-    CGFloat const width = MAX(80.0, NSWidth(cellFrame) - 90.0);
-    [torrent.name drawInRect:NSMakeRect(left, NSMinY(cellFrame) + 3.0, width, 16.0) withAttributes:titleAttrs];
-    [torrent.progressString drawInRect:NSMakeRect(left - 2.0, NSMinY(cellFrame) + 21.0, width + 4.0, 13.0) withAttributes:detailAttrs];
-    [ProgressBarView.sharedInstance drawBarInRect:NSMakeRect(left, NSMinY(cellFrame) + 36.0, width, 14.0) forTableView:self.tableView
+    [self drawTitleForTorrent:torrent inLayout:layout selected:selected attributes:titleAttrs];
+    [torrent.progressString drawInRect:layout.progressText withAttributes:detailAttrs];
+    [ProgressBarView.sharedInstance drawBarInRect:layout.progressBar forTableView:self.tableView
                                       withTorrent:torrent];
-    [torrent.statusString drawInRect:NSMakeRect(left - 2.0, NSMinY(cellFrame) + 50.0, width + 4.0, 13.0) withAttributes:detailAttrs];
+    NSString* status = [self.tableView legacyHoveredRow] == row ? [self legacyHoverTextForTorrent:torrent] : nil;
+    [status ?: torrent.statusString drawInRect:layout.status withAttributes:detailAttrs];
+
+    [self drawLegacyButtonsForTorrent:torrent row:row layout:layout showControlButtons:YES inView:self.tableView];
 }
 
 - (void)drawSmallTorrent:(Torrent*)torrent
                  inFrame:(NSRect)cellFrame
+                     row:(NSInteger)row
                 selected:(BOOL)selected
          titleAttributes:(NSDictionary*)titleAttrs
         detailAttributes:(NSDictionary*)detailAttrs
 {
-    CGFloat const centerY = NSMidY(cellFrame);
+    BOOL const showControlButtons = [self.tableView legacyHoveredRow] == row;
+    LegacyTorrentRowLayout layout = LegacyTorrentRowLayoutForFrame(cellFrame, YES, showControlButtons);
     NSInteger const groupValue = torrent.groupValue;
     if (groupValue != -1 && ![NSUserDefaults.standardUserDefaults boolForKey:@"SortByGroup"])
     {
         [[NSImage discIconWithColor:[GroupsController.groups colorForIndex:groupValue]
-                        insetFactor:0] drawInRect:NSMakeRect(NSMinX(cellFrame), floor(centerY - 3.0), 6.0, 6.0)
+                        insetFactor:0] drawInRect:layout.groupIndicator
                                          fromRect:NSZeroRect
                                         operation:NSCompositingOperationSourceOver
                                          fraction:1.0
@@ -195,20 +464,16 @@ static CGFloat const kLegacySmallStatusWidth = 130.0;
     }
 
     NSImage* icon = torrent.anyErrorOrWarning ? [NSImage imageNamed:NSImageNameCaution] : torrent.icon;
-    [icon drawInRect:NSMakeRect(NSMinX(cellFrame) + 14.0, floor(centerY - 8.0), 16.0, 16.0) fromRect:NSZeroRect
+    [icon drawInRect:layout.icon fromRect:NSZeroRect
              operation:NSCompositingOperationSourceOver
               fraction:1.0
         respectFlipped:YES
                  hints:nil];
 
-    CGFloat const left = NSMinX(cellFrame) + 45.0;
-    CGFloat const right = NSMaxX(cellFrame) - 8.0;
-    CGFloat const contentWidth = MAX(40.0, right - left);
-    [ProgressBarView.sharedInstance drawBarInRect:NSMakeRect(left, floor(centerY - 9.0), contentWidth, 18.0) forTableView:self.tableView
+    [ProgressBarView.sharedInstance drawBarInRect:layout.progressBar forTableView:self.tableView
                                       withTorrent:torrent];
 
-    CGFloat const stackWidth = MAX(40.0, MIN(240.0, contentWidth - kLegacySmallStatusWidth));
-    [torrent.name drawInRect:NSMakeRect(left, floor(centerY - 7.5), stackWidth, 15.0) withAttributes:titleAttrs];
+    [self drawTitleForTorrent:torrent inLayout:layout selected:selected attributes:titleAttrs];
 
     NSString* status = [NSUserDefaults.standardUserDefaults boolForKey:@"DisplaySmallStatusRegular"] ? torrent.shortStatusString :
                                                                                                        torrent.remainingTimeString;
@@ -218,9 +483,89 @@ static CGFloat const kLegacySmallStatusWidth = 130.0;
     [rightAttrs setObject:paragraphStyle forKey:NSParagraphStyleAttributeName];
     [rightAttrs setObject:(selected ? NSColor.whiteColor : NSColor.controlTextColor) forKey:NSForegroundColorAttributeName];
 
-    CGFloat const statusLeft = NSMaxX(cellFrame) - MAX(kLegacySmallStatusWidth, right - NSMaxX(NSMakeRect(left, 0.0, stackWidth, 0.0)) - 4.0) - 8.0;
-    CGFloat const statusWidth = MAX(40.0, right - statusLeft);
-    [status drawInRect:NSMakeRect(statusLeft, floor(centerY - 7.0), statusWidth, 14.0) withAttributes:rightAttrs];
+    if (!showControlButtons)
+    {
+        [status drawInRect:layout.status withAttributes:rightAttrs];
+    }
+
+    [self drawLegacyButtonsForTorrent:torrent row:row layout:layout showControlButtons:showControlButtons inView:self.tableView];
+}
+
+- (void)drawTitleForTorrent:(Torrent*)torrent
+                   inLayout:(LegacyTorrentRowLayout)layout
+                   selected:(BOOL)selected
+                 attributes:(NSDictionary*)titleAttrs
+{
+    NSRect titleRect = layout.title;
+    if (torrent.priority != TR_PRI_NORMAL)
+    {
+        titleRect.size.width = MAX(20.0, titleRect.size.width - 16.0);
+    }
+    [torrent.name drawInRect:titleRect withAttributes:titleAttrs];
+
+    if (torrent.priority != TR_PRI_NORMAL)
+    {
+        NSColor* priorityColor = selected ? NSColor.whiteColor : TRLabelColor();
+        NSImage* priorityImage = [[NSImage imageNamed:(torrent.priority == TR_PRI_HIGH ? @"PriorityHighTemplate" : @"PriorityLowTemplate")]
+            imageWithColor:priorityColor];
+        [priorityImage drawInRect:layout.priority
+                        fromRect:NSZeroRect
+                       operation:NSCompositingOperationSourceOver
+                        fraction:1.0
+                  respectFlipped:YES
+                           hints:nil];
+    }
+}
+
+- (NSString*)legacyHoverTextForTorrent:(Torrent*)torrent
+{
+    switch ([self.tableView legacyHoveredButton])
+    {
+    case LegacyTorrentButtonAction:
+        return NSLocalizedString(@"Change transfer settings", "Torrent Table -> tooltip");
+    case LegacyTorrentButtonControl:
+        return [TorrentCellControlButton descriptionForTorrent:torrent
+                                                 optionKeyDown:([NSAppCurrentEvent() modifierFlags] & NSEventModifierFlagOption) != 0];
+    case LegacyTorrentButtonReveal:
+        return NSLocalizedString(@"Show the data file in Finder", "Torrent cell -> button info");
+    default:
+        return nil;
+    }
+}
+
+- (void)drawLegacyButtonsForTorrent:(Torrent*)torrent
+                                row:(NSInteger)row
+                             layout:(LegacyTorrentRowLayout)layout
+                 showControlButtons:(BOOL)showControlButtons
+                             inView:(NSView*)view
+{
+    LegacyTorrentButton hovered = [self.tableView legacyHoveredRow] == row ? [self.tableView legacyHoveredButton] :
+                                                                            LegacyTorrentButtonNone;
+    LegacyTorrentButton pressed = [self.tableView legacyPressedRow] == row ? [self.tableView legacyPressedButton] :
+                                                                                LegacyTorrentButtonNone;
+
+    if (hovered == LegacyTorrentButtonAction)
+    {
+        _actionButtonCell.image = [NSImage imageNamed:@"ActionHover"];
+        [_actionButtonCell drawWithFrame:layout.action inView:view];
+    }
+
+    if (!showControlButtons)
+    {
+        return;
+    }
+
+    NSString* controlSuffix = pressed == LegacyTorrentButtonControl ? @"On" :
+        (hovered == LegacyTorrentButtonControl ? @"Hover" : @"Off");
+    _controlButtonCell.image = [TorrentCellControlButton imageForTorrent:torrent
+                                                                  suffix:controlSuffix
+                                                           optionKeyDown:([NSAppCurrentEvent() modifierFlags] & NSEventModifierFlagOption) != 0];
+    [_controlButtonCell drawWithFrame:layout.control inView:view];
+
+    NSString* revealSuffix = pressed == LegacyTorrentButtonReveal ? @"On" :
+        (hovered == LegacyTorrentButtonReveal ? @"Hover" : @"Off");
+    _revealButtonCell.image = [NSImage imageNamed:[@"Reveal" stringByAppendingString:revealSuffix]];
+    [_revealButtonCell drawWithFrame:layout.reveal inView:view];
 }
 
 - (void)drawGroup:(TorrentGroup*)group inFrame:(NSRect)cellFrame selected:(BOOL)selected detailAttributes:(NSDictionary*)detailAttrs
@@ -273,9 +618,25 @@ static CGFloat const kLegacySmallStatusWidth = 130.0;
 
     BOOL displayGroupRowRatio = [NSUserDefaults.standardUserDefaults boolForKey:@"DisplayGroupRowRatio"];
     NSString* rightText = displayGroupRowRatio ? [NSString stringForRatio:group.ratio] : [NSString stringForSpeed:group.uploadRate];
-    [[NSString stringForSpeed:group.downloadRate] drawInRect:NSMakeRect(NSMaxX(cellFrame) - 165.0, NSMinY(cellFrame) + 2.0, 78.0, 14.0)
+    NSColor* metricColor = selected ? NSColor.whiteColor : NSColor.disabledControlTextColor;
+    NSImage* downloadImage = [[NSImage imageNamed:@"DownArrowGroupTemplate"] imageWithColor:metricColor];
+    NSImage* uploadOrRatioImage = [[NSImage imageNamed:(displayGroupRowRatio ? @"YingYangGroupTemplate" : @"UpArrowGroupTemplate")]
+        imageWithColor:metricColor];
+    [downloadImage drawInRect:NSMakeRect(NSMaxX(cellFrame) - 165.0, NSMinY(cellFrame) + 3.0, 12.0, 12.0)
+                     fromRect:NSZeroRect
+                    operation:NSCompositingOperationSourceOver
+                     fraction:1.0
+               respectFlipped:YES
+                        hints:nil];
+    [uploadOrRatioImage drawInRect:NSMakeRect(NSMaxX(cellFrame) - 82.0, NSMinY(cellFrame) + 3.0, 12.0, 12.0)
+                          fromRect:NSZeroRect
+                         operation:NSCompositingOperationSourceOver
+                          fraction:1.0
+                    respectFlipped:YES
+                             hints:nil];
+    [[NSString stringForSpeed:group.downloadRate] drawInRect:NSMakeRect(NSMaxX(cellFrame) - 151.0, NSMinY(cellFrame) + 2.0, 64.0, 14.0)
                                               withAttributes:detailAttrs];
-    [rightText drawInRect:NSMakeRect(NSMaxX(cellFrame) - 82.0, NSMinY(cellFrame) + 2.0, 76.0, 14.0) withAttributes:detailAttrs];
+    [rightText drawInRect:NSMakeRect(NSMaxX(cellFrame) - 68.0, NSMinY(cellFrame) + 2.0, 62.0, 14.0) withAttributes:detailAttrs];
 }
 
 @end
@@ -336,6 +697,20 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 
 @property(nonatomic) NSMutableIndexSet* fPendingSelectionReloadRows;
 
+- (void)toggleControlForTorrentObject:(Torrent*)torrent;
+- (void)revealTorrentObject:(Torrent*)torrent;
+- (void)displayActionPopoverForTorrent:(Torrent*)torrent relativeToRect:(NSRect)rect ofView:(NSView*)view;
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+@property(nonatomic) NSTrackingArea* fLegacyTrackingArea;
+@property(nonatomic) NSInteger fLegacyPressedRow;
+@property(nonatomic) NSInteger fLegacyPressedButton;
+
+- (LegacyTorrentButton)legacyButtonAtPoint:(NSPoint)point row:(NSInteger)row;
+- (void)setLegacyHoverRow:(NSInteger)row button:(LegacyTorrentButton)button;
+- (void)updateLegacyHoverForEvent:(NSEvent*)event;
+#endif
+
 @end
 
 @implementation TorrentTableView
@@ -353,6 +728,11 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 @synthesize fPositioningView = _fPositioningView;
 @synthesize fHoverEventDict = _fHoverEventDict;
 @synthesize fPendingSelectionReloadRows = _fPendingSelectionReloadRows;
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+@synthesize fLegacyTrackingArea = _fLegacyTrackingArea;
+@synthesize fLegacyPressedRow = _fLegacyPressedRow;
+@synthesize fLegacyPressedButton = _fLegacyPressedButton;
+#endif
 #endif
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
@@ -424,6 +804,8 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
         self.indentationPerLevel = 0;
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+        _fLegacyPressedRow = -1;
+        _fLegacyPressedButton = LegacyTorrentButtonNone;
         [self configureLegacyTorrentColumn];
 #endif
 
@@ -442,6 +824,10 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
     [super awakeFromNib];
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_9 && TR_MACOS_DEPLOYMENT_BEFORE_10_7
     [self configureLegacyTorrentColumn];
+#endif
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+    self.window.acceptsMouseMovedEvents = YES;
+    [self updateTrackingAreas];
 #endif
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(refreshTorrentTable) name:@"RefreshTorrentTable"
                                              object:nil];
@@ -862,11 +1248,229 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
     [NSNotificationCenter.defaultCenter postNotificationName:@"OutlineExpandCollapse" object:self];
 }
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+- (NSInteger)legacyHoveredRow
+{
+    NSNumber* row = self.fHoverEventDict[@"row"];
+    return row != nil ? row.integerValue : -1;
+}
+
+- (LegacyTorrentButton)legacyHoveredButton
+{
+    return (LegacyTorrentButton)[self.fHoverEventDict[@"button"] integerValue];
+}
+
+- (LegacyTorrentButton)legacyPressedButton
+{
+    return (LegacyTorrentButton)self.fLegacyPressedButton;
+}
+
+- (NSInteger)legacyPressedRow
+{
+    return self.fLegacyPressedRow;
+}
+
+- (void)performLegacyButton:(LegacyTorrentButton)button forTorrent:(Torrent*)torrent
+{
+    if (torrent == nil)
+    {
+        return;
+    }
+
+    if (button == LegacyTorrentButtonControl)
+    {
+        [self toggleControlForTorrentObject:torrent];
+    }
+    else if (button == LegacyTorrentButtonReveal)
+    {
+        [self revealTorrentObject:torrent];
+    }
+    else if (button == LegacyTorrentButtonAction)
+    {
+        NSInteger const row = [self rowForItem:torrent];
+        if (row >= 0)
+        {
+            LegacyTorrentRowLayout layout = LegacyTorrentRowLayoutForFrame(
+                [self rectOfRow:row], [self.fDefaults boolForKey:@"SmallView"], YES);
+            [self displayActionPopoverForTorrent:torrent relativeToRect:layout.action ofView:self];
+        }
+    }
+}
+
+- (LegacyTorrentButton)legacyButtonAtPoint:(NSPoint)point row:(NSInteger)row
+{
+    if (row < 0 || ![[self itemAtRow:row] isKindOfClass:[Torrent class]])
+    {
+        return LegacyTorrentButtonNone;
+    }
+
+    BOOL const small = [self.fDefaults boolForKey:@"SmallView"];
+    LegacyTorrentRowLayout layout = LegacyTorrentRowLayoutForFrame([self rectOfRow:row], small, YES);
+    if (NSPointInRect(point, layout.action))
+    {
+        return LegacyTorrentButtonAction;
+    }
+    if (NSPointInRect(point, layout.control))
+    {
+        return LegacyTorrentButtonControl;
+    }
+    if (NSPointInRect(point, layout.reveal))
+    {
+        return LegacyTorrentButtonReveal;
+    }
+    return LegacyTorrentButtonNone;
+}
+
+- (void)setLegacyHoverRow:(NSInteger)row button:(LegacyTorrentButton)button
+{
+    NSInteger const oldRow = self.legacyHoveredRow;
+    LegacyTorrentButton const oldButton = self.legacyHoveredButton;
+    if (oldRow == row && oldButton == button)
+    {
+        return;
+    }
+
+    self.fHoverEventDict = row >= 0 ? @{ @"row" : @(row), @"button" : @(button) } : nil;
+
+    NSMutableIndexSet* rows = [NSMutableIndexSet indexSet];
+    if (oldRow >= 0 && oldRow < self.numberOfRows)
+    {
+        [rows addIndex:oldRow];
+    }
+    if (row >= 0 && row < self.numberOfRows)
+    {
+        [rows addIndex:row];
+    }
+    if (rows.count != 0)
+    {
+        [self reloadDataForRowIndexes:rows columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+    }
+}
+
+- (void)updateLegacyHoverForEvent:(NSEvent*)event
+{
+    NSPoint const point = [self convertPoint:event.locationInWindow fromView:nil];
+    NSInteger const row = NSPointInRect(point, self.bounds) ? [self rowAtPoint:point] : -1;
+    id item = row >= 0 ? [self itemAtRow:row] : nil;
+    if (![item isKindOfClass:[Torrent class]])
+    {
+        [self setLegacyHoverRow:-1 button:LegacyTorrentButtonNone];
+        return;
+    }
+
+    [self setLegacyHoverRow:row button:[self legacyButtonAtPoint:point row:row]];
+}
+
+- (void)updateTrackingAreas
+{
+    [super updateTrackingAreas];
+
+    if (self.fLegacyTrackingArea != nil)
+    {
+        [self removeTrackingArea:self.fLegacyTrackingArea];
+    }
+
+    NSTrackingAreaOptions const options = NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingActiveInKeyWindow;
+    self.fLegacyTrackingArea = [[NSTrackingArea alloc] initWithRect:self.bounds options:options owner:self userInfo:nil];
+    [self addTrackingArea:self.fLegacyTrackingArea];
+}
+
+- (void)viewDidMoveToWindow
+{
+    [super viewDidMoveToWindow];
+    self.window.acceptsMouseMovedEvents = YES;
+    [self updateTrackingAreas];
+}
+
+- (void)mouseEntered:(NSEvent*)event
+{
+    [self updateLegacyHoverForEvent:event];
+}
+
+- (void)mouseMoved:(NSEvent*)event
+{
+    [self updateLegacyHoverForEvent:event];
+}
+
+- (void)mouseExited:(NSEvent*)event
+{
+    [self updateLegacyHoverForEvent:event];
+}
+
+- (id)accessibilityAttributeValue:(NSString*)attribute
+{
+    id value = [super accessibilityAttributeValue:attribute];
+    if (![attribute isEqualToString:NSAccessibilityChildrenAttribute])
+    {
+        return value;
+    }
+
+    NSMutableArray* children = value != nil ? [value mutableCopy] : [NSMutableArray array];
+    NSRange const visibleRows = [self rowsInRect:self.visibleRect];
+    if (visibleRows.location == NSNotFound)
+    {
+        return children;
+    }
+
+    NSUInteger const end = NSMaxRange(visibleRows);
+    for (NSUInteger row = visibleRows.location; row < end && row < (NSUInteger)self.numberOfRows; ++row)
+    {
+        id item = [self itemAtRow:row];
+        if (![item isKindOfClass:[Torrent class]])
+        {
+            continue;
+        }
+
+        [children addObject:[[LegacyTorrentAccessibilityButton alloc] initWithTableView:self
+                                                                                torrent:item
+                                                                                 button:LegacyTorrentButtonAction]];
+        [children addObject:[[LegacyTorrentAccessibilityButton alloc] initWithTableView:self
+                                                                                torrent:item
+                                                                                 button:LegacyTorrentButtonControl]];
+        [children addObject:[[LegacyTorrentAccessibilityButton alloc] initWithTableView:self
+                                                                                torrent:item
+                                                                                 button:LegacyTorrentButtonReveal]];
+    }
+    return children;
+}
+#endif
+
 - (void)mouseDown:(NSEvent*)event
 {
     NSPoint point = [self convertPoint:event.locationInWindow fromView:nil];
     NSInteger const row = [self rowAtPoint:point];
     id item = row >= 0 ? [self itemAtRow:row] : nil;
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_9
+    LegacyTorrentButton const button = [self legacyButtonAtPoint:point row:row];
+    if (event.clickCount == 1 && button != LegacyTorrentButtonNone)
+    {
+        [self.window makeFirstResponder:self];
+        self.fLegacyPressedRow = row;
+        self.fLegacyPressedButton = button;
+        [self reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:row] columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+
+        Torrent* torrent = (Torrent*)item;
+        LegacyTorrentRowLayout layout = LegacyTorrentRowLayoutForFrame(
+            [self rectOfRow:row], [self.fDefaults boolForKey:@"SmallView"], YES);
+        NSRect buttonRect = button == LegacyTorrentButtonAction ? layout.action :
+            (button == LegacyTorrentButtonControl ? layout.control : layout.reveal);
+        NSButtonCell* trackingCell = [[NSButtonCell alloc] init];
+        trackingCell.bordered = NO;
+        BOOL const activate = [trackingCell trackMouse:event inRect:buttonRect ofView:self untilMouseUp:YES];
+
+        self.fLegacyPressedRow = -1;
+        self.fLegacyPressedButton = LegacyTorrentButtonNone;
+        [self reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:row] columnIndexes:[NSIndexSet indexSetWithIndex:0]];
+        if (!activate)
+        {
+            return;
+        }
+
+        [self performLegacyButton:button forTorrent:torrent];
+        return;
+    }
+#endif
 
 #if TR_MACOS_DEPLOYMENT_BEFORE_10_10
     if (event.clickCount == 1 && [item isKindOfClass:[TorrentGroup class]])
@@ -1121,23 +1725,8 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
         }
         else if ([view isKindOfClass:[TorrentCellControlButton class]])
         {
-            if (torrent.active)
-                statusString = NSLocalizedString(@"Pause the transfer", "Torrent Table -> tooltip");
-            else
-            {
-                if ([NSAppCurrentEvent() modifierFlags] & NSEventModifierFlagOption)
-                {
-                    statusString = NSLocalizedString(@"Resume the transfer right away", "Torrent cell -> button info");
-                }
-                else if (torrent.waitingToStart)
-                {
-                    statusString = NSLocalizedString(@"Stop waiting to start", "Torrent cell -> button info");
-                }
-                else
-                {
-                    statusString = NSLocalizedString(@"Resume the transfer", "Torrent cell -> button info");
-                }
-            }
+            statusString = [TorrentCellControlButton descriptionForTorrent:torrent
+                                                              optionKeyDown:([NSAppCurrentEvent() modifierFlags] & NSEventModifierFlagOption) != 0];
         }
         else if ([view isKindOfClass:[TorrentCellActionButton class]])
         {
@@ -1189,6 +1778,16 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 - (IBAction)toggleControlForTorrent:(id)sender
 {
     Torrent* torrent = [self itemAtRow:[self rowForView:[sender superview]]];
+    [self toggleControlForTorrentObject:torrent];
+}
+
+- (void)toggleControlForTorrentObject:(Torrent*)torrent
+{
+    if (torrent == nil)
+    {
+        return;
+    }
+
     if (torrent.active)
     {
         [self.fController stopTorrents:@[ torrent ]];
@@ -1213,6 +1812,11 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 - (IBAction)revealTorrentFile:(id)sender
 {
     Torrent* torrent = [self itemAtRow:[self rowForView:[sender superview]]];
+    [self revealTorrentObject:torrent];
+}
+
+- (void)revealTorrentObject:(Torrent*)torrent
+{
     NSString* location = torrent.dataLocation;
     if (location)
     {
@@ -1223,13 +1827,17 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
 
 - (IBAction)displayTorrentActionPopover:(id)sender
 {
-    if (self.fActionPopoverShown)
+    NSInteger const row = [self rowForView:[sender superview]];
+    Torrent* torrent = row >= 0 ? [self itemAtRow:row] : nil;
+    [self displayActionPopoverForTorrent:torrent relativeToRect:[sender bounds] ofView:sender];
+}
+
+- (void)displayActionPopoverForTorrent:(Torrent*)torrent relativeToRect:(NSRect)rect ofView:(NSView*)view
+{
+    if (torrent == nil || self.fActionPopoverShown)
     {
         return;
     }
-
-    Torrent* torrent = [self itemAtRow:[self rowForView:[sender superview]]];
-    NSRect rect = [sender bounds];
 
     NSPopover* popover = [[NSPopover alloc] init];
     popover.behavior = NSPopoverBehaviorTransient;
@@ -1237,7 +1845,6 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
     popover.contentViewController = infoViewController;
     popover.delegate = self;
 
-    [popover showRelativeToRect:rect ofView:sender preferredEdge:NSMaxYEdge];
     [infoViewController setInfoForTorrents:@[ torrent ]];
     [infoViewController updateInfo];
 
@@ -1254,7 +1861,7 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
     }
     else
     {
-        [popover showRelativeToRect:rect ofView:sender preferredEdge:NSMaxYEdge];
+        [popover showRelativeToRect:rect ofView:view preferredEdge:NSMaxYEdge];
     }
 }
 
