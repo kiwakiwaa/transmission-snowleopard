@@ -490,11 +490,18 @@ if(NOT TR_MACOS_USES_COMPAT_STACK_XIBS)
         StatsWindow.xib)
 endif()
 
+set(TR_DOCUMENT_ICON_NAME TransmissionDocument)
+if(TR_MACOS_DEPLOYMENT_BEFORE_10_5)
+    # Tiger's Icon Services cannot decode the PNG-backed large representations
+    # in the modern document icon.
+    set(TR_DOCUMENT_ICON_NAME TransmissionDocumentTiger)
+endif()
+
 set(RESOURCES
     Defaults.plist
     Credits.rtf
     ../COPYING
-    Images/TransmissionDocument.icns)
+    Images/${TR_DOCUMENT_ICON_NAME}.icns)
 if(TR_MACOS_DEPLOYMENT_BEFORE_10_5)
     list(APPEND RESOURCES
         Images/ActionGear.png
