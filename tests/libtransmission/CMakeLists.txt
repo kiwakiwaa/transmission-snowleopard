@@ -10,6 +10,9 @@ target_sources(libtransmission-test
         announcer-udp-test.cc
         api-compat-test.cc
         benc-test.cc
+        bep55-holepunch-test.cc
+        bep55-introducer-store-test.cc
+        bep55-test-utils.h
         bitfield-test.cc
         block-info-test.cc
         blocklist-test.cc
@@ -66,6 +69,7 @@ target_sources(libtransmission-test
         values-test.cc
         variant-test.cc
         watchdir-test.cc
+        web-test.cc
         web-utils-test.cc)
 
 if(APPLE)
