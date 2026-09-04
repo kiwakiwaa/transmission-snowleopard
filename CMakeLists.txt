@@ -776,8 +776,22 @@ endif()
 option(TR_MACOS_OBJC_FRAGILE_RUNTIME "Use the fragile Objective-C runtime"
     ${TR_MACOS_OBJC_FRAGILE_RUNTIME_DEFAULT})
 
-if(ENABLE_MAC AND APPLE AND TR_MACOS_DEPLOYMENT_BEFORE_10_7)
-    include(LibArcSupport)
+if(APPLE AND TR_MACOS_DEPLOYMENT_BEFORE_10_7)
+    set(TR_LIBARC_SUPPORT_SOURCE_DIR "${TR_THIRD_PARTY_SOURCE_DIR}/libarc_support")
+    if(NOT EXISTS "${TR_LIBARC_SUPPORT_SOURCE_DIR}/CMakeLists.txt")
+        message(FATAL_ERROR "macOS builds before 10.7 require third-party/libarc_support")
+    endif()
+
+    add_subdirectory(
+        "${TR_LIBARC_SUPPORT_SOURCE_DIR}"
+        "${TR_THIRD_PARTY_BINARY_DIR}/libarc_support"
+        EXCLUDE_FROM_ALL)
+
+    if(TR_MACOS_DEPLOYMENT_BEFORE_10_6)
+        set(TR_LIBARC_SUPPORT_TARGET libarc_support::legacy_static)
+    else()
+        set(TR_LIBARC_SUPPORT_TARGET libarc_support::static)
+    endif()
 endif()
 
 set(TR_WEB_ASSETS ${PROJECT_SOURCE_DIR}/web/public_html)

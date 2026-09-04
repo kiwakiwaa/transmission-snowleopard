@@ -39,10 +39,10 @@ set_property(
 
 add_library(${TR_NAME} STATIC)
 
-if(APPLE AND TR_MACOS_DEPLOYMENT_BEFORE_10_7 AND TARGET libarc_support::runtime)
+if(TR_LIBARC_SUPPORT_TARGET)
     target_link_libraries(${TR_NAME}
         PUBLIC
-            libarc_support::runtime)
+            ${TR_LIBARC_SUPPORT_TARGET})
 endif()
 
 set(IS_APPLE_CLANG FALSE)

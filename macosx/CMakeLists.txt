@@ -39,14 +39,8 @@ if(CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.6)
 endif()
 set(TR_MACOS_OBJC_WEAK_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:-fobjc-weak>")
 set(TR_MACOS_OBJC_RUNTIME_COMPILE_OPTIONS)
-set(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME OFF)
 if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
     set(TR_MACOS_OBJC_WEAK_COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:C,CXX>:SHELL:-Xclang -fobjc-runtime-has-weak>")
-
-    if(NOT TARGET libarc_support::runtime)
-        message(FATAL_ERROR "macOS builds before 10.7 require third-party/libarc_support")
-    endif()
-    set(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME ON)
 
     if(TR_MACOS_OBJC_FRAGILE_RUNTIME)
         list(LENGTH CMAKE_OSX_ARCHITECTURES TR_MACOS_ARCH_COUNT)
@@ -82,19 +76,10 @@ if(TR_MACOS_BUNDLE_COMPATIBILITY_DEPENDENCIES)
         tr_macos_add_compatibility_bundle_dep_dir("${TR_MACOS_DEP_PREFIX}/libexec/openssl3/lib")
     endforeach()
 
-    if(TR_BLOCKS_RUNTIME_LIBRARY)
-        get_filename_component(TR_BLOCKS_RUNTIME_LIBRARY_DIR "${TR_BLOCKS_RUNTIME_LIBRARY}" DIRECTORY)
-        tr_macos_add_compatibility_bundle_dep_dir("${TR_BLOCKS_RUNTIME_LIBRARY_DIR}")
-    endif()
-
     if(TR_MACOS_COMPATIBILITY_BUNDLE_DEP_DIRS)
         list(REMOVE_DUPLICATES TR_MACOS_COMPATIBILITY_BUNDLE_DEP_DIRS)
     endif()
     set(TR_MACOS_COMPATIBILITY_INSTALL_BUNDLE_DEP_DIRS "${TR_MACOS_COMPATIBILITY_BUNDLE_DEP_DIRS}")
-
-    if(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME)
-        list(APPEND TR_MACOS_COMPATIBILITY_BUNDLE_DEP_DIRS "$<TARGET_FILE_DIR:_libarc_support_runtime>")
-    endif()
 endif()
 
 add_compile_options(
@@ -933,12 +918,6 @@ target_link_libraries(${TR_NAME}-mac
 if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
     target_link_libraries(${TR_NAME}-mac PRIVATE "-licucore")
 endif()
-if(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME)
-    target_link_libraries(${TR_NAME}-mac PRIVATE libarc_support::runtime)
-    if(TR_BLOCKS_RUNTIME_LIBRARY)
-        target_link_libraries(${TR_NAME}-mac PRIVATE "${TR_BLOCKS_RUNTIME_LIBRARY}")
-    endif()
-endif()
 
 if(NOT TR_MACOS_TARGET_BEFORE_11_0)
     target_link_libraries(${TR_NAME}-mac PRIVATE "-weak_framework UniformTypeIdentifiers")
@@ -962,21 +941,6 @@ if(TR_ENABLE_SPARKLE AND NOT CMAKE_GENERATOR STREQUAL Xcode)
         COMMAND ${CMAKE_COMMAND} -E rm -rf "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/Frameworks/Sparkle.framework"
         COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/Frameworks"
         COMMAND /usr/bin/ditto "${SPARKLE_FRAMEWORK}" "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/Frameworks/Sparkle.framework")
-endif()
-
-if(TR_MACOS_USE_LIBARC_SUPPORT_RUNTIME AND NOT CMAKE_GENERATOR STREQUAL Xcode)
-    find_program(TR_INSTALL_NAME_TOOL
-        NAMES install_name_tool
-        PATHS /opt/local/bin /usr/bin
-        NO_DEFAULT_PATH
-        REQUIRED)
-    add_custom_command(
-        TARGET ${TR_NAME}-mac
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/Frameworks"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:_libarc_support_runtime>" "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/Frameworks/"
-        COMMAND "${TR_INSTALL_NAME_TOOL}" -change libarc_support.dylib "@executable_path/../Frameworks/libarc_support.dylib" "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/MacOS/${MAC_BUNDLE_NAME}"
-        VERBATIM)
 endif()
 
 if(TR_MACOS_BUNDLE_COMPATIBILITY_DEPENDENCIES AND NOT CMAKE_GENERATOR STREQUAL Xcode)
