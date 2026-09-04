@@ -1,0 +1,18 @@
+# Snow Leopard compatibility patch 0016
+#
+# Incompatibility: modern ARC requires an explicit bridge when passing the host
+# bundle NSURL to the 10.6 Core Foundation bundle metadata function.
+# Behaviour preserved: the slow path still reads fresh metadata for non-main
+# bundles and transfers the copied dictionary to ARC through patch 0013.
+# History: 0b6b6fe4 introduced the fresh-read path after ARC conversion but used
+# a C cast. Later source retains the same algorithm. No older cache is restored.
+# Public API evidence: __bridge is Clang's non-owning toll-free bridge and both
+# NSURL and CFURL are publicly toll-free bridged on 10.6.
+# Safety: ownership and the copied-dictionary lifetime are unchanged.
+diff --git a/Sparkle/SUHost.m b/Sparkle/SUHost.m
+index b9973bf4..af99cf29 100644
+--- a/Sparkle/SUHost.m
++++ b/Sparkle/SUHost.m
+@@ -175 +175 @@
+-        CFDictionaryRef cfInfoDictionary = CFBundleCopyInfoDictionaryInDirectory((CFURLRef)self.bundle.bundleURL);
++        CFDictionaryRef cfInfoDictionary = CFBundleCopyInfoDictionaryInDirectory((__bridge CFURLRef)self.bundle.bundleURL);

@@ -1,0 +1,500 @@
+# Snow Leopard compatibility patch 0022
+#
+# Incompatibility: the 10.6 SDK and runtime have no NSURLSession, secure-coder
+# class filters, request service types, automatic termination, or URL cache lookup.
+# Behaviour preserved: the complete 1.27.3 downloader contract remains active
+# through Sparkle's final NSURLDownload implementation, including redirects,
+# HTTPS, progress, response metadata, cancellation, and persistent destinations.
+# History: 8a0474d6 introduced the deprecated downloader beside NSURLSession.
+# c3c1b1af removed it only when Sparkle raised its minimum from 10.7 to 10.9.
+# ecb608bb introduced the coder models. 282f0ae5 added warning-only generics.
+# Public API evidence: NSURLDownload, NSCoding, cache path search, and explicit
+# decoded-class validation are public on 10.6.
+# Safety: the NSURLSession source is explicitly excluded only for the 10.6 SDK.
+# Newer SDK builds retain it. Decoded fallback objects are class-checked.
+diff --git a/Sparkle/SPUDownloaderDeprecated.h b/Sparkle/SPUDownloaderDeprecated.h
+new file mode 100644
+index 0000000..dd5d0c9
+--- /dev/null
++++ b/Sparkle/SPUDownloaderDeprecated.h
+@@ -0,0 +1,14 @@
++//
++//  SPUDownloaderDeprecated.h
++//  Sparkle
++//
++//  Created by Deadpikle on 12/20/17.
++//  Copyright © 2017 Sparkle Project. All rights reserved.
++//
++
++#import "SPUDownloader.h"
++
++@interface SPUDownloaderDeprecated : SPUDownloader <SPUDownloaderProtocol>
++
++@end
++
+diff --git a/Sparkle/SPUDownloaderDeprecated.m b/Sparkle/SPUDownloaderDeprecated.m
+new file mode 100644
+index 0000000..ab2f909
+--- /dev/null
++++ b/Sparkle/SPUDownloaderDeprecated.m
+@@ -0,0 +1,177 @@
++//
++//  SPUDownloaderDeprecated.m
++//  Sparkle
++//
++//  Created by Deadpikle on 12/20/17.
++//  Copyright © 2017 Sparkle Project. All rights reserved.
++//
++
++#import "SPUDownloaderDeprecated.h"
++#import "SPUURLRequest.h"
++#import "SPUDownloader_Private.h"
++#import "SPUDownloadData.h"
++#import "SPULocalCacheDirectory.h"
++#import "SUErrors.h"
++#import "SUOperatingSystem.h"
++
++#include "AppKitPrevention.h"
++
++#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
++@interface SPUDownloaderDeprecated () <NSURLDownloadDelegate>
++#else
++@interface SPUDownloaderDeprecated ()
++#endif
++
++@property (nonatomic) NSURLDownload *download;
++@property (nonatomic) NSURLResponse *response;
++
++@end
++
++@implementation SPUDownloaderDeprecated
++
++@synthesize download = _download;
++@synthesize response = _response;
++
++- (void)startPersistentDownloadWithRequest:(SPUURLRequest *)request bundleIdentifier:(NSString *)bundleIdentifier desiredFilename:(NSString *)desiredFilename
++{
++    dispatch_async(dispatch_get_main_queue(), ^{
++        if (self.download == nil && self.delegate != nil) {
++            // Prevent service from automatically terminating while downloading the update asynchronously without any reply blocks
++            if (SUAVAILABLE(10, 7)) {
++                [[NSProcessInfo processInfo] disableAutomaticTermination:SUDownloadingReason];
++                self.disabledAutomaticTermination = YES;
++            }
++            
++            self.mode = SPUDownloadModePersistent;
++            self.desiredFilename = desiredFilename;
++            self.bundleIdentifier = bundleIdentifier;
++            
++            self.download = [[NSURLDownload alloc] initWithRequest:request.request delegate:self];
++        }
++    });
++}
++
++- (void)startTemporaryDownloadWithRequest:(SPUURLRequest *)request
++{
++    dispatch_async(dispatch_get_main_queue(), ^{
++        if (self.download == nil && self.delegate != nil) {
++            // Prevent service from automatically terminating while downloading the update asynchronously without any reply blocks
++            if (SUAVAILABLE(10, 7)) {
++                [[NSProcessInfo processInfo] disableAutomaticTermination:SUDownloadingReason];
++                self.disabledAutomaticTermination = YES;
++            }
++            
++            self.mode = SPUDownloadModeTemporary;
++            self.download = [[NSURLDownload alloc] initWithRequest:request.request delegate:self];
++        }
++    });
++}
++
++- (void)download:(NSURLDownload *)__unused d decideDestinationWithSuggestedFilename:(NSString *)name
++{
++    if (self.mode == SPUDownloadModeTemporary) {
++        // Files downloaded in temporary mode should not last for very long,
++        // so it's ideal to place them in a system temporary directory
++        NSString *destinationFilename = NSTemporaryDirectory();
++        if (destinationFilename) {
++            destinationFilename = [destinationFilename stringByAppendingPathComponent:name];
++            
++            [self.download setDestination:destinationFilename allowOverwrite:NO];
++        }
++    } else {
++        NSString *tempDir = [super getAndCleanTempDirectory];
++        
++        if (tempDir != nil) {
++            NSString *downloadFileName = self.desiredFilename;
++            NSString *downloadFileNameDirectory = [tempDir stringByAppendingPathComponent:downloadFileName];
++            
++            NSError *createError = nil;
++            if (![[NSFileManager defaultManager] createDirectoryAtPath:downloadFileNameDirectory withIntermediateDirectories:NO attributes:nil error:&createError]) {
++                NSError *error = [NSError errorWithDomain:SUSparkleErrorDomain code:SUTemporaryDirectoryError userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Can't make a download file name %@ directory inside temporary directory for the update download at %@.", downloadFileName, downloadFileNameDirectory] }];
++                
++                [self.delegate downloaderDidFailWithError:error];
++            } else {
++                [self.download setDestination:[downloadFileNameDirectory stringByAppendingPathComponent:name] allowOverwrite:YES];
++                
++                [self.delegate downloaderDidSetDestinationName:name temporaryDirectory:downloadFileNameDirectory];
++            }
++        }
++    }
++}
++
++- (void)download:(NSURLDownload *)__unused aDownload didCreateDestination:(NSString *)path
++{
++    self.downloadFilename = path;
++}
++
++- (void)download:(NSURLDownload *)__unused download didReceiveResponse:(NSURLResponse *)response
++{
++    self.response = response;
++    
++    if (self.mode == SPUDownloadModePersistent) {
++        // It might be tempting to send over the response object instead of the expected content length but this isn't a good idea
++        // For one, we are only ever concerned about the expected content length
++        // Another reason is that NSURLResponse doesn't support NSSecureCoding in older OS releases (eg: 10.8), which cause issues with XPC
++        [self.delegate downloaderDidReceiveExpectedContentLength:response.expectedContentLength];
++    }
++}
++
++- (void)download:(NSURLDownload *)__unused download didReceiveDataOfLength:(NSUInteger)length
++{
++    if (self.mode == SPUDownloadModePersistent) {
++        [self.delegate downloaderDidReceiveDataOfLength:length];
++    }
++}
++
++- (void)downloadDidFinish:(NSURLDownload *)__unused d
++{
++    [self downloadDidFinish];
++    [self cleanup];
++}
++
++- (void)download:(NSURLDownload *)__unused download didFailWithError:(NSError *)error
++{
++    self.download = nil;
++    [self.delegate downloaderDidFailWithError:error];
++    [self cleanup];
++}
++
++- (BOOL)download:(NSURLDownload *)__unused download shouldDecodeSourceDataOfMIMEType:(NSString *)encodingType
++{
++    // We don't want the download system to extract our gzips for persistent downloads
++    // Note that we use a substring matching here instead of direct comparison because the docs say "application/gzip" but the system *uses* "application/x-gzip". This is a documentation bug.
++    return (self.mode == SPUDownloadModeTemporary || [encodingType rangeOfString:@"gzip"].location == NSNotFound);
++}
++
++- (void)downloadDidFinish
++{
++    assert(self.response != nil);
++    assert(self.downloadFilename != nil);
++    
++    SPUDownloadData *downloadData = nil;
++    if (self.mode == SPUDownloadModeTemporary) {
++        NSData *data = [NSData dataWithContentsOfFile:self.downloadFilename];
++        if (data != nil) {
++            downloadData = [[SPUDownloadData alloc] initWithData:data textEncodingName:self.response.textEncodingName MIMEType:self.response.MIMEType];
++        }
++    }
++    
++    self.download = nil;
++    
++    [super downloadDidFinishWithData:downloadData];
++}
++
++-(void)cleanup
++{
++    [self.download cancel];
++    self.download = nil;
++    self.response = nil;
++    [super cleanup];
++}
++
++- (void)cancel
++{
++    [self cleanup];
++}
++
++@end
+diff --git a/Sparkle.xcodeproj/project.pbxproj b/Sparkle.xcodeproj/project.pbxproj
+index 11d147f..2daf229 100644
+--- a/Sparkle.xcodeproj/project.pbxproj
++++ b/Sparkle.xcodeproj/project.pbxproj
+@@ -75,2 +75,4 @@
+ 		34074BA31FEABFD2001CB3A5 /* SPUDownloaderSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 34074BA11FEABFD2001CB3A5 /* SPUDownloaderSession.m */; };
++		34074BA71FEAC417001CB3A5 /* SPUDownloaderDeprecated.h in Headers */ = {isa = PBXBuildFile; fileRef = 34074BA51FEAC417001CB3A5 /* SPUDownloaderDeprecated.h */; settings = {ATTRIBUTES = (Public, ); }; };
++		34074BA81FEAC417001CB3A5 /* SPUDownloaderDeprecated.m in Sources */ = {isa = PBXBuildFile; fileRef = 34074BA61FEAC417001CB3A5 /* SPUDownloaderDeprecated.m */; };
+ 		342731481FF58E5B00285FBD /* SPUDownloaderTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 342731461FF58E4F00285FBD /* SPUDownloaderTest.swift */; };
+@@ -680,2 +682,4 @@
+ 		34074BA41FEAC0BC001CB3A5 /* SPUDownloader_Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SPUDownloader_Private.h; sourceTree = "<group>"; };
++		34074BA51FEAC417001CB3A5 /* SPUDownloaderDeprecated.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SPUDownloaderDeprecated.h; sourceTree = "<group>"; };
++		34074BA61FEAC417001CB3A5 /* SPUDownloaderDeprecated.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SPUDownloaderDeprecated.m; sourceTree = "<group>"; };
+ 		342731461FF58E4F00285FBD /* SPUDownloaderTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SPUDownloaderTest.swift; sourceTree = "<group>"; };
+@@ -1388,2 +1392,4 @@
+ 				34074B8E1FEABD08001CB3A5 /* SPUDownloaderDelegate.h */,
++				34074BA51FEAC417001CB3A5 /* SPUDownloaderDeprecated.h */,
++				34074BA61FEAC417001CB3A5 /* SPUDownloaderDeprecated.m */,
+ 				34074B8F1FEABD08001CB3A5 /* SPUDownloaderProtocol.h */,
+@@ -1792,2 +1798,3 @@
+ 				34074B921FEABD08001CB3A5 /* SPUDownloaderDelegate.h in Headers */,
++				34074BA71FEAC417001CB3A5 /* SPUDownloaderDeprecated.h in Headers */,
+ 				34074B931FEABD08001CB3A5 /* SPUDownloaderProtocol.h in Headers */,
+@@ -2507,2 +2514,3 @@
+ 				34074B901FEABD08001CB3A5 /* SPUDownloader.m in Sources */,
++				34074BA81FEAC417001CB3A5 /* SPUDownloaderDeprecated.m in Sources */,
+ 				72E1D7DD25A3E3AD0001BA6D /* SUWebViewCommon.m in Sources */,
+diff --git a/Configurations/ConfigFramework.xcconfig b/Configurations/ConfigFramework.xcconfig
+index fb394e0..01fdbbf 100644
+--- a/Configurations/ConfigFramework.xcconfig
++++ b/Configurations/ConfigFramework.xcconfig
+@@ -13 +13,2 @@ DEFINES_MODULE = YES
+ PRODUCT_BUNDLE_IDENTIFIER = ${SPARKLE_BUNDLE_IDENTIFIER}
++EXCLUDED_SOURCE_FILE_NAMES[sdk=macosx10.6] = SPUDownloaderSession.m
+diff --git a/Sparkle/SPUDownloader_Private.h b/Sparkle/SPUDownloader_Private.h
+index af0464c..3621b4d 100644
+--- a/Sparkle/SPUDownloader_Private.h
++++ b/Sparkle/SPUDownloader_Private.h
+@@ -13,2 +13,9 @@
+ 
++#if __MAC_OS_X_VERSION_MAX_ALLOWED < 1070
++@interface NSProcessInfo (LionAutomaticTermination)
++- (void)disableAutomaticTermination:(NSString *)reason;
++- (void)enableAutomaticTermination:(NSString *)reason;
++@end
++#endif
++
+ typedef NS_ENUM(NSUInteger, SPUDownloadMode)
+diff --git a/Sparkle/SPUDownloader.m b/Sparkle/SPUDownloader.m
+index ef6e906..52b4cd8 100644
+--- a/Sparkle/SPUDownloader.m
++++ b/Sparkle/SPUDownloader.m
+@@ -15,2 +15,3 @@
+ #import "SPUDownloader_Private.h"
++#import "SUOperatingSystem.h"
+ 
+@@ -56,4 +57,6 @@ - (void)enableAutomaticTermination
+     if (self.disabledAutomaticTermination) {
+-        [[NSProcessInfo processInfo] enableAutomaticTermination:SUDownloadingReason];
+-        self.disabledAutomaticTermination = NO;
++        if (SUAVAILABLE(10, 7)) {
++            [[NSProcessInfo processInfo] enableAutomaticTermination:SUDownloadingReason];
++            self.disabledAutomaticTermination = NO;
++        }
+     }
+diff --git a/Sparkle/SPUDownloaderSession.h b/Sparkle/SPUDownloaderSession.h
+index 4bde75a..72d7c28 100644
+--- a/Sparkle/SPUDownloaderSession.h
++++ b/Sparkle/SPUDownloaderSession.h
+@@ -16,3 +16,4 @@
+ 
+-NS_CLASS_AVAILABLE(NSURLSESSION_AVAILABLE, 7_0)
++#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
++NS_CLASS_AVAILABLE(10_9, 7_0)
+ @interface SPUDownloaderSession : SPUDownloader <SPUDownloaderProtocol>
+@@ -20 +21,2 @@ NS_CLASS_AVAILABLE(NSURLSESSION_AVAILABLE, 7_0)
+ @end
++#endif
+diff --git a/Sparkle/SUAppcast.m b/Sparkle/SUAppcast.m
+index 2ee7735..791034b 100644
+--- a/Sparkle/SUAppcast.m
++++ b/Sparkle/SUAppcast.m
+@@ -18,2 +18,3 @@
+ #import "SPUDownloaderDelegate.h"
++#import "SPUDownloaderDeprecated.h"
+ #import "SPUDownloaderSession.h"
+@@ -69,3 +70,3 @@ - (void)fetchAppcastFromURL:(NSURL *)url inBackground:(BOOL)background completio
+     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:30.0];
+-    if (background) {
++    if (background && SUAVAILABLE(10, 7)) {
+         request.networkServiceType = NSURLNetworkServiceTypeBackground;
+@@ -86,3 +87,11 @@ - (void)fetchAppcastFromURL:(NSURL *)url inBackground:(BOOL)background completio
+     
+-    self.download = [[SPUDownloaderSession alloc] initWithDelegate:self];
++#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
++    if (SUAVAILABLE(10, 9)) {
++        self.download = [[SPUDownloaderSession alloc] initWithDelegate:self];
++    } else {
++        self.download = [[SPUDownloaderDeprecated alloc] initWithDelegate:self];
++    }
++#else
++    self.download = [[SPUDownloaderDeprecated alloc] initWithDelegate:self];
++#endif
+     
+diff --git a/Sparkle/SUBasicUpdateDriver.m b/Sparkle/SUBasicUpdateDriver.m
+index 2df2210..1978e30 100644
+--- a/Sparkle/SUBasicUpdateDriver.m
++++ b/Sparkle/SUBasicUpdateDriver.m
+@@ -31,2 +31,3 @@
+ #import "SPUURLRequest.h"
++#import "SPUDownloaderDeprecated.h"
+ #import "SPUDownloaderSession.h"
+@@ -376,3 +377,11 @@ - (void)downloadUpdate
+ 
+-    self.download = [[SPUDownloaderSession alloc] initWithDelegate:self];
++#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
++    if (SUAVAILABLE(10, 9)) {
++        self.download = [[SPUDownloaderSession alloc] initWithDelegate:self];
++    } else {
++        self.download = [[SPUDownloaderDeprecated alloc] initWithDelegate:self];
++    }
++#else
++    self.download = [[SPUDownloaderDeprecated alloc] initWithDelegate:self];
++#endif
+ 
+diff --git a/Sparkle/SPUDownloadData.h b/Sparkle/SPUDownloadData.h
+index 41cd574..7673e56 100644
+--- a/Sparkle/SPUDownloadData.h
++++ b/Sparkle/SPUDownloadData.h
+@@ -21,3 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
+  */
++#if __MAC_OS_X_VERSION_MAX_ALLOWED < 1080
++SU_EXPORT @interface SPUDownloadData : NSObject <NSCoding>
++#else
+ SU_EXPORT @interface SPUDownloadData : NSObject <NSSecureCoding>
++#endif
+ 
+diff --git a/Sparkle/SPUDownloadData.m b/Sparkle/SPUDownloadData.m
+index e888229..760a7af 100644
+--- a/Sparkle/SPUDownloadData.m
++++ b/Sparkle/SPUDownloadData.m
+@@ -55,2 +55,13 @@ - (nullable instancetype)initWithCoder:(NSCoder *)decoder
+ {
++#if __MAC_OS_X_VERSION_MAX_ALLOWED < 1080
++        NSData *data = [decoder decodeObjectForKey:SPUDownloadDataKey];
++        NSString *textEncodingName = [decoder decodeObjectForKey:SPUDownloadTextEncodingKey];
++        NSString *MIMEType = [decoder decodeObjectForKey:SPUDownloadMIMETypeKey];
++        if (![data isKindOfClass:[NSData class]] ||
++            (textEncodingName != nil &&
++                ![textEncodingName isKindOfClass:[NSString class]]) ||
++            (MIMEType != nil && ![MIMEType isKindOfClass:[NSString class]])) {
++            return nil;
++        }
++#else
+         NSData *data = [decoder decodeObjectOfClass:[NSData class] forKey:SPUDownloadDataKey];
+@@ -63,2 +74,7 @@ - (nullable instancetype)initWithCoder:(NSCoder *)decoder
+         NSString *MIMEType = [decoder decodeObjectOfClass:[NSString class] forKey:SPUDownloadMIMETypeKey];
++#endif
++
++        if (data == nil) {
++            return nil;
++        }
+ 
+diff --git a/Sparkle/SPUURLRequest.h b/Sparkle/SPUURLRequest.h
+index 6949614..787135d 100644
+--- a/Sparkle/SPUURLRequest.h
++++ b/Sparkle/SPUURLRequest.h
+@@ -16,2 +16,13 @@ NS_ASSUME_NONNULL_BEGIN
+ 
++#if __MAC_OS_X_VERSION_MAX_ALLOWED < 1070
++typedef NS_ENUM(NSUInteger, NSURLRequestNetworkServiceType) {
++    NSURLNetworkServiceTypeDefault = 0,
++    NSURLNetworkServiceTypeBackground = 3
++};
++
++@interface NSURLRequest (LionNetworkServiceType)
++@property NSURLRequestNetworkServiceType networkServiceType;
++@end
++#endif
++
+ // A class that wraps NSURLRequest and implements NSSecureCoding
+@@ -19,3 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
+ // I have not verified if NSURLRequest in 10.9 implements NSSecureCoding or not
++#if __MAC_OS_X_VERSION_MAX_ALLOWED < 1080
++@interface SPUURLRequest : NSObject <NSCoding>
++#else
+ @interface SPUURLRequest : NSObject <NSSecureCoding>
++#endif
+ 
+diff --git a/Sparkle/SPUURLRequest.m b/Sparkle/SPUURLRequest.m
+index 8606ffe..308dc02 100644
+--- a/Sparkle/SPUURLRequest.m
++++ b/Sparkle/SPUURLRequest.m
+@@ -25,3 +25,3 @@ @interface SPUURLRequest ()
+ @property (nonatomic, readonly) NSTimeInterval timeoutInterval;
+-@property (nonatomic, readonly, nullable) NSDictionary<NSString *, NSString *> *httpHeaderFields;
++@property (nonatomic, readonly, nullable) NSDictionary *httpHeaderFields;
+ @property (nonatomic, readonly) NSURLRequestNetworkServiceType networkServiceType;
+@@ -38,3 +38,3 @@ @implementation SPUURLRequest
+ 
+-- (instancetype)initWithURL:(NSURL *)url cachePolicy:(NSURLRequestCachePolicy)cachePolicy timeoutInterval:(NSTimeInterval)timeoutInterval httpHeaderFields:(NSDictionary<NSString *, NSString *> *)httpHeaderFields networkServiceType:(NSURLRequestNetworkServiceType)networkServiceType
++- (instancetype)initWithURL:(NSURL *)url cachePolicy:(NSURLRequestCachePolicy)cachePolicy timeoutInterval:(NSTimeInterval)timeoutInterval httpHeaderFields:(NSDictionary *)httpHeaderFields networkServiceType:(NSURLRequestNetworkServiceType)networkServiceType
+ {
+@@ -53,3 +53,8 @@ + (instancetype)URLRequestWithRequest:(NSURLRequest *)request
+ {
+-    return [(SPUURLRequest *)[[self class] alloc] initWithURL:request.URL cachePolicy:request.cachePolicy timeoutInterval:request.timeoutInterval httpHeaderFields:request.allHTTPHeaderFields networkServiceType:request.networkServiceType];
++    NSURLRequestNetworkServiceType networkServiceType =
++        NSURLNetworkServiceTypeDefault;
++    if (SUAVAILABLE(10, 7)) {
++        networkServiceType = request.networkServiceType;
++    }
++    return [(SPUURLRequest *)[[self class] alloc] initWithURL:request.URL cachePolicy:request.cachePolicy timeoutInterval:request.timeoutInterval httpHeaderFields:request.allHTTPHeaderFields networkServiceType:networkServiceType];
+ }
+@@ -75,6 +80,23 @@ - (instancetype)initWithCoder:(NSCoder *)decoder
+ {
++#if __MAC_OS_X_VERSION_MAX_ALLOWED < 1080
++        NSURL *url = [decoder decodeObjectForKey:SPUURLRequestURLKey];
++        NSDictionary *httpHeaderFields = [decoder decodeObjectForKey:SPUURLRequestHttpHeaderFieldsKey];
++        if (![url isKindOfClass:[NSURL class]] ||
++            (httpHeaderFields != nil &&
++                ![httpHeaderFields isKindOfClass:[NSDictionary class]])) {
++            return nil;
++        }
++        for (id key in httpHeaderFields) {
++            if (![key isKindOfClass:[NSString class]] ||
++                ![[httpHeaderFields objectForKey:key]
++                    isKindOfClass:[NSString class]]) {
++                return nil;
++            }
++        }
++#else
+         NSURL *url = [decoder decodeObjectOfClass:[NSURL class] forKey:SPUURLRequestURLKey];
++        NSDictionary *httpHeaderFields = [decoder decodeObjectOfClasses:[NSSet setWithArray:@[[NSDictionary class], [NSString class]]] forKey:SPUURLRequestHttpHeaderFieldsKey];
++#endif
+         NSURLRequestCachePolicy cachePolicy = (NSURLRequestCachePolicy)[decoder decodeIntegerForKey:SPUURLRequestCachePolicyKey];
+         NSTimeInterval timeoutInterval = [decoder decodeDoubleForKey:SPUURLRequestTimeoutIntervalKey];
+-        NSDictionary<NSString *, NSString *> *httpHeaderFields = [decoder decodeObjectOfClasses:[NSSet setWithArray:@[[NSDictionary class], [NSString class]]] forKey:SPUURLRequestHttpHeaderFieldsKey];
+         NSURLRequestNetworkServiceType networkServiceType = (NSURLRequestNetworkServiceType)[decoder decodeIntegerForKey:SPUURLRequestNetworkServiceTypeKey];
+@@ -90,3 +112,5 @@ - (NSURLRequest *)request
+     }
+-    request.networkServiceType = self.networkServiceType;
++    if (SUAVAILABLE(10, 7)) {
++        request.networkServiceType = self.networkServiceType;
++    }
+     return [request copy];
+diff --git a/Sparkle/SPULocalCacheDirectory.m b/Sparkle/SPULocalCacheDirectory.m
+index c63f102..66a3346 100644
+--- a/Sparkle/SPULocalCacheDirectory.m
++++ b/Sparkle/SPULocalCacheDirectory.m
+@@ -22,6 +22,9 @@ + (NSString *)cachePathForBundleIdentifier:(NSString *)bundleIdentifier
+ {
+-    NSURL *cacheURL = [[NSFileManager defaultManager] URLForDirectory:NSCachesDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:NO error:NULL];
+-    assert(cacheURL != nil);
+-    
+-    NSString *resultPath = [[[cacheURL URLByAppendingPathComponent:bundleIdentifier] URLByAppendingPathComponent:@SPARKLE_BUNDLE_IDENTIFIER] path];
++    NSArray *cachePaths = NSSearchPathForDirectoriesInDomains(
++        NSCachesDirectory, NSUserDomainMask, YES);
++    assert([cachePaths count] > 0);
++
++    NSString *resultPath = [[[cachePaths objectAtIndex:0]
++        stringByAppendingPathComponent:bundleIdentifier]
++        stringByAppendingPathComponent:@SPARKLE_BUNDLE_IDENTIFIER];
+     assert(resultPath != nil);
+@@ -33,3 +36,3 @@ + (void)removeOldItemsInDirectory:(NSString *)directory
+ {
+-    NSMutableArray<NSString *> *filePathsToRemove = [NSMutableArray array];
++    NSMutableArray *filePathsToRemove = [NSMutableArray array];
+     NSFileManager *fileManager = [NSFileManager defaultManager];
+@@ -40,3 +43,3 @@ + (void)removeOldItemsInDirectory:(NSString *)directory
+         {
+-            NSDictionary<NSString *, id> *fileAttributes = [fileManager attributesOfItemAtPath:[directory stringByAppendingPathComponent:filename] error:NULL];
++            NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:[directory stringByAppendingPathComponent:filename] error:NULL];
+             if (fileAttributes != nil)
+diff --git a/Sparkle/SUAppcastItem.m b/Sparkle/SUAppcastItem.m
+index a214f7b..336e179 100644
+--- a/Sparkle/SUAppcastItem.m
++++ b/Sparkle/SUAppcastItem.m
+@@ -115,3 +115,3 @@ - (instancetype)initWithDictionary:(NSDictionary *)dict failureReason:(NSString
+             // then we remove the extension. Hopefully, this will be the version.
+-            NSArray<NSString *> *fileComponents = [(NSString *)[enclosure objectForKey:SURSSAttributeURL] componentsSeparatedByString:@"_"];
++            NSArray *fileComponents = [(NSString *)[enclosure objectForKey:SURSSAttributeURL] componentsSeparatedByString:@"_"];
+             if ([fileComponents count] > 1) {
+

@@ -1,0 +1,117 @@
+# Snow Leopard compatibility patch 0017
+#
+# Incompatibility: NSData's public strict Base64 decoder starts at OS X 10.9.
+# The historical pre-10.9 selector is absent from the 10.6 public SDK and is not
+# acceptable because private Apple APIs are forbidden.
+# Behaviour preserved: nil and surrounding whitespace handling remain unchanged.
+# Canonical Base64 decodes identically, while malformed characters, padding,
+# lengths, and non-zero padding bits fail closed before signature verification.
+# History: 4bbfac11 declared the old selector only to compile with older SDKs.
+# ea149426 replaced it with the public 10.9 API to remove deprecation warnings.
+# 697a3436's older decoder path was rejected because it used that private method.
+# Public API evidence: the implementation uses only NSString, NSMutableData, and
+# NSData operations published in Foundation 10.6.
+# Safety: no malformed input is accepted and cryptographic verification is not
+# changed. The obsolete private category declaration is removed.
+diff --git a/Sparkle/SUSignatures.h b/Sparkle/SUSignatures.h
+index a1df42bb..d2b5d64c 100644
+--- a/Sparkle/SUSignatures.h
++++ b/Sparkle/SUSignatures.h
+@@ -11,5 +10,0 @@
+-#if __MAC_OS_X_VERSION_MAX_ALLOWED < 1090
+-@interface NSData (SUDSAVerifier)
+-- (id)initWithBase64Encoding:(NSString *)base64String;
+-@end
+-#endif
+diff --git a/Sparkle/SUSignatures.m b/Sparkle/SUSignatures.m
+index 8e97ce55..a96e33fb 100644
+--- a/Sparkle/SUSignatures.m
++++ b/Sparkle/SUSignatures.m
+@@ -16,8 +16,79 @@
+-static NSData *decode(NSString *str) {
+-    if (str == nil) {
+-        return nil;
+-    }
+-
+-    NSString *stripped = [str stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+-    return [[NSData alloc] initWithBase64EncodedString:stripped options:0];
+-}
++static int SUBase64Value(unichar character)
++{
++    if (character >= 'A' && character <= 'Z') {
++        return character - 'A';
++    }
++    if (character >= 'a' && character <= 'z') {
++        return character - 'a' + 26;
++    }
++    if (character >= '0' && character <= '9') {
++        return character - '0' + 52;
++    }
++    if (character == '+') {
++        return 62;
++    }
++    if (character == '/') {
++        return 63;
++    }
++    return -1;
++}
++
++static NSData *decode(NSString *str)
++{
++    if (str == nil) {
++        return nil;
++    }
++
++    NSString *stripped = [str stringByTrimmingCharactersInSet:
++        [NSCharacterSet whitespaceAndNewlineCharacterSet]];
++    NSUInteger length = [stripped length];
++    if (length == 0) {
++        return [NSData data];
++    }
++    if (length % 4 != 0) {
++        return nil;
++    }
++
++    NSMutableData *decoded = [NSMutableData dataWithCapacity:length / 4 * 3];
++    for (NSUInteger index = 0; index < length; index += 4) {
++        unichar thirdCharacter = [stripped characterAtIndex:index + 2];
++        unichar fourthCharacter = [stripped characterAtIndex:index + 3];
++        int first = SUBase64Value([stripped characterAtIndex:index]);
++        int second = SUBase64Value([stripped characterAtIndex:index + 1]);
++        BOOL finalGroup = index + 4 == length;
++        if (first < 0 || second < 0) {
++            return nil;
++        }
++
++        uint8_t bytes[3];
++        bytes[0] = (uint8_t)((first << 2) | (second >> 4));
++        if (thirdCharacter == '=') {
++            if (!finalGroup || fourthCharacter != '=' || (second & 15) != 0) {
++                return nil;
++            }
++            [decoded appendBytes:bytes length:1];
++            continue;
++        }
++
++        int third = SUBase64Value(thirdCharacter);
++        if (third < 0) {
++            return nil;
++        }
++        bytes[1] = (uint8_t)((second << 4) | (third >> 2));
++        if (fourthCharacter == '=') {
++            if (!finalGroup || (third & 3) != 0) {
++                return nil;
++            }
++            [decoded appendBytes:bytes length:2];
++            continue;
++        }
++
++        int fourth = SUBase64Value(fourthCharacter);
++        if (fourth < 0) {
++            return nil;
++        }
++        bytes[2] = (uint8_t)((third << 6) | fourth);
++        [decoded appendBytes:bytes length:3];
++    }
++    return [decoded copy];
++}

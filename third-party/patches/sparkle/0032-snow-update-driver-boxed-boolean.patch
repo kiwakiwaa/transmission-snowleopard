@@ -1,0 +1,23 @@
+# Snow Leopard compatibility patch 0032
+#
+# Incompatibility: the 10.6 SDK defines YES in a form that Clang cannot parse
+# inside the later @YES Objective-C boxed-literal spelling.
+# Behaviour preserved: abortUpdate still sets the KVC-backed finished property
+# to an NSNumber containing YES before posting the finished notification.
+# History: bc3be9a1 introduced this code with numberWithBool:. b0c9c31d changed
+# it to @YES only as part of a modern-syntax conversion.
+# Public API evidence: NSNumber numberWithBool: is public in Foundation 10.6 and
+# is the semantic implementation of this boxed literal.
+# Safety: object value, KVC key, ordering, and notification are unchanged.
+diff --git a/Sparkle/SUUpdateDriver.m b/Sparkle/SUUpdateDriver.m
+--- a/Sparkle/SUUpdateDriver.m
++++ b/Sparkle/SUUpdateDriver.m
+@@ -48,7 +48,7 @@
+ 
+ - (void)abortUpdate
+ {
+-    [self setValue:@YES forKey:@"finished"];
++    [self setValue:[NSNumber numberWithBool:YES] forKey:@"finished"];
+     [[NSNotificationCenter defaultCenter] postNotificationName:SUUpdateDriverFinishedNotification object:self];
+ }
+ 

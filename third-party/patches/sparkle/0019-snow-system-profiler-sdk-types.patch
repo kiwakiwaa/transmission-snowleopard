@@ -1,0 +1,42 @@
+# Snow Leopard compatibility patch 0019
+#
+# Incompatibility: Foundation 10.6 rejects profiler collection generics and its
+# machine header predates the ARM64E subtype spelling used by 1.27.3.
+# Behaviour preserved: every profile key and value, CPU mask, ARM recognition,
+# model translation, application field, and language field remains unchanged.
+# History: 282f0ae5 added collection generics only as metadata. ae4af4d6 added
+# one more warning-only array generic. a38e8c46 added ARM reporting using the
+# public machine constant whose stable value is 2.
+# Public API evidence: mach/machine.h publishes CPU_SUBTYPE_ARM64E as subtype 2.
+# Safety: the local declaration changes have no runtime effect and keep future
+# ARM64E reporting while native Snow x86_64 values follow their existing cases.
+diff --git a/Sparkle/SUSystemProfiler.h b/Sparkle/SUSystemProfiler.h
+index f82c51c2..c6ab80f0 100644
+--- a/Sparkle/SUSystemProfiler.h
++++ b/Sparkle/SUSystemProfiler.h
+@@ -19 +19 @@
+-+ (NSArray<NSDictionary<NSString *, NSString *> *> *)systemProfileArrayForHost:(SUHost *)host;
+++ (NSArray *)systemProfileArrayForHost:(SUHost *)host;
+diff --git a/Sparkle/SUSystemProfiler.m b/Sparkle/SUSystemProfiler.m
+index 6838b4c0..ff956357 100644
+--- a/Sparkle/SUSystemProfiler.m
++++ b/Sparkle/SUSystemProfiler.m
+@@ -18,0 +19,4 @@
++#ifndef CPU_SUBTYPE_ARM64E
++#define CPU_SUBTYPE_ARM64E ((cpu_subtype_t)2)
++#endif
++
+@@ -33 +37 @@
+-+ (NSDictionary<NSString *, NSString *> *)modelTranslationTable
+++ (NSDictionary *)modelTranslationTable
+@@ -40 +44 @@
+-+ (NSArray<NSDictionary<NSString *, NSString *> *> *)systemProfileArrayForHost:(SUHost *)host
+++ (NSArray *)systemProfileArrayForHost:(SUHost *)host
+@@ -42 +46 @@
+-    NSDictionary<NSString *, NSString *> *modelTranslation = [self modelTranslationTable];
++    NSDictionary *modelTranslation = [self modelTranslationTable];
+@@ -45,2 +49,2 @@
+-    NSMutableArray<NSDictionary<NSString *, NSString *> *> *profileArray = [NSMutableArray array];
+-    NSArray<NSString *> *profileDictKeys = @[@"key", @"displayKey", @"value", @"displayValue"];
++    NSMutableArray *profileArray = [NSMutableArray array];
++    NSArray *profileDictKeys = @[@"key", @"displayKey", @"value", @"displayValue"];

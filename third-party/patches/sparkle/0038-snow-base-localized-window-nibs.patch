@@ -1,0 +1,100 @@
+# Snow Leopard compatibility patch 0038
+#
+# Incompatibility: Snow Leopard does not resolve Sparkle's window-controller
+# nib names through the newer Base.lproj localization convention. The compiled
+# nibs are present, but controller loading from the framework localization
+# directory returns no window and makes an accepted update disappear. The build
+# graph places identical Snow-compiled nibs in a nonlocalized framework directory.
+# Behaviour preserved: each controller remains the nib owner and AppKit connects
+# the same window, bindings, actions, and zeroing-weak outlets. NSWindowController
+# still invokes windowDidLoad after this bounded loadWindow override returns. The
+# original loader remains the fallback when the pinned resource is absent.
+# Public API evidence: NSBundle pathForResource:ofType:inDirectory: and
+# loadNibFile:externalNameTable:withZone: are public 10.6 AppKit APIs.
+diff --git a/Sparkle/SUAutomaticUpdateAlert.m b/Sparkle/SUAutomaticUpdateAlert.m
+index 1e914dd3..5d409945 100644
+--- a/Sparkle/SUAutomaticUpdateAlert.m
++++ b/Sparkle/SUAutomaticUpdateAlert.m
+@@ -35,6 +35,24 @@
+ @synthesize laterButton;
+ @synthesize installButton;
+ 
++- (void)loadWindow
++{
++    NSString *nibPath = [[NSBundle bundleForClass:[self class]]
++        pathForResource:@"SUAutomaticUpdateAlert"
++                 ofType:@"nib"
++            inDirectory:@"LegacySnow"];
++    if (nibPath == nil) {
++        [super loadWindow];
++        return;
++    }
++    NSDictionary *nameTable = [NSDictionary dictionaryWithObject:self
++        forKey:NSNibOwner];
++    if (![NSBundle loadNibFile:nibPath externalNameTable:nameTable
++        withZone:nil]) {
++        [self setWindow:nil];
++    }
++}
++
+ - (instancetype)initWithAppcastItem:(SUAppcastItem *)item host:(SUHost *)aHost completionBlock:(void (^)(SUAutomaticInstallationChoice))block
+ {
+     self = [super initWithWindowNibName:@"SUAutomaticUpdateAlert"];
+diff --git a/Sparkle/SUUpdateAlert.m b/Sparkle/SUUpdateAlert.m
+index 2ad7a7d9..ad38c91e 100644
+--- a/Sparkle/SUUpdateAlert.m
++++ b/Sparkle/SUUpdateAlert.m
+@@ -81,6 +81,24 @@
+ @synthesize httpHeaders = _httpHeaders;
+ @synthesize userAgent = _userAgent;
+ 
++- (void)loadWindow
++{
++    NSString *nibPath = [[NSBundle bundleForClass:[self class]]
++        pathForResource:@"SUUpdateAlert"
++                 ofType:@"nib"
++            inDirectory:@"LegacySnow"];
++    if (nibPath == nil) {
++        [super loadWindow];
++        return;
++    }
++    NSDictionary *nameTable = [NSDictionary dictionaryWithObject:self
++        forKey:NSNibOwner];
++    if (![NSBundle loadNibFile:nibPath externalNameTable:nameTable
++        withZone:nil]) {
++        [self setWindow:nil];
++    }
++}
++
+ - (instancetype)initWithAppcastItem:(SUAppcastItem *)item httpHeaders:(NSDictionary *)httpHeaders userAgent:(NSString *)userAgent host:(SUHost *)aHost completionBlock:(void (^)(SUUpdateAlertChoice))block
+ {
+     self = [super initWithWindowNibName:@"SUUpdateAlert"];
+diff --git a/Sparkle/SUUpdatePermissionPrompt.m b/Sparkle/SUUpdatePermissionPrompt.m
+index ccf11f0b..701257ac 100644
+--- a/Sparkle/SUUpdatePermissionPrompt.m
++++ b/Sparkle/SUUpdatePermissionPrompt.m
+@@ -56,6 +56,24 @@
+     return [(NSNumber *)[self.host objectForInfoDictionaryKey:SUEnableSystemProfilingKey] boolValue];
+ }
+ 
++- (void)loadWindow
++{
++    NSString *nibPath = [[NSBundle bundleForClass:[self class]]
++        pathForResource:@"SUUpdatePermissionPrompt"
++                 ofType:@"nib"
++            inDirectory:@"LegacySnow"];
++    if (nibPath == nil) {
++        [super loadWindow];
++        return;
++    }
++    NSDictionary *nameTable = [NSDictionary dictionaryWithObject:self
++        forKey:NSNibOwner];
++    if (![NSBundle loadNibFile:nibPath externalNameTable:nameTable
++        withZone:nil]) {
++        [self setWindow:nil];
++    }
++}
++
+ - (instancetype)initWithHost:(SUHost *)aHost systemProfile:(NSArray *)profile reply:(void (^)(SUUpdatePermissionResponse *))reply
+ {
+     self = [super initWithWindowNibName:@"SUUpdatePermissionPrompt"];

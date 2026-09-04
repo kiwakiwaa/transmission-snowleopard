@@ -1,0 +1,1181 @@
+# Snow Leopard compatibility patch 0010
+#
+# Incompatibility: Xcode 4.2 cannot read the Xcode 8 automatic-alert XIB,
+# and Snow AppKit does not implement the Auto Layout constraints added later.
+# Behaviour preserved: every modern outlet, action, binding, frame, autosave
+# name, fullscreen policy, and translated intrinsic button size is retained.
+# History: 1eedc27e and fbda90ad changed XIB formats. d9d62299 and 22f5d1f0
+# added explicit button outlets. d1d71dc1 added fullscreen auxiliary behaviour.
+# 239693a9 replaced springs and struts with the current constraint graph.
+# Public API evidence: frame sizing, bindings, autosave, collection behaviour,
+# and cell intrinsic sizes use public AppKit contracts. Snow publishes
+# NSAppKitVersionNumber and reports integral AppKit generation 1038.
+# Safety: update choices and defaults remain connected to their original
+# actions and binding. Critical-update skip disabling remains unchanged.
+diff --git a/Sparkle/Base.lproj/SUAutomaticUpdateAlert.xib b/Sparkle/Base.lproj/SUAutomaticUpdateAlert.xib
+index bc8082c8..00000000 100644
+--- a/Sparkle/Base.lproj/SUAutomaticUpdateAlert.xib
++++ b/Sparkle/Base.lproj/SUAutomaticUpdateAlert.xib
+@@ -1,140 +1,657 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="17701" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+-    <dependencies>
+-        <deployment identifier="macosx"/>
+-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="17701"/>
+-        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+-    </dependencies>
+-    <objects>
+-        <customObject id="-2" userLabel="File's Owner" customClass="SUAutomaticUpdateAlert">
+-            <connections>
+-                <outlet property="installButton" destination="15" id="VHi-SZ-6td"/>
+-                <outlet property="laterButton" destination="16" id="AZg-1M-E8w"/>
+-                <outlet property="skipButton" destination="30" id="LpO-Ax-F1B"/>
+-                <outlet property="window" destination="5" id="22"/>
+-            </connections>
+-        </customObject>
+-        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+-        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+-        <window allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="SUAutomaticUpdateAlert" animationBehavior="default" id="5" userLabel="Window">
+-            <windowStyleMask key="styleMask" titled="YES"/>
+-            <windowCollectionBehavior key="collectionBehavior" fullScreenAuxiliary="YES"/>
+-            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+-            <rect key="contentRect" x="114" y="521" width="616" height="152"/>
+-            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="875"/>
+-            <value key="minSize" type="size" width="511" height="152"/>
+-            <view key="contentView" id="6">
+-                <rect key="frame" x="0.0" y="0.0" width="616" height="152"/>
+-                <autoresizingMask key="autoresizingMask"/>
+-                <subviews>
+-                    <imageView translatesAutoresizingMaskIntoConstraints="NO" id="7">
+-                        <rect key="frame" x="23" y="73" width="64" height="64"/>
+-                        <constraints>
+-                            <constraint firstAttribute="width" constant="64" id="HIJ-Gw-yTF"/>
+-                            <constraint firstAttribute="height" constant="64" id="hbh-y8-N7K"/>
+-                        </constraints>
+-                        <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="NSApplicationIcon" id="38"/>
+-                        <connections>
+-                            <binding destination="-2" name="value" keyPath="applicationIcon" id="10"/>
+-                        </connections>
+-                    </imageView>
+-                    <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="8">
+-                        <rect key="frame" x="105" y="121" width="497" height="16"/>
+-                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" id="39">
+-                            <font key="font" metaFont="systemBold"/>
+-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+-                        </textFieldCell>
+-                        <connections>
+-                            <binding destination="-2" name="value" keyPath="titleText" id="11"/>
+-                        </connections>
+-                    </textField>
+-                    <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="9">
+-                        <rect key="frame" x="105" y="99" width="493" height="14"/>
+-                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" id="40">
+-                            <font key="font" metaFont="smallSystem"/>
+-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+-                        </textFieldCell>
+-                        <connections>
+-                            <binding destination="-2" name="value" keyPath="descriptionText" id="14"/>
+-                        </connections>
+-                    </textField>
+-                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="15">
+-                        <rect key="frame" x="446" y="12" width="156" height="32"/>
+-                        <buttonCell key="cell" type="push" title="Install and Relaunch" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="41">
+-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+-                            <font key="font" metaFont="system"/>
+-                            <string key="keyEquivalent" base64-UTF8="YES">
+-DQ
+-</string>
+-                        </buttonCell>
+-                        <connections>
+-                            <action selector="installNow:" target="-2" id="33"/>
+-                        </connections>
+-                    </button>
+-                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="16">
+-                        <rect key="frame" x="328" y="12" width="118" height="32"/>
+-                        <buttonCell key="cell" type="push" title="Install on Quit" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="42">
+-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+-                            <font key="font" metaFont="system"/>
+-                            <string key="keyEquivalent" base64-UTF8="YES">
+-Gw
+-</string>
+-                        </buttonCell>
+-                        <connections>
+-                            <action selector="installLater:" target="-2" id="34"/>
+-                        </connections>
+-                    </button>
+-                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="30">
+-                        <rect key="frame" x="100" y="12" width="107" height="32"/>
+-                        <buttonCell key="cell" type="push" title="Don't Install" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="44">
+-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+-                            <font key="font" metaFont="system"/>
+-                        </buttonCell>
+-                        <connections>
+-                            <action selector="doNotInstall:" target="-2" id="35"/>
+-                        </connections>
+-                    </button>
+-                    <button translatesAutoresizingMaskIntoConstraints="NO" id="17">
+-                        <rect key="frame" x="106" y="58" width="489" height="18"/>
+-                        <buttonCell key="cell" type="check" title="Automatically download and install updates in the future" bezelStyle="regularSquare" imagePosition="left" alignment="left" controlSize="small" inset="2" id="43">
+-                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+-                            <font key="font" metaFont="smallSystem"/>
+-                        </buttonCell>
+-                        <connections>
+-                            <binding destination="18" name="value" keyPath="values.SUAutomaticallyUpdate" id="19"/>
+-                        </connections>
+-                    </button>
+-                </subviews>
+-                <constraints>
+-                    <constraint firstItem="15" firstAttribute="leading" secondItem="16" secondAttribute="trailing" constant="14" id="1z5-yw-8XJ"/>
+-                    <constraint firstItem="30" firstAttribute="top" secondItem="17" secondAttribute="bottom" constant="20" symbolic="YES" id="3AQ-x0-2t4"/>
+-                    <constraint firstItem="7" firstAttribute="leading" secondItem="6" secondAttribute="leading" constant="23" id="3ak-LX-g8l"/>
+-                    <constraint firstItem="17" firstAttribute="leading" secondItem="7" secondAttribute="trailing" constant="20" id="600-33-4ZV"/>
+-                    <constraint firstItem="16" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="30" secondAttribute="trailing" constant="100" id="86g-dm-fdN"/>
+-                    <constraint firstItem="8" firstAttribute="top" secondItem="6" secondAttribute="top" constant="15" id="Adf-rF-bOx"/>
+-                    <constraint firstItem="9" firstAttribute="leading" secondItem="7" secondAttribute="trailing" constant="20" id="CKo-2e-9BO"/>
+-                    <constraint firstAttribute="trailing" secondItem="17" secondAttribute="trailing" constant="21" id="Hen-8y-ckS"/>
+-                    <constraint firstItem="30" firstAttribute="leading" secondItem="7" secondAttribute="trailing" constant="20" id="T5I-iM-tWw"/>
+-                    <constraint firstItem="17" firstAttribute="top" secondItem="9" secondAttribute="bottom" constant="24" id="eo1-MH-1S4"/>
+-                    <constraint firstAttribute="bottom" secondItem="15" secondAttribute="bottom" constant="19" id="h6K-Du-mzi"/>
+-                    <constraint firstAttribute="bottom" secondItem="16" secondAttribute="bottom" constant="19" id="iJb-rw-tCI"/>
+-                    <constraint firstAttribute="trailing" secondItem="8" secondAttribute="trailing" constant="16" id="k1D-UP-haL"/>
+-                    <constraint firstAttribute="trailing" secondItem="9" secondAttribute="trailing" constant="20" id="k4f-2L-XBk"/>
+-                    <constraint firstItem="15" firstAttribute="top" secondItem="17" secondAttribute="bottom" constant="20" symbolic="YES" id="pU4-ge-nz4"/>
+-                    <constraint firstItem="7" firstAttribute="top" secondItem="6" secondAttribute="top" constant="15" id="pxH-Va-6al"/>
+-                    <constraint firstItem="9" firstAttribute="top" secondItem="8" secondAttribute="bottom" constant="8" symbolic="YES" id="qgx-nM-F29"/>
+-                    <constraint firstItem="16" firstAttribute="top" secondItem="17" secondAttribute="bottom" constant="20" id="sTJ-dt-fNH"/>
+-                    <constraint firstAttribute="trailing" secondItem="15" secondAttribute="trailing" constant="21" id="txY-6K-ogq"/>
+-                    <constraint firstItem="8" firstAttribute="leading" secondItem="7" secondAttribute="trailing" constant="20" id="vhw-bw-hJ4"/>
+-                </constraints>
+-            </view>
+-            <point key="canvasLocation" x="117" y="124"/>
+-        </window>
+-        <userDefaultsController representsSharedInstance="YES" id="18" userLabel="Shared Defaults"/>
+-    </objects>
+-    <resources>
+-        <image name="NSApplicationIcon" width="32" height="32"/>
+-    </resources>
+-</document>
++<?xml version="1.0" encoding="UTF-8"?>
++<archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="7.10">
++	<data>
++		<int key="IBDocument.SystemTarget">1060</int>
++		<string key="IBDocument.SystemVersion">11A453</string>
++		<string key="IBDocument.InterfaceBuilderVersion">1553</string>
++		<string key="IBDocument.AppKitVersion">1120</string>
++		<string key="IBDocument.HIToolboxVersion">556.00</string>
++		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
++			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
++			<string key="NS.object.0">1553</string>
++		</object>
++		<object class="NSArray" key="IBDocument.IntegratedClassDependencies">
++			<bool key="EncodedWithXMLCoder">YES</bool>
++			<string>NSTextField</string>
++			<string>NSView</string>
++			<string>NSWindowTemplate</string>
++			<string>NSUserDefaultsController</string>
++			<string>NSTextFieldCell</string>
++			<string>NSImageCell</string>
++			<string>NSButtonCell</string>
++			<string>NSImageView</string>
++			<string>NSButton</string>
++			<string>NSCustomObject</string>
++		</object>
++		<object class="NSArray" key="IBDocument.PluginDependencies">
++			<bool key="EncodedWithXMLCoder">YES</bool>
++			<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++		</object>
++		<object class="NSMutableDictionary" key="IBDocument.Metadata">
++			<bool key="EncodedWithXMLCoder">YES</bool>
++			<object class="NSArray" key="dict.sortedKeys" id="0">
++				<bool key="EncodedWithXMLCoder">YES</bool>
++			</object>
++			<reference key="dict.values" ref="0"/>
++		</object>
++		<object class="NSMutableArray" key="IBDocument.RootObjects" id="703667931">
++			<bool key="EncodedWithXMLCoder">YES</bool>
++			<object class="NSCustomObject" id="1063113299">
++				<string key="NSClassName">SUAutomaticUpdateAlert</string>
++			</object>
++			<object class="NSCustomObject" id="980192062">
++				<string key="NSClassName">FirstResponder</string>
++			</object>
++			<object class="NSCustomObject" id="600560674">
++				<string key="NSClassName">NSApplication</string>
++			</object>
++			<object class="NSWindowTemplate" id="26497398">
++				<int key="NSWindowStyleMask">1</int>
++				<int key="NSWindowBacking">2</int>
++				<string key="NSWindowRect">{{114, 521}, {616, 152}}</string>
++				<int key="NSWTFlags">1886912512</int>
++				<string key="NSWindowTitle"/>
++				<object class="NSMutableString" key="NSWindowClass">
++					<characters key="NS.bytes">NSWindow</characters>
++				</object>
++				<object class="NSMutableString" key="NSViewClass">
++					<characters key="NS.bytes">View</characters>
++				</object>
++				<nil key="NSUserInterfaceItemIdentifier"/>
++				<string key="NSWindowContentMinSize">{511, 152}</string>
++				<object class="NSView" key="NSWindowView" id="683629094">
++					<reference key="NSNextResponder"/>
++					<int key="NSvFlags">256</int>
++					<object class="NSMutableArray" key="NSSubviews">
++						<bool key="EncodedWithXMLCoder">YES</bool>
++						<object class="NSImageView" id="684391777">
++							<reference key="NSNextResponder" ref="683629094"/>
++							<int key="NSvFlags">268</int>
++							<object class="NSMutableSet" key="NSDragTypes">
++								<bool key="EncodedWithXMLCoder">YES</bool>
++								<object class="NSArray" key="set.sortedObjects">
++									<bool key="EncodedWithXMLCoder">YES</bool>
++									<string>Apple PDF pasteboard type</string>
++									<string>Apple PICT pasteboard type</string>
++									<string>Apple PNG pasteboard type</string>
++									<string>NSFilenamesPboardType</string>
++									<string>NeXT Encapsulated PostScript v1.2 pasteboard type</string>
++									<string>NeXT TIFF v4.0 pasteboard type</string>
++								</object>
++							</object>
++							<string key="NSFrame">{{23, 73}, {64, 64}}</string>
++							<reference key="NSSuperview" ref="683629094"/>
++							<reference key="NSNextKeyView" ref="766768061"/>
++							<bool key="NSEnabled">YES</bool>
++							<object class="NSImageCell" key="NSCell" id="17541256">
++								<int key="NSCellFlags">130560</int>
++								<int key="NSCellFlags2">33554432</int>
++								<object class="NSCustomResource" key="NSContents">
++									<string key="NSClassName">NSImage</string>
++									<string key="NSResourceName">NSApplicationIcon</string>
++								</object>
++								<int key="NSAlign">0</int>
++								<int key="NSScale">0</int>
++								<int key="NSStyle">0</int>
++								<bool key="NSAnimates">NO</bool>
++							</object>
++							<bool key="NSEditable">YES</bool>
++						</object>
++						<object class="NSTextField" id="766768061">
++							<reference key="NSNextResponder" ref="683629094"/>
++							<int key="NSvFlags">270</int>
++							<string key="NSFrame">{{105, 121}, {497, 16}}</string>
++							<reference key="NSSuperview" ref="683629094"/>
++							<reference key="NSNextKeyView" ref="757978667"/>
++							<bool key="NSEnabled">YES</bool>
++							<object class="NSTextFieldCell" key="NSCell" id="86959214">
++								<int key="NSCellFlags">67239424</int>
++								<int key="NSCellFlags2">272629760</int>
++								<string key="NSContents"/>
++								<object class="NSFont" key="NSSupport">
++									<string key="NSName">LucidaGrande-Bold</string>
++									<double key="NSSize">13</double>
++									<int key="NSfFlags">2072</int>
++								</object>
++								<reference key="NSControlView" ref="766768061"/>
++								<object class="NSColor" key="NSBackgroundColor" id="1051534986">
++									<int key="NSColorSpace">6</int>
++									<string key="NSCatalogName">System</string>
++									<string key="NSColorName">controlColor</string>
++									<object class="NSColor" key="NSColor">
++										<int key="NSColorSpace">3</int>
++										<bytes key="NSWhite">MC42NjY2NjY2NjY3AA</bytes>
++									</object>
++								</object>
++								<object class="NSColor" key="NSTextColor" id="953131030">
++									<int key="NSColorSpace">6</int>
++									<string key="NSCatalogName">System</string>
++									<string key="NSColorName">controlTextColor</string>
++									<object class="NSColor" key="NSColor">
++										<int key="NSColorSpace">3</int>
++										<bytes key="NSWhite">MAA</bytes>
++									</object>
++								</object>
++							</object>
++						</object>
++						<object class="NSTextField" id="757978667">
++							<reference key="NSNextResponder" ref="683629094"/>
++							<int key="NSvFlags">270</int>
++							<string key="NSFrame">{{105, 99}, {493, 14}}</string>
++							<reference key="NSSuperview" ref="683629094"/>
++							<reference key="NSNextKeyView" ref="649646560"/>
++							<bool key="NSEnabled">YES</bool>
++							<object class="NSTextFieldCell" key="NSCell" id="7373583">
++								<int key="NSCellFlags">67239424</int>
++								<int key="NSCellFlags2">272629760</int>
++								<string key="NSContents"/>
++								<object class="NSFont" key="NSSupport" id="26">
++									<string key="NSName">LucidaGrande</string>
++									<double key="NSSize">11</double>
++									<int key="NSfFlags">3100</int>
++								</object>
++								<reference key="NSControlView" ref="757978667"/>
++								<reference key="NSBackgroundColor" ref="1051534986"/>
++								<reference key="NSTextColor" ref="953131030"/>
++							</object>
++						</object>
++						<object class="NSButton" id="265767855">
++							<reference key="NSNextResponder" ref="683629094"/>
++							<int key="NSvFlags">257</int>
++							<string key="NSFrame">{{446, 12}, {156, 32}}</string>
++							<reference key="NSSuperview" ref="683629094"/>
++							<reference key="NSNextKeyView"/>
++							<bool key="NSEnabled">YES</bool>
++							<object class="NSButtonCell" key="NSCell" id="5529083">
++								<int key="NSCellFlags">67239424</int>
++								<int key="NSCellFlags2">134217728</int>
++								<string key="NSContents">Install and Relaunch</string>
++								<object class="NSFont" key="NSSupport" id="957448308">
++									<string key="NSName">LucidaGrande</string>
++									<double key="NSSize">13</double>
++									<int key="NSfFlags">1044</int>
++								</object>
++								<reference key="NSControlView" ref="265767855"/>
++								<int key="NSButtonFlags">-2038284033</int>
++								<int key="NSButtonFlags2">1</int>
++								<reference key="NSAlternateImage" ref="957448308"/>
++								<string key="NSAlternateContents"/>
++								<string type="base64-UTF8" key="NSKeyEquivalent">DQ</string>
++								<int key="NSPeriodicDelay">200</int>
++								<int key="NSPeriodicInterval">25</int>
++							</object>
++						</object>
++						<object class="NSButton" id="389094888">
++							<reference key="NSNextResponder" ref="683629094"/>
++							<int key="NSvFlags">257</int>
++							<string key="NSFrame">{{328, 12}, {118, 32}}</string>
++							<reference key="NSSuperview" ref="683629094"/>
++							<reference key="NSNextKeyView" ref="265767855"/>
++							<bool key="NSEnabled">YES</bool>
++							<object class="NSButtonCell" key="NSCell" id="285814029">
++								<int key="NSCellFlags">67239424</int>
++								<int key="NSCellFlags2">134217728</int>
++								<string key="NSContents">Install on Quit</string>
++								<reference key="NSSupport" ref="957448308"/>
++								<reference key="NSControlView" ref="389094888"/>
++								<int key="NSButtonFlags">-2038284033</int>
++								<int key="NSButtonFlags2">1</int>
++								<reference key="NSAlternateImage" ref="957448308"/>
++								<string key="NSAlternateContents"/>
++								<string type="base64-UTF8" key="NSKeyEquivalent">Gw</string>
++								<int key="NSPeriodicDelay">200</int>
++								<int key="NSPeriodicInterval">25</int>
++							</object>
++						</object>
++						<object class="NSButton" id="689081238">
++							<reference key="NSNextResponder" ref="683629094"/>
++							<int key="NSvFlags">256</int>
++							<string key="NSFrame">{{100, 12}, {107, 32}}</string>
++							<reference key="NSSuperview" ref="683629094"/>
++							<reference key="NSNextKeyView" ref="389094888"/>
++							<bool key="NSEnabled">YES</bool>
++							<object class="NSButtonCell" key="NSCell" id="368800735">
++								<int key="NSCellFlags">67239424</int>
++								<int key="NSCellFlags2">134217728</int>
++								<string key="NSContents">Don't Install</string>
++								<reference key="NSSupport" ref="957448308"/>
++								<reference key="NSControlView" ref="689081238"/>
++								<int key="NSButtonFlags">-2038284033</int>
++								<int key="NSButtonFlags2">1</int>
++								<reference key="NSAlternateImage" ref="957448308"/>
++								<string key="NSAlternateContents"/>
++								<object class="NSMutableString" key="NSKeyEquivalent">
++									<characters key="NS.bytes"/>
++								</object>
++								<int key="NSPeriodicDelay">200</int>
++								<int key="NSPeriodicInterval">25</int>
++							</object>
++						</object>
++						<object class="NSButton" id="649646560">
++							<reference key="NSNextResponder" ref="683629094"/>
++							<int key="NSvFlags">256</int>
++							<string key="NSFrame">{{106, 58}, {489, 18}}</string>
++							<reference key="NSSuperview" ref="683629094"/>
++							<reference key="NSNextKeyView" ref="689081238"/>
++							<bool key="NSEnabled">YES</bool>
++							<object class="NSButtonCell" key="NSCell" id="112350240">
++								<int key="NSCellFlags">67239424</int>
++								<int key="NSCellFlags2">131072</int>
++								<string key="NSContents">Automatically download and install updates in the future</string>
++								<reference key="NSSupport" ref="26"/>
++								<reference key="NSControlView" ref="649646560"/>
++								<int key="NSButtonFlags">1211912703</int>
++								<int key="NSButtonFlags2">2</int>
++								<object class="NSButtonImageSource" key="NSAlternateImage">
++									<string key="NSImageName">NSSwitch</string>
++								</object>
++								<string key="NSAlternateContents"/>
++								<string key="NSKeyEquivalent"/>
++								<int key="NSPeriodicDelay">200</int>
++								<int key="NSPeriodicInterval">25</int>
++							</object>
++						</object>
++					</object>
++					<string key="NSFrameSize">{616, 152}</string>
++					<reference key="NSSuperview"/>
++					<reference key="NSNextKeyView" ref="684391777"/>
++				</object>
++				<string key="NSScreenRect">{{0, 0}, {1920, 1178}}</string>
++				<string key="NSMinSize">{511, 174}</string>
++				<string key="NSMaxSize">{10000000000000, 10000000000000}</string>
++				<bool key="NSWindowIsRestorable">YES</bool>
++			</object>
++			<object class="NSUserDefaultsController" id="964078912">
++				<bool key="NSSharedInstance">YES</bool>
++			</object>
++		</object>
++		<object class="IBObjectContainer" key="IBDocument.Objects">
++			<object class="NSMutableArray" key="connectionRecords">
++				<bool key="EncodedWithXMLCoder">YES</bool>
++				<object class="IBConnectionRecord">
++					<object class="IBBindingConnection" key="connection">
++						<string key="label">value: applicationIcon</string>
++						<reference key="source" ref="684391777"/>
++						<reference key="destination" ref="1063113299"/>
++						<object class="NSNibBindingConnector" key="connector">
++							<reference key="NSSource" ref="684391777"/>
++							<reference key="NSDestination" ref="1063113299"/>
++							<string key="NSLabel">value: applicationIcon</string>
++							<string key="NSBinding">value</string>
++							<string key="NSKeyPath">applicationIcon</string>
++							<int key="NSNibBindingConnectorVersion">2</int>
++						</object>
++					</object>
++					<int key="connectionID">10</int>
++				</object>
++				<object class="IBConnectionRecord">
++					<object class="IBBindingConnection" key="connection">
++						<string key="label">value: titleText</string>
++						<reference key="source" ref="766768061"/>
++						<reference key="destination" ref="1063113299"/>
++						<object class="NSNibBindingConnector" key="connector">
++							<reference key="NSSource" ref="766768061"/>
++							<reference key="NSDestination" ref="1063113299"/>
++							<string key="NSLabel">value: titleText</string>
++							<string key="NSBinding">value</string>
++							<string key="NSKeyPath">titleText</string>
++							<int key="NSNibBindingConnectorVersion">2</int>
++						</object>
++					</object>
++					<int key="connectionID">11</int>
++				</object>
++				<object class="IBConnectionRecord">
++					<object class="IBBindingConnection" key="connection">
++						<string key="label">value: descriptionText</string>
++						<reference key="source" ref="757978667"/>
++						<reference key="destination" ref="1063113299"/>
++						<object class="NSNibBindingConnector" key="connector">
++							<reference key="NSSource" ref="757978667"/>
++							<reference key="NSDestination" ref="1063113299"/>
++							<string key="NSLabel">value: descriptionText</string>
++							<string key="NSBinding">value</string>
++							<string key="NSKeyPath">descriptionText</string>
++							<int key="NSNibBindingConnectorVersion">2</int>
++						</object>
++					</object>
++					<int key="connectionID">14</int>
++				</object>
++				<object class="IBConnectionRecord">
++					<object class="IBBindingConnection" key="connection">
++						<string key="label">value: values.SUAutomaticallyUpdate</string>
++						<reference key="source" ref="649646560"/>
++						<reference key="destination" ref="964078912"/>
++						<object class="NSNibBindingConnector" key="connector">
++							<reference key="NSSource" ref="649646560"/>
++							<reference key="NSDestination" ref="964078912"/>
++							<string key="NSLabel">value: values.SUAutomaticallyUpdate</string>
++							<string key="NSBinding">value</string>
++							<string key="NSKeyPath">values.SUAutomaticallyUpdate</string>
++							<int key="NSNibBindingConnectorVersion">2</int>
++						</object>
++					</object>
++					<int key="connectionID">19</int>
++				</object>
++				<object class="IBConnectionRecord">
++					<object class="IBOutletConnection" key="connection">
++						<string key="label">window</string>
++						<reference key="source" ref="1063113299"/>
++						<reference key="destination" ref="26497398"/>
++					</object>
++					<int key="connectionID">22</int>
++				</object>
++				<object class="IBConnectionRecord">
++					<object class="IBOutletConnection" key="connection">
++						<string key="label">installButton</string>
++						<reference key="source" ref="1063113299"/>
++						<reference key="destination" ref="265767855"/>
++					</object>
++					<int key="connectionID">45</int>
++				</object>
++				<object class="IBConnectionRecord">
++					<object class="IBOutletConnection" key="connection">
++						<string key="label">laterButton</string>
++						<reference key="source" ref="1063113299"/>
++						<reference key="destination" ref="389094888"/>
++					</object>
++					<int key="connectionID">46</int>
++				</object>
++				<object class="IBConnectionRecord">
++					<object class="IBOutletConnection" key="connection">
++						<string key="label">skipButton</string>
++						<reference key="source" ref="1063113299"/>
++						<reference key="destination" ref="689081238"/>
++					</object>
++					<int key="connectionID">47</int>
++				</object>
++				<object class="IBConnectionRecord">
++					<object class="IBActionConnection" key="connection">
++						<string key="label">installNow:</string>
++						<reference key="source" ref="1063113299"/>
++						<reference key="destination" ref="265767855"/>
++					</object>
++					<int key="connectionID">33</int>
++				</object>
++				<object class="IBConnectionRecord">
++					<object class="IBActionConnection" key="connection">
++						<string key="label">installLater:</string>
++						<reference key="source" ref="1063113299"/>
++						<reference key="destination" ref="389094888"/>
++					</object>
++					<int key="connectionID">34</int>
++				</object>
++				<object class="IBConnectionRecord">
++					<object class="IBActionConnection" key="connection">
++						<string key="label">doNotInstall:</string>
++						<reference key="source" ref="1063113299"/>
++						<reference key="destination" ref="689081238"/>
++					</object>
++					<int key="connectionID">35</int>
++				</object>
++			</object>
++			<object class="IBMutableOrderedSet" key="objectRecords">
++				<object class="NSArray" key="orderedObjects">
++					<bool key="EncodedWithXMLCoder">YES</bool>
++					<object class="IBObjectRecord">
++						<int key="objectID">0</int>
++						<reference key="object" ref="0"/>
++						<reference key="children" ref="703667931"/>
++						<nil key="parent"/>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">-2</int>
++						<reference key="object" ref="1063113299"/>
++						<reference key="parent" ref="0"/>
++						<string key="objectName">File's Owner</string>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">-1</int>
++						<reference key="object" ref="980192062"/>
++						<reference key="parent" ref="0"/>
++						<string key="objectName">First Responder</string>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">-3</int>
++						<reference key="object" ref="600560674"/>
++						<reference key="parent" ref="0"/>
++						<string key="objectName">Application</string>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">5</int>
++						<reference key="object" ref="26497398"/>
++						<object class="NSMutableArray" key="children">
++							<bool key="EncodedWithXMLCoder">YES</bool>
++							<reference ref="683629094"/>
++						</object>
++						<reference key="parent" ref="0"/>
++						<string key="objectName">Window</string>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">6</int>
++						<reference key="object" ref="683629094"/>
++						<object class="NSMutableArray" key="children">
++							<bool key="EncodedWithXMLCoder">YES</bool>
++							<reference ref="684391777"/>
++							<reference ref="766768061"/>
++							<reference ref="757978667"/>
++							<reference ref="649646560"/>
++							<reference ref="265767855"/>
++							<reference ref="389094888"/>
++							<reference ref="689081238"/>
++						</object>
++						<reference key="parent" ref="26497398"/>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">7</int>
++						<reference key="object" ref="684391777"/>
++						<object class="NSMutableArray" key="children">
++							<bool key="EncodedWithXMLCoder">YES</bool>
++							<reference ref="17541256"/>
++						</object>
++						<reference key="parent" ref="683629094"/>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">8</int>
++						<reference key="object" ref="766768061"/>
++						<object class="NSMutableArray" key="children">
++							<bool key="EncodedWithXMLCoder">YES</bool>
++							<reference ref="86959214"/>
++						</object>
++						<reference key="parent" ref="683629094"/>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">9</int>
++						<reference key="object" ref="757978667"/>
++						<object class="NSMutableArray" key="children">
++							<bool key="EncodedWithXMLCoder">YES</bool>
++							<reference ref="7373583"/>
++						</object>
++						<reference key="parent" ref="683629094"/>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">15</int>
++						<reference key="object" ref="265767855"/>
++						<object class="NSMutableArray" key="children">
++							<bool key="EncodedWithXMLCoder">YES</bool>
++							<reference ref="5529083"/>
++						</object>
++						<reference key="parent" ref="683629094"/>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">16</int>
++						<reference key="object" ref="389094888"/>
++						<object class="NSMutableArray" key="children">
++							<bool key="EncodedWithXMLCoder">YES</bool>
++							<reference ref="285814029"/>
++						</object>
++						<reference key="parent" ref="683629094"/>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">17</int>
++						<reference key="object" ref="649646560"/>
++						<object class="NSMutableArray" key="children">
++							<bool key="EncodedWithXMLCoder">YES</bool>
++							<reference ref="112350240"/>
++						</object>
++						<reference key="parent" ref="683629094"/>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">30</int>
++						<reference key="object" ref="689081238"/>
++						<object class="NSMutableArray" key="children">
++							<bool key="EncodedWithXMLCoder">YES</bool>
++							<reference ref="368800735"/>
++						</object>
++						<reference key="parent" ref="683629094"/>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">18</int>
++						<reference key="object" ref="964078912"/>
++						<reference key="parent" ref="0"/>
++						<string key="objectName">Shared Defaults</string>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">38</int>
++						<reference key="object" ref="17541256"/>
++						<reference key="parent" ref="684391777"/>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">39</int>
++						<reference key="object" ref="86959214"/>
++						<reference key="parent" ref="766768061"/>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">40</int>
++						<reference key="object" ref="7373583"/>
++						<reference key="parent" ref="757978667"/>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">41</int>
++						<reference key="object" ref="5529083"/>
++						<reference key="parent" ref="265767855"/>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">42</int>
++						<reference key="object" ref="285814029"/>
++						<reference key="parent" ref="389094888"/>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">43</int>
++						<reference key="object" ref="112350240"/>
++						<reference key="parent" ref="649646560"/>
++					</object>
++					<object class="IBObjectRecord">
++						<int key="objectID">44</int>
++						<reference key="object" ref="368800735"/>
++						<reference key="parent" ref="689081238"/>
++					</object>
++				</object>
++			</object>
++			<object class="NSMutableDictionary" key="flattenedProperties">
++				<bool key="EncodedWithXMLCoder">YES</bool>
++				<object class="NSArray" key="dict.sortedKeys">
++					<bool key="EncodedWithXMLCoder">YES</bool>
++					<string>-1.IBPluginDependency</string>
++					<string>-2.IBPluginDependency</string>
++					<string>-3.IBPluginDependency</string>
++					<string>-3.ImportedFromIB2</string>
++					<string>15.IBPluginDependency</string>
++					<string>15.ImportedFromIB2</string>
++					<string>16.IBPluginDependency</string>
++					<string>16.ImportedFromIB2</string>
++					<string>17.IBPluginDependency</string>
++					<string>17.ImportedFromIB2</string>
++					<string>18.IBPluginDependency</string>
++					<string>18.ImportedFromIB2</string>
++					<string>30.IBPluginDependency</string>
++					<string>30.ImportedFromIB2</string>
++					<string>38.IBPluginDependency</string>
++					<string>39.IBPluginDependency</string>
++					<string>40.IBPluginDependency</string>
++					<string>41.IBPluginDependency</string>
++					<string>42.IBPluginDependency</string>
++					<string>43.IBPluginDependency</string>
++					<string>44.IBPluginDependency</string>
++					<string>5.IBEditorWindowLastContentRect</string>
++					<string>5.IBPluginDependency</string>
++					<string>5.IBWindowTemplateEditedContentRect</string>
++					<string>5.ImportedFromIB2</string>
++					<string>6.IBPluginDependency</string>
++					<string>6.ImportedFromIB2</string>
++					<string>7.IBPluginDependency</string>
++					<string>7.ImportedFromIB2</string>
++					<string>8.IBPluginDependency</string>
++					<string>8.ImportedFromIB2</string>
++					<string>9.IBPluginDependency</string>
++					<string>9.ImportedFromIB2</string>
++				</object>
++				<object class="NSMutableArray" key="dict.values">
++					<bool key="EncodedWithXMLCoder">YES</bool>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<boolean value="YES"/>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<boolean value="YES"/>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<boolean value="YES"/>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<boolean value="YES"/>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<boolean value="YES"/>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<boolean value="YES"/>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<string>{{312, 947}, {743, 152}}</string>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<string>{{312, 947}, {743, 152}}</string>
++					<boolean value="YES"/>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<boolean value="YES"/>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<boolean value="YES"/>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<boolean value="YES"/>
++					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
++					<boolean value="YES"/>
++				</object>
++			</object>
++			<object class="NSMutableDictionary" key="unlocalizedProperties">
++				<bool key="EncodedWithXMLCoder">YES</bool>
++				<reference key="dict.sortedKeys" ref="0"/>
++				<reference key="dict.values" ref="0"/>
++			</object>
++			<nil key="activeLocalization"/>
++			<object class="NSMutableDictionary" key="localizations">
++				<bool key="EncodedWithXMLCoder">YES</bool>
++				<reference key="dict.sortedKeys" ref="0"/>
++				<reference key="dict.values" ref="0"/>
++			</object>
++			<nil key="sourceID"/>
++			<int key="maxID">47</int>
++		</object>
++		<object class="IBClassDescriber" key="IBDocument.Classes"/>
++		<int key="IBDocument.localizationMode">0</int>
++		<string key="IBDocument.TargetRuntimeIdentifier">IBCocoaFramework</string>
++		<object class="NSMutableDictionary" key="IBDocument.PluginDeclaredDependencies">
++			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin.macosx</string>
++			<integer value="1060" key="NS.object.0"/>
++		</object>
++		<object class="NSMutableDictionary" key="IBDocument.PluginDeclaredDevelopmentDependencies">
++			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin.InterfaceBuilder3</string>
++			<integer value="3100" key="NS.object.0"/>
++		</object>
++		<bool key="IBDocument.PluginDeclaredDependenciesTrackSystemTargetVersion">YES</bool>
++		<int key="IBDocument.defaultPropertyAccessControl">3</int>
++		<object class="NSMutableDictionary" key="IBDocument.LastKnownImageSizes">
++			<string key="NS.key.0">NSApplicationIcon</string>
++			<string key="NS.object.0">{128, 128}</string>
++		</object>
++	</data>
++</archive>
+diff --git a/Sparkle/SULegacyXIBCompatibility.h b/Sparkle/SULegacyXIBCompatibility.h
+index 00000000..00000000 100644
+--- a/Sparkle/SULegacyXIBCompatibility.h
++++ b/Sparkle/SULegacyXIBCompatibility.h
+@@ -1,17 +1,74 @@
+-//
+-//  SULegacyXIBCompatibility.h
+-//  Sparkle
+-//
+-//  Runtime properties that Xcode 3 cannot retain in legacy XIB archives.
+-//
+-
+-
+-#import <AppKit/AppKit.h>
+-
+-NS_INLINE void SUConfigureLegacyPermissionPromptTable(NSTableView *tableView)
+-{
+-    NSScrollView *scrollView = [tableView enclosingScrollView];
+-    [[scrollView horizontalScroller] setWantsLayer:YES];
+-    [[scrollView verticalScroller] setWantsLayer:YES];
+-}
+-
++//
++//  SULegacyXIBCompatibility.h
++//  Sparkle
++//
++//  Runtime properties that Xcode 3 cannot retain in legacy XIB archives.
++//
++
++
++#import <AppKit/AppKit.h>
++
++NS_INLINE void SUConfigureLegacyPermissionPromptTable(NSTableView *tableView)
++{
++    NSScrollView *scrollView = [tableView enclosingScrollView];
++    [[scrollView horizontalScroller] setWantsLayer:YES];
++    [[scrollView verticalScroller] setWantsLayer:YES];
++}
++
++
++NS_INLINE NSString *SULegacyObservedKeyPath(id object, NSString *binding)
++{
++    return [[object infoForBinding:binding] objectForKey:NSObservedKeyPathKey];
++}
++
++NS_INLINE NSView *SULegacyViewBoundToKeyPath(NSView *contentView,
++    NSString *keyPath)
++{
++    for (NSView *view in [contentView subviews]) {
++        if ([[SULegacyObservedKeyPath(view, NSValueBinding) description]
++            isEqualToString:keyPath]) {
++            return view;
++        }
++    }
++    return nil;
++}
++
++NS_INLINE void SUConfigureLegacyAutomaticAlert(NSWindow *window,
++    NSButton *installButton, NSButton *laterButton, NSButton *skipButton)
++{
++    NSView *contentView = [window contentView];
++    NSView *iconView = SULegacyViewBoundToKeyPath(contentView,
++        @"applicationIcon");
++    NSView *titleView = SULegacyViewBoundToKeyPath(contentView, @"titleText");
++    NSView *descriptionView = SULegacyViewBoundToKeyPath(contentView,
++        @"descriptionText");
++    NSView *automaticCheckBox = SULegacyViewBoundToKeyPath(contentView,
++        @"values.SUAutomaticallyUpdate");
++
++    CGFloat installWidth = MAX(156.0, ceil([[installButton cell] cellSize].width));
++    CGFloat laterWidth = MAX(118.0, ceil([[laterButton cell] cellSize].width));
++    CGFloat skipWidth = MAX(107.0, ceil([[skipButton cell] cellSize].width));
++    CGFloat contentWidth = MAX(616.0,
++        14.0 + installWidth + laterWidth + 100.0 + 100.0 + skipWidth);
++    [window setContentSize:NSMakeSize(contentWidth, 152.0)];
++    [window setFrameAutosaveName:@"SUAutomaticUpdateAlert"];
++    [window setHidesOnDeactivate:NO];
++
++    // AppKit 10.7 publishes FullScreenAuxiliary as collection bit 8.
++    if ((NSInteger)NSAppKitVersionNumber > 1038) {
++        [window setCollectionBehavior:[window collectionBehavior] | (1UL << 8)];
++    }
++
++    [iconView setFrame:NSMakeRect(23.0, 73.0, 64.0, 64.0)];
++    [titleView setFrame:NSMakeRect(105.0, 121.0,
++        contentWidth - 119.0, 16.0)];
++    [descriptionView setFrame:NSMakeRect(105.0, 99.0,
++        contentWidth - 123.0, 14.0)];
++    [automaticCheckBox setFrame:NSMakeRect(106.0, 58.0,
++        contentWidth - 127.0, 18.0)];
++    [installButton setFrame:NSMakeRect(contentWidth - 14.0 - installWidth,
++        12.0, installWidth, 32.0)];
++    [laterButton setFrame:NSMakeRect(NSMinX([installButton frame]) - laterWidth,
++        12.0, laterWidth, 32.0)];
++    [skipButton setFrame:NSMakeRect(100.0, 12.0, skipWidth, 32.0)];
++}
+diff --git a/Sparkle/SUAutomaticUpdateAlert.m b/Sparkle/SUAutomaticUpdateAlert.m
+index 999c7e0e..00000000 100644
+--- a/Sparkle/SUAutomaticUpdateAlert.m
++++ b/Sparkle/SUAutomaticUpdateAlert.m
+@@ -1,130 +1,134 @@
+-//
+-//  SUAutomaticUpdateAlert.m
+-//  Sparkle
+-//
+-//  Created by Andy Matuschak on 3/18/06.
+-//  Copyright 2006 Andy Matuschak. All rights reserved.
+-//
+-
+-#import "SUAutomaticUpdateAlert.h"
+-#import "SULocalizations.h"
+-#import "SUAppcastItem.h"
+-#import "SUApplicationInfo.h"
+-#import "SUHost.h"
+-#import "SUTouchBarForwardDeclarations.h"
+-#import "SUTouchBarButtonGroup.h"
+-
+-static NSString *const SUAutomaticUpdateAlertTouchBarIndentifier = @"" SPARKLE_BUNDLE_IDENTIFIER ".SUAutomaticUpdateAlert";
+-
+-@interface SUAutomaticUpdateAlert () <NSTouchBarDelegate>
+-@property (strong) void(^completionBlock)(SUAutomaticInstallationChoice);
+-@property (strong) SUAppcastItem *updateItem;
+-@property (strong) SUHost *host;
+-
+-@property (weak) IBOutlet NSButton *skipButton;
+-@property (weak) IBOutlet NSButton *laterButton;
+-@property (weak) IBOutlet NSButton *installButton;
+-@end
+-
+-@implementation SUAutomaticUpdateAlert
+-@synthesize host;
+-@synthesize updateItem;
+-@synthesize completionBlock;
+-@synthesize skipButton;
+-@synthesize laterButton;
+-@synthesize installButton;
+-
+-- (instancetype)initWithAppcastItem:(SUAppcastItem *)item host:(SUHost *)aHost completionBlock:(void (^)(SUAutomaticInstallationChoice))block
+-{
+-    self = [super initWithWindowNibName:@"SUAutomaticUpdateAlert"];
+-    if (self) {
+-        self.updateItem = item;
+-        self.completionBlock = block;
+-        self.host = aHost;
+-        [self setShouldCascadeWindows:NO];
+-
+-        [[self window] center];
+-    }
+-    return self;
+-}
+-
+-- (NSString *__nonnull)description { return [NSString stringWithFormat:@"%@ <%@>", [self class], [self.host bundlePath]]; }
+-
+-- (IBAction)installNow:(id)__unused sender
+-{
+-    [self close];
+-    self.completionBlock(SUInstallNowChoice);
+-    self.completionBlock = nil;
+-}
+-
+-- (IBAction)installLater:(id)__unused sender
+-{
+-    [self close];
+-    self.completionBlock(SUInstallLaterChoice);
+-    self.completionBlock = nil;
+-}
+-
+-- (IBAction)doNotInstall:(id)__unused sender
+-{
+-    [self close];
+-    self.completionBlock(SUDoNotInstallChoice);
+-    self.completionBlock = nil;
+-}
+-
+-- (void)windowDidLoad
+-{
+-    if ([self.updateItem isCriticalUpdate]) {
+-        self.skipButton.enabled = NO;
+-    }
+-}
+-
+-
+-- (NSImage *__nonnull)applicationIcon
+-{
+-    return [SUApplicationInfo bestIconForHost:self.host];
+-}
+-
+-- (NSString *__nonnull)titleText
+-{
+-    if ([self.updateItem isCriticalUpdate])
+-    {
+-        return [NSString stringWithFormat:SULocalizedString(@"An important update to %@ is ready to install", nil), [self.host name]];
+-    }
+-    else
+-    {
+-        return [NSString stringWithFormat:SULocalizedString(@"A new version of %@ is ready to install!", nil), [self.host name]];
+-    }
+-}
+-
+-- (NSString *)descriptionText
+-{
+-    if ([self.updateItem isCriticalUpdate])
+-    {
+-        return [NSString stringWithFormat:SULocalizedString(@"%1$@ %2$@ has been downloaded and is ready to use! This is an important update; would you like to install it and relaunch %1$@ now?", nil), [self.host name], [self.updateItem displayVersionString]];
+-    }
+-    else
+-    {
+-        return [NSString stringWithFormat:SULocalizedString(@"%1$@ %2$@ has been downloaded and is ready to use! Would you like to install it and relaunch %1$@ now?", nil), [self.host name], [self.updateItem displayVersionString]];
+-    }
+-}
+-
+-- (NSTouchBar *)makeTouchBar
+-{
+-    NSTouchBar *touchBar = [(NSTouchBar *)[NSClassFromString(@"NSTouchBar") alloc] init];
+-    touchBar.defaultItemIdentifiers = @[SUAutomaticUpdateAlertTouchBarIndentifier,];
+-    touchBar.principalItemIdentifier = SUAutomaticUpdateAlertTouchBarIndentifier;
+-    touchBar.delegate = self;
+-    return touchBar;
+-}
+-
+-- (NSTouchBarItem *)touchBar:(NSTouchBar * __unused)touchBar makeItemForIdentifier:(NSTouchBarItemIdentifier)identifier API_AVAILABLE(macos(10.12.2))
+-{
+-    if ([identifier isEqualToString:SUAutomaticUpdateAlertTouchBarIndentifier]) {
+-        NSCustomTouchBarItem* item = [(NSCustomTouchBarItem *)[NSClassFromString(@"NSCustomTouchBarItem") alloc] initWithIdentifier:identifier];
+-        item.viewController = [[SUTouchBarButtonGroup alloc] initByReferencingButtons:@[self.installButton, self.laterButton, self.skipButton]];
+-        return item;
+-    }
+-    return nil;
+-}
+-
+-@end
++//
++//  SUAutomaticUpdateAlert.m
++//  Sparkle
++//
++//  Created by Andy Matuschak on 3/18/06.
++//  Copyright 2006 Andy Matuschak. All rights reserved.
++//
++
++#import "SUAutomaticUpdateAlert.h"
++#import "SULegacyXIBCompatibility.h"
++#import "SULocalizations.h"
++#import "SUAppcastItem.h"
++#import "SUApplicationInfo.h"
++#import "SUHost.h"
++#import "SUTouchBarForwardDeclarations.h"
++#import "SUTouchBarButtonGroup.h"
++
++static NSString *const SUAutomaticUpdateAlertTouchBarIndentifier = @"" SPARKLE_BUNDLE_IDENTIFIER ".SUAutomaticUpdateAlert";
++
++@interface SUAutomaticUpdateAlert () <NSTouchBarDelegate>
++@property (strong) void(^completionBlock)(SUAutomaticInstallationChoice);
++@property (strong) SUAppcastItem *updateItem;
++@property (strong) SUHost *host;
++
++@property (weak) IBOutlet NSButton *skipButton;
++@property (weak) IBOutlet NSButton *laterButton;
++@property (weak) IBOutlet NSButton *installButton;
++@end
++
++@implementation SUAutomaticUpdateAlert
++@synthesize host;
++@synthesize updateItem;
++@synthesize completionBlock;
++@synthesize skipButton;
++@synthesize laterButton;
++@synthesize installButton;
++
++- (instancetype)initWithAppcastItem:(SUAppcastItem *)item host:(SUHost *)aHost completionBlock:(void (^)(SUAutomaticInstallationChoice))block
++{
++    self = [super initWithWindowNibName:@"SUAutomaticUpdateAlert"];
++    if (self) {
++        self.updateItem = item;
++        self.completionBlock = block;
++        self.host = aHost;
++        [self setShouldCascadeWindows:NO];
++
++        [[self window] center];
++    }
++    return self;
++}
++
++- (NSString *__nonnull)description { return [NSString stringWithFormat:@"%@ <%@>", [self class], [self.host bundlePath]]; }
++
++- (IBAction)installNow:(id)__unused sender
++{
++    [self close];
++    self.completionBlock(SUInstallNowChoice);
++    self.completionBlock = nil;
++}
++
++- (IBAction)installLater:(id)__unused sender
++{
++    [self close];
++    self.completionBlock(SUInstallLaterChoice);
++    self.completionBlock = nil;
++}
++
++- (IBAction)doNotInstall:(id)__unused sender
++{
++    [self close];
++    self.completionBlock(SUDoNotInstallChoice);
++    self.completionBlock = nil;
++}
++
++- (void)windowDidLoad
++{
++    SUConfigureLegacyAutomaticAlert(self.window, self.installButton,
++        self.laterButton, self.skipButton);
++
++    if ([self.updateItem isCriticalUpdate]) {
++        self.skipButton.enabled = NO;
++    }
++}
++
++
++- (NSImage *__nonnull)applicationIcon
++{
++    return [SUApplicationInfo bestIconForHost:self.host];
++}
++
++- (NSString *__nonnull)titleText
++{
++    if ([self.updateItem isCriticalUpdate])
++    {
++        return [NSString stringWithFormat:SULocalizedString(@"An important update to %@ is ready to install", nil), [self.host name]];
++    }
++    else
++    {
++        return [NSString stringWithFormat:SULocalizedString(@"A new version of %@ is ready to install!", nil), [self.host name]];
++    }
++}
++
++- (NSString *)descriptionText
++{
++    if ([self.updateItem isCriticalUpdate])
++    {
++        return [NSString stringWithFormat:SULocalizedString(@"%1$@ %2$@ has been downloaded and is ready to use! This is an important update; would you like to install it and relaunch %1$@ now?", nil), [self.host name], [self.updateItem displayVersionString]];
++    }
++    else
++    {
++        return [NSString stringWithFormat:SULocalizedString(@"%1$@ %2$@ has been downloaded and is ready to use! Would you like to install it and relaunch %1$@ now?", nil), [self.host name], [self.updateItem displayVersionString]];
++    }
++}
++
++- (NSTouchBar *)makeTouchBar
++{
++    NSTouchBar *touchBar = [(NSTouchBar *)[NSClassFromString(@"NSTouchBar") alloc] init];
++    touchBar.defaultItemIdentifiers = @[SUAutomaticUpdateAlertTouchBarIndentifier,];
++    touchBar.principalItemIdentifier = SUAutomaticUpdateAlertTouchBarIndentifier;
++    touchBar.delegate = self;
++    return touchBar;
++}
++
++- (NSTouchBarItem *)touchBar:(NSTouchBar * __unused)touchBar makeItemForIdentifier:(NSTouchBarItemIdentifier)identifier API_AVAILABLE(macos(10.12.2))
++{
++    if ([identifier isEqualToString:SUAutomaticUpdateAlertTouchBarIndentifier]) {
++        NSCustomTouchBarItem* item = [(NSCustomTouchBarItem *)[NSClassFromString(@"NSCustomTouchBarItem") alloc] initWithIdentifier:identifier];
++        item.viewController = [[SUTouchBarButtonGroup alloc] initByReferencingButtons:@[self.installButton, self.laterButton, self.skipButton]];
++        return item;
++    }
++    return nil;
++}
++
++@end

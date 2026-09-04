@@ -1,0 +1,53 @@
+# Snow Leopard compatibility patch 0036
+#
+# Incompatibility: 1.27.3 sends the 10.7 networkServiceType setter while
+# beginning an automatic archive download. Snow raises an unrecognised-selector
+# exception after finding the update and before downloading its archive.
+# Behaviour preserved: background downloads retain their public OS scheduling
+# hint on 10.7 and later. Snow performs the same HTTPS download without a hint
+# its Foundation cannot represent.
+# History: 392cb657 introduced the hint for non-UI networking. Its parent uses
+# the same downloader without the hint. 5cff3cd5 retained it as background QoS
+# property. Neither change treated the hint as transport or security policy.
+# Public API evidence: NSURLRequestNetworkServiceType is public from 10.7.
+# Safety: only the unavailable scheduling hint is skipped. Request URL, headers,
+# HTTPS handling, redirects, verification, cancellation, and errors are intact.
+diff --git a/Sparkle/SULegacyRequestServiceType.inc b/Sparkle/SULegacyRequestServiceType.inc
+new file mode 100644
+index 00000000..d5911ab9
+--- /dev/null
++++ b/Sparkle/SULegacyRequestServiceType.inc
+@@ -0,0 +1,10 @@
++#import "SPUURLRequest.h"
++#import "SUOperatingSystem.h"
++
++static void SUSetBackgroundNetworkServiceType(
++    NSMutableURLRequest *request, BOOL background)
++{
++    if (background && SUAVAILABLE(10, 7)) {
++        request.networkServiceType = NSURLNetworkServiceTypeBackground;
++    }
++}
+diff --git a/Sparkle/SUBasicUpdateDriver.m b/Sparkle/SUBasicUpdateDriver.m
+index 1978e30f..36a235da 100644
+--- a/Sparkle/SUBasicUpdateDriver.m
++++ b/Sparkle/SUBasicUpdateDriver.m
+@@ -32,6 +32,7 @@
+ #import "SPUDownloaderDeprecated.h"
+ #import "SPUDownloaderSession.h"
+ #import "SPULocalCacheDirectory.h"
++#include "SULegacyRequestServiceType.inc"
+ 
+ @interface SUBasicUpdateDriver ()
+ 
+@@ -352,9 +353,7 @@ - (void)downloadUpdate
+     id<SUUpdaterPrivate> updater = self.updater;
+ 
+     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[self.updateItem fileURL]];
+-    if (self.downloadsUpdatesInBackground) {
+-        request.networkServiceType = NSURLNetworkServiceTypeBackground;
+-    }
++    SUSetBackgroundNetworkServiceType(request, self.downloadsUpdatesInBackground);
+ 
+     NSString *userAgentString = [updater userAgentString];
+     if (userAgentString) {

@@ -410,13 +410,17 @@ function(_tr_bundle_delete_external_rpaths ITEM_FULL_PATH)
             set(ITEM_NEXT_RPATH OFF)
             set(ITEM_RPATH "${CMAKE_MATCH_1}")
             if(ITEM_RPATH MATCHES "^/" AND NOT ITEM_RPATH MATCHES "^(/System/|/usr/lib/)")
-                execute_process(COMMAND install_name_tool -delete_rpath "${ITEM_RPATH}" "${ITEM_FULL_PATH}")
+                execute_process(COMMAND "${TR_INSTALL_NAME_TOOL_EXECUTABLE}"
+                    -delete_rpath "${ITEM_RPATH}" "${ITEM_FULL_PATH}")
             endif()
         endif()
     endforeach()
 endfunction()
 
 function(tr_fixup_bundle_item BUNDLE_DIR BUNDLE_ITEMS DEP_DIRS)
+    if(NOT TR_INSTALL_NAME_TOOL_EXECUTABLE)
+        set(TR_INSTALL_NAME_TOOL_EXECUTABLE install_name_tool)
+    endif()
     while(BUNDLE_ITEMS)
         list(GET BUNDLE_ITEMS 0 ITEM)
         list(REMOVE_AT BUNDLE_ITEMS 0)
@@ -439,6 +443,11 @@ function(tr_fixup_bundle_item BUNDLE_DIR BUNDLE_ITEMS DEP_DIRS)
             "${ITEM_RPATHS}")
 
         foreach(DEP IN LISTS ITEM_DEPS)
+            list(FIND TR_FIXUP_BUNDLE_IGNORED_DEPENDENCIES
+                "${DEP}" IGNORED_DEPENDENCY_INDEX)
+            if(NOT IGNORED_DEPENDENCY_INDEX EQUAL -1)
+                continue()
+            endif()
             gp_resolve_item(
                 "${ITEM_FULL_BUNDLE_PATH}"
                 "${DEP}"
@@ -466,11 +475,14 @@ function(tr_fixup_bundle_item BUNDLE_DIR BUNDLE_ITEMS DEP_DIRS)
                 message(FATAL_ERROR "Don't know how to fixup '${DEP_FULL_PATH}'")
             endif()
 
-            execute_process(COMMAND install_name_tool -change "${DEP}" "${ITEM_DEP_PREFIX}/${DEP_NAME}" "${ITEM_FULL_BUNDLE_PATH}")
+            execute_process(COMMAND "${TR_INSTALL_NAME_TOOL_EXECUTABLE}"
+                -change "${DEP}" "${ITEM_DEP_PREFIX}/${DEP_NAME}"
+                "${ITEM_FULL_BUNDLE_PATH}")
 
             set(DEP_FULL_BUNDLE_PATH "${BUNDLE_DIR}/${DEP_BUNDLE_PATH}")
             execute_process(COMMAND chmod u+w "${DEP_FULL_BUNDLE_PATH}")
-            execute_process(COMMAND install_name_tool -id "@loader_path/${DEP_NAME}" "${DEP_FULL_BUNDLE_PATH}")
+            execute_process(COMMAND "${TR_INSTALL_NAME_TOOL_EXECUTABLE}"
+                -id "@loader_path/${DEP_NAME}" "${DEP_FULL_BUNDLE_PATH}")
 
             list(REMOVE_ITEM BUNDLE_ITEMS "${DEP_BUNDLE_PATH}")
             list(APPEND BUNDLE_ITEMS "${DEP_BUNDLE_PATH}")

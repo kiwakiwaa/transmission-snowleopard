@@ -1,0 +1,20 @@
+# Snow Leopard compatibility patch 0034
+#
+# Incompatibility: Snow ld64 asserts while trying to merge Clang 20's larger
+# Objective-C category record for SUAppcastExtensions into NSXMLElement.
+# Behaviour preserved: the category and its methods remain in the framework and
+# are registered by the Objective-C runtime instead of folded into the class.
+# History: 6e648f14 added this category for delta enclosure attribute parsing
+# while Sparkle supported Snow. It remains necessary to the 1.27.3 appcast path.
+# Public API evidence: Snow ld64 documents -no_objc_category_merging as disabling
+# only this link-time optimisation. Runtime category dispatch is unchanged.
+# Safety: no category, selector, or parser code is removed, and dead stripping,
+# install names, ARC closure, and all other link settings remain.
+diff --git a/Configurations/ConfigFramework.xcconfig b/Configurations/ConfigFramework.xcconfig
+--- a/Configurations/ConfigFramework.xcconfig
++++ b/Configurations/ConfigFramework.xcconfig
+@@ -9,3 +9,3 @@
+ GCC_PREPROCESSOR_DEFINITIONS = $(inherited) BUILDING_SPARKLE=1
+-OTHER_LDFLAGS = -Wl,-U,_NSURLQuarantinePropertiesKey $(TR_ARC_SUPPORT_DYLIB)
++OTHER_LDFLAGS = -Wl,-no_objc_category_merging -Wl,-U,_NSURLQuarantinePropertiesKey $(TR_ARC_SUPPORT_DYLIB)
+ SKIP_INSTALL = YES

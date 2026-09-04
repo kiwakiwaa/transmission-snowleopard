@@ -1,0 +1,17 @@
+# Snow Leopard compatibility patch 0012
+#
+# Incompatibility: the 10.6 Foundation headers do not declare NSArray as a
+# lightweight-generic class, so Autoupdate's typed process-argument array fails.
+# Behaviour preserved: argument count, indexing, parsing, and launch policy are
+# unchanged because the local type has no runtime effect.
+# History: 9ae41fe4 added the generic only to silence an Xcode 10 diagnostic.
+# Its parent uses plain NSArray with the same NSProcessInfo result and operations.
+# Public API evidence: -[NSProcessInfo arguments] returns NSArray on the 10.6 SDK.
+# Safety: this restores the proven declaration only and changes no argument data.
+diff --git a/Sparkle/Autoupdate/Autoupdate.m b/Sparkle/Autoupdate/Autoupdate.m
+index b2b131b8..651d9dc1 100644
+--- a/Sparkle/Autoupdate/Autoupdate.m
++++ b/Sparkle/Autoupdate/Autoupdate.m
+@@ -237 +237 @@
+-        NSArray<NSString *> *args = [[NSProcessInfo processInfo] arguments];
++        NSArray *args = [[NSProcessInfo processInfo] arguments];

@@ -1,0 +1,54 @@
+# Snow Leopard compatibility patch 0025
+#
+# Incompatibility: the 10.6 Foundation SDK has no lightweight collection
+# generics and does not declare NSArray's firstObject property.
+# Behaviour preserved: every archive suffix maps to the same absolute system
+# extraction tool and arguments. The known non-empty command array still
+# supplies its first element.
+# History: 60d4f057 introduced the current protocol-based implementation and
+# its typed collections. dc0aca1d is Sparkle precedent for replacing
+# firstObject when compiling against older SDKs. No extraction logic changed.
+# Public API evidence: NSArray, NSDictionary, objectAtIndex:, objectForKey:,
+# and subarrayWithRange: are public in Foundation 10.6.
+# Safety: archive validation policy, fixed tool paths, argument construction,
+# byte streaming, completion, and error handling remain unchanged.
+diff --git a/Sparkle/SUPipedUnarchiver.m b/Sparkle/SUPipedUnarchiver.m
+index 071825f..358c694 100644
+--- a/Sparkle/SUPipedUnarchiver.m
++++ b/Sparkle/SUPipedUnarchiver.m
+@@ -26,13 +26,13 @@
+ @synthesize archivePath = _archivePath;
+ @synthesize extractionDirectory = _extractionDirectory;
+ 
+-+ (nullable NSArray <NSString *> *)commandAndArgumentsConformingToTypeOfPath:(NSString *)path
+++ (nullable NSArray *)commandAndArgumentsConformingToTypeOfPath:(NSString *)path
+ {
+-    NSArray <NSString *> *extractTGZ = @[@"/usr/bin/tar", @"-zxC"];
+-    NSArray <NSString *> *extractTBZ = @[@"/usr/bin/tar", @"-jxC"];
+-    NSArray <NSString *> *extractTXZ = extractTGZ;
++    NSArray *extractTGZ = @[@"/usr/bin/tar", @"-zxC"];
++    NSArray *extractTBZ = @[@"/usr/bin/tar", @"-jxC"];
++    NSArray *extractTXZ = extractTGZ;
+     
+-    NSDictionary <NSString *, NSArray<NSString *> *> *extractCommandDictionary =
++    NSDictionary *extractCommandDictionary =
+     @{
+       @".zip" : @[@"/usr/bin/ditto", @"-x",@"-k",@"-"],
+       @".tar" : @[@"/usr/bin/tar", @"-xC"],
+@@ -77,13 +77,13 @@
+ 
+ - (void)unarchiveWithCompletionBlock:(void (^)(NSError * _Nullable))completionBlock progressBlock:(void (^ _Nullable)(double))progressBlock
+ {
+-    NSArray <NSString *> *commandAndArguments = [[self class] commandAndArgumentsConformingToTypeOfPath:self.archivePath];
++    NSArray *commandAndArguments = [[self class] commandAndArgumentsConformingToTypeOfPath:self.archivePath];
+     assert(commandAndArguments != nil);
+     
+-    NSString *command = commandAndArguments.firstObject;
++    NSString *command = [commandAndArguments objectAtIndex:0];
+     assert(command != nil);
+     
+-    NSArray <NSString *> *arguments = [commandAndArguments subarrayWithRange:NSMakeRange(1, commandAndArguments.count - 1)];
++    NSArray *arguments = [commandAndArguments subarrayWithRange:NSMakeRange(1, commandAndArguments.count - 1)];
+     
+     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+         SUUnarchiverNotifier *notifier = [[SUUnarchiverNotifier alloc] initWithCompletionBlock:completionBlock progressBlock:progressBlock];

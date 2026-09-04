@@ -1,0 +1,140 @@
+# Snow Leopard compatibility patch 0023
+#
+# Incompatibility: the 10.6 SDK lacks the external-entity prohibition added
+# after Sparkle's XML local-file inclusion fix, and rejects HTTP dictionary
+# generics added for compiler diagnostics.
+# Behaviour preserved: appcasts still reject all document types and entity
+# declarations before parsing. Newer SDKs additionally retain Foundation's
+# NSXMLNodeLoadExternalEntitiesNever option. HTTP header contents are unchanged.
+# History: a6e9c8af replaced same-origin loading after a local-file inclusion
+# vulnerability. That earlier implementation is rejected. 282f0ae5 added the
+# exported generics conditionally, and 8ffb4956 added the local generic.
+# Public API evidence: the compatibility scanner uses only 10.6 NSData and
+# NSString decoding and range APIs across XML's common Unicode encodings.
+# Safety: declarations inside comments and CDATA remain accepted. Active DTDs
+# are refused before Snow's parser can resolve any external resource.
+diff --git a/Sparkle/SUAppcast.m b/Sparkle/SUAppcast.m
+index 791034b..d437276 100644
+--- a/Sparkle/SUAppcast.m
++++ b/Sparkle/SUAppcast.m
+@@ -23,2 +23,69 @@
+ 
++static BOOL SUXMLStringContainsDocumentType(NSString *xml)
++{
++    NSUInteger location = 0;
++    while (location < [xml length]) {
++        NSRange marker = [xml rangeOfString:@"<!" options:0
++            range:NSMakeRange(location, [xml length] - location)];
++        if (marker.location == NSNotFound) {
++            return NO;
++        }
++        NSRange remainder = NSMakeRange(marker.location,
++            [xml length] - marker.location);
++        if ([xml rangeOfString:@"<!--" options:NSAnchoredSearch
++                range:remainder].location != NSNotFound) {
++            NSRange close = [xml rangeOfString:@"-->" options:0
++                range:remainder];
++            if (close.location == NSNotFound) {
++                return NO;
++            }
++            location = NSMaxRange(close);
++            continue;
++        }
++        if ([xml rangeOfString:@"<![CDATA[" options:NSAnchoredSearch
++                range:remainder].location != NSNotFound) {
++            NSRange close = [xml rangeOfString:@"]]>" options:0
++                range:remainder];
++            if (close.location == NSNotFound) {
++                return NO;
++            }
++            location = NSMaxRange(close);
++            continue;
++        }
++        NSStringCompareOptions options = NSAnchoredSearch |
++            NSCaseInsensitiveSearch;
++        if ([xml rangeOfString:@"<!DOCTYPE" options:options
++                range:remainder].location != NSNotFound ||
++            [xml rangeOfString:@"<!ENTITY" options:options
++                range:remainder].location != NSNotFound) {
++            return YES;
++        }
++        location = NSMaxRange(marker);
++    }
++    return NO;
++}
++
++static BOOL SUXMLDataContainsDocumentType(NSData *data)
++{
++    const NSStringEncoding encodings[] = {
++        NSUTF8StringEncoding,
++        NSUnicodeStringEncoding,
++        NSUTF16BigEndianStringEncoding,
++        NSUTF16LittleEndianStringEncoding,
++        NSUTF32StringEncoding,
++        NSUTF32BigEndianStringEncoding,
++        NSUTF32LittleEndianStringEncoding,
++        NSISOLatin1StringEncoding
++    };
++    for (NSUInteger index = 0;
++         index < sizeof(encodings) / sizeof(encodings[0]); index++) {
++        NSString *xml = [[NSString alloc] initWithData:data
++            encoding:encodings[index]];
++        if (xml != nil && SUXMLStringContainsDocumentType(xml)) {
++            return YES;
++        }
++    }
++    return NO;
++}
++
+ @interface NSXMLElement (SUAppcastExtensions)
+@@ -198,3 +265,16 @@ -(NSArray *)parseAppcastItemsFromXMLData:(NSData *)appcastData error:(NSError *_
+ 
+-    NSUInteger options = NSXMLNodeLoadExternalEntitiesNever; // Prevent inclusion from file://
++    if (SUXMLDataContainsDocumentType(appcastData)) {
++        if (errorp != NULL) {
++            *errorp = [NSError errorWithDomain:NSXMLParserErrorDomain code:1
++                userInfo:@{NSLocalizedDescriptionKey:
++                    @"Appcast document types and entity declarations are not allowed."}];
++        }
++        return nil;
++    }
++
++#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
++    NSUInteger options = NSXMLNodeLoadExternalEntitiesNever;
++#else
++    NSUInteger options = NSXMLNodeOptionsNone;
++#endif
+     NSXMLDocument *document = [[NSXMLDocument alloc] initWithData:appcastData options:options error:errorp];
+diff --git a/Sparkle/SUAppcast.h b/Sparkle/SUAppcast.h
+index d807b93..01c0a29 100644
+--- a/Sparkle/SUAppcast.h
++++ b/Sparkle/SUAppcast.h
+@@ -20,3 +20,7 @@ SU_EXPORT @interface SUAppcast : NSObject
+ @property (copy, nullable) NSString *userAgentString;
++#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
+ @property (copy, nullable) NSDictionary<NSString *, NSString *> *httpHeaders;
++#else
++@property (copy, nullable) NSDictionary *httpHeaders;
++#endif
+ 
+diff --git a/Sparkle/SUUpdater.h b/Sparkle/SUUpdater.h
+index 45cd984..bccb59e 100644
+--- a/Sparkle/SUUpdater.h
++++ b/Sparkle/SUUpdater.h
+@@ -162,3 +162,7 @@ SU_EXPORT @interface SUUpdater : NSObject
+  */
++#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
+ @property (copy) NSDictionary<NSString *, NSString *> *httpHeaders;
++#else
++@property (copy) NSDictionary *httpHeaders;
++#endif
+ 
+diff --git a/Sparkle/SUBasicUpdateDriver.m b/Sparkle/SUBasicUpdateDriver.m
+index 1978e30..8240af4 100644
+--- a/Sparkle/SUBasicUpdateDriver.m
++++ b/Sparkle/SUBasicUpdateDriver.m
+@@ -363,3 +363,3 @@ - (void)downloadUpdate
+ 
+-    NSDictionary<NSString *, NSString *> *httpHeaders = [updater httpHeaders];
++    NSDictionary *httpHeaders = [updater httpHeaders];
+     if (httpHeaders) {

@@ -1,0 +1,25 @@
+# Snow Leopard compatibility patch 0026
+#
+# Incompatibility: Clang cannot lower Objective-C dictionary subscript writes
+# against the 10.6 Foundation SDK.
+# Behaviour preserved: a failed flat-package copy still attaches the original
+# copy error under NSUnderlyingErrorKey before notifying the update driver.
+# History: bbe887e1 added separate extraction directories and this underlying
+# error preservation. The entire recovery improvement is retained.
+# Public API evidence: NSMutableDictionary setObject:forKey: is public in the
+# 10.6 Foundation SDK and is the method implemented by subscript assignment.
+# Safety: only equivalent setter syntax changes. Copy, progress, completion,
+# and error construction paths remain unchanged.
+diff --git a/Sparkle/SUFlatPackageUnarchiver.m b/Sparkle/SUFlatPackageUnarchiver.m
+index 989e528..5a8255d 100644
+--- a/Sparkle/SUFlatPackageUnarchiver.m
++++ b/Sparkle/SUFlatPackageUnarchiver.m
+@@ -63,7 +63,7 @@
+             NSMutableDictionary *userInfoDictionary = [NSMutableDictionary dictionaryWithDictionary:@{ NSLocalizedDescriptionKey:[NSString stringWithFormat:@"Flat package (%@) cannot be copied to extraction directory (%@)", self.flatPackagePath, self.extractionDirectory]}];
+             
+             if (copyError != nil) {
+-                userInfoDictionary[NSUnderlyingErrorKey] = copyError;
++                [userInfoDictionary setObject:copyError forKey:NSUnderlyingErrorKey];
+             }
+             
+             [notifier notifyFailureWithError:[NSError errorWithDomain:SUSparkleErrorDomain code:SUUnarchivingError userInfo:userInfoDictionary]];

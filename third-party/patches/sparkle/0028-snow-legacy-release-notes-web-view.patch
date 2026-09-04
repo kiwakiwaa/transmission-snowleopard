@@ -1,0 +1,53 @@
+# Snow Leopard compatibility patch 0028
+#
+# Incompatibility: SDKs before 10.11 cannot compile Sparkle's WKWebView release
+# notes implementation.
+# Behaviour preserved: 1.27.3 already selects SULegacyWebView before 10.11.
+# Those SDK builds compile only that complete implementation. SDKs which
+# provide WKWebView retain the original runtime choice and implementation.
+# History: dfff98d1 introduced both implementations together and explicitly
+# requires the legacy path before 10.11. WKWebView was never a Snow API.
+# Public API evidence: SULegacyWebView uses public WebKit WebView, delegates,
+# preferences, request, and HTML loading APIs available in 10.6.
+# Safety: the legacy implementation retains disabled Java and plug-ins, the
+# configured JavaScript policy, safe-scheme filtering, and external navigation
+# policy. Release notes are not omitted.
+diff --git a/Sparkle/SUWKWebView.h b/Sparkle/SUWKWebView.h
+--- a/Sparkle/SUWKWebView.h
++++ b/Sparkle/SUWKWebView.h
+@@ -9,6 +9,11 @@
+ #import <Foundation/Foundation.h>
+ #import "SUWebView.h"
+
++#if __MAC_OS_X_VERSION_MAX_ALLOWED < 101100
++#import "SULegacyWebView.h"
++#define SUWKWebView SULegacyWebView
++#else
++
+ NS_ASSUME_NONNULL_BEGIN
+
+ // Only use this class on macOS 10.11 or later (see implementation for rationale)
+@@ -19,3 +24,5 @@
+ @end
+
+ NS_ASSUME_NONNULL_END
++
++#endif
+diff --git a/Sparkle/SUWKWebView.m b/Sparkle/SUWKWebView.m
+--- a/Sparkle/SUWKWebView.m
++++ b/Sparkle/SUWKWebView.m
+@@ -6,6 +6,8 @@
+ //  Copyright © 2020 Sparkle Project. All rights reserved.
+ //
+
++#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
++
+ #import "SUWKWebView.h"
+ #import "SUWebViewCommon.h"
+ #import "SULog.h"
+@@ -250,3 +252,5 @@
+ #pragma clang diagnostic pop
+
+ @end
++
++#endif

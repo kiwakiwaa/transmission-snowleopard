@@ -1,0 +1,38 @@
+# Snow Leopard compatibility patch 0037
+#
+# Incompatibility: Snow's SecCodeCopyDesignatedRequirement reports a damaged
+# signed bundle as an error other than errSecCSUnsigned. The 1.27.3 presence
+# probe consequently calls it unsigned and skips the subsequent validity check.
+# Behaviour preserved: unsigned bundles remain unsigned, valid signed bundles
+# remain signed, and damaged signatures are passed to Sparkle's existing strict
+# validation and rejection path. Newer systems keep the exact 1.27.3 probe.
+# History: 4d6eeb36 introduced the signed-bundle probe. 31d03b31 added the
+# separate strict validity check. 51391794 deliberately rejects corrupted code
+# signing even when archive signing succeeds. No earlier safe probe handles
+# Snow's distinct designated-requirement error.
+# Public API evidence: SecStaticCodeCreateWithPath, SecCodeCopyDesignatedRequirement,
+# and errSecCSUnsigned are public Security framework interfaces on 10.6.
+# Safety: Snow treats ambiguous signing errors as signed so validation fails
+# closed. It never turns an invalid signature into a successful result.
+diff --git a/Sparkle/SUCodeSigningVerifier.m b/Sparkle/SUCodeSigningVerifier.m
+index bb227c9a..2c868cf1 100644
+--- a/Sparkle/SUCodeSigningVerifier.m
++++ b/Sparkle/SUCodeSigningVerifier.m
+@@ -10,6 +10,7 @@
+ #include <Security/SecCode.h>
+ #import "SUCodeSigningVerifier.h"
+ #import "SULog.h"
++#import "SUOperatingSystem.h"
+ 
+ 
+ #include "AppKitPrevention.h"
+@@ -179,6 +180,9 @@ finally:
+     if (result == errSecCSUnsigned) {
+         return NO;
+     }
++    if (!SUAVAILABLE(10, 7)) {
++        return YES;
++    }
+     return (result == 0);
+ }
+ 

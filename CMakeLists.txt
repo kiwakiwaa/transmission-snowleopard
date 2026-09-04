@@ -761,13 +761,28 @@ target_compile_definitions(transmission::WideInteger
         $<$<BOOL:${TR_HAVE_INT128}>:WIDE_INTEGER_HAS_LIMB_TYPE_UINT64>)
 
 set(TR_MACOS_HAS_I386_ARCH OFF)
+set(TR_MACOS_HAS_X86_64_ARCH OFF)
 set(TR_MACOS_OBJC_FRAGILE_RUNTIME_DEFAULT OFF)
 if(APPLE AND CMAKE_OSX_ARCHITECTURES)
     foreach(TR_MACOS_ARCH IN LISTS CMAKE_OSX_ARCHITECTURES)
         if(TR_MACOS_ARCH STREQUAL "i386")
             set(TR_MACOS_HAS_I386_ARCH ON)
+        elseif(TR_MACOS_ARCH STREQUAL "x86_64")
+            set(TR_MACOS_HAS_X86_64_ARCH ON)
         endif()
     endforeach()
+elseif(APPLE AND CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
+    set(TR_MACOS_HAS_X86_64_ARCH ON)
+endif()
+
+set(TR_USE_SOURCE_SPARKLE OFF)
+if(APPLE
+        AND ENABLE_MAC
+        AND NOT CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.6
+        AND CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 11.0
+        AND TR_MACOS_HAS_X86_64_ARCH
+        AND NOT TR_MACOS_HAS_I386_ARCH)
+    set(TR_USE_SOURCE_SPARKLE ON)
 endif()
 if(APPLE AND TR_MACOS_DEPLOYMENT_BEFORE_10_7 AND TR_MACOS_HAS_I386_ARCH)
     set(TR_MACOS_OBJC_FRAGILE_RUNTIME_DEFAULT ON)
@@ -776,10 +791,10 @@ endif()
 option(TR_MACOS_OBJC_FRAGILE_RUNTIME "Use the fragile Objective-C runtime"
     ${TR_MACOS_OBJC_FRAGILE_RUNTIME_DEFAULT})
 
-if(APPLE AND TR_MACOS_DEPLOYMENT_BEFORE_10_7)
+if(APPLE AND (TR_MACOS_DEPLOYMENT_BEFORE_10_7 OR TR_USE_SOURCE_SPARKLE))
     set(TR_LIBARC_SUPPORT_SOURCE_DIR "${TR_THIRD_PARTY_SOURCE_DIR}/libarc_support")
     if(NOT EXISTS "${TR_LIBARC_SUPPORT_SOURCE_DIR}/CMakeLists.txt")
-        message(FATAL_ERROR "macOS builds before 10.7 require third-party/libarc_support")
+        message(FATAL_ERROR "Legacy ARC builds require third-party/libarc_support")
     endif()
 
     add_subdirectory(
@@ -787,7 +802,14 @@ if(APPLE AND TR_MACOS_DEPLOYMENT_BEFORE_10_7)
         "${TR_THIRD_PARTY_BINARY_DIR}/libarc_support"
         EXCLUDE_FROM_ALL)
 
-    if(TR_MACOS_DEPLOYMENT_BEFORE_10_6)
+    if(TR_USE_SOURCE_SPARKLE AND TR_MACOS_DEPLOYMENT_BEFORE_10_7)
+        set(TR_LIBARC_SUPPORT_TARGET
+            "$<$<BOOL:$<TARGET_PROPERTY:TR_LIBARC_SUPPORT_DYNAMIC>>:libarc_support::dynamic>"
+            "$<$<NOT:$<BOOL:$<TARGET_PROPERTY:TR_LIBARC_SUPPORT_DYNAMIC>>>:libarc_support::static>")
+    elseif(TR_USE_SOURCE_SPARKLE)
+        set(TR_LIBARC_SUPPORT_TARGET
+            "$<$<BOOL:$<TARGET_PROPERTY:TR_LIBARC_SUPPORT_DYNAMIC>>:libarc_support::dynamic>")
+    elseif(TR_MACOS_DEPLOYMENT_BEFORE_10_6)
         set(TR_LIBARC_SUPPORT_TARGET libarc_support::legacy_static)
     else()
         set(TR_LIBARC_SUPPORT_TARGET libarc_support::static)

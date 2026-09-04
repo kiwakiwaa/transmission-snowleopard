@@ -1,0 +1,30 @@
+# Snow Leopard compatibility patch 0021
+#
+# Incompatibility: the status controller directly names a 10.11 font method,
+# its weight constant, and NSArray's 10.6-SDK-absent firstObject property.
+# Behaviour preserved: 10.11 and later still receive fixed-width progress digits.
+# The Touch Bar still binds the first copied action button.
+# History: 07d28972 introduced the font solely to stop progress-text flicker on
+# 10.11 and later. 118c72e6 introduced the one-button Touch Bar group.
+# dc0aca1d previously replaced firstObject to retain older-SDK builds.
+# Public API evidence: NSFontWeight is CGFloat, regular weight is 0.0, and the
+# declared selector is the public 10.11 NSFont method behind the runtime guard.
+# Safety: Objective-C message dispatch creates no unavailable symbol dependency.
+diff --git a/Sparkle/SUStatusController.m b/Sparkle/SUStatusController.m
+index 6f343670..bcc843a0 100644
+--- a/Sparkle/SUStatusController.m
++++ b/Sparkle/SUStatusController.m
+@@ -14,0 +15,10 @@
++#if __MAC_OS_X_VERSION_MAX_ALLOWED < 101100
++typedef CGFloat NSFontWeight;
++static const NSFontWeight NSFontWeightRegular = 0.0;
++
++@interface NSFont (ElCapitanSDK)
+++ (NSFont *)monospacedDigitSystemFontOfSize:(CGFloat)fontSize
++    weight:(NSFontWeight)weight;
++@end
++#endif
++
+@@ -161 +171 @@
+-        self.touchBarButton = group.buttons.firstObject;
++        self.touchBarButton = [group.buttons objectAtIndex:0];

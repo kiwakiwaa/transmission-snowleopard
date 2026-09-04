@@ -1,0 +1,29 @@
+# Snow Leopard compatibility patch 0014
+#
+# Incompatibility: Foundation 10.6 does not parameterise NSArray, so warning-only
+# generic declarations fail in package installation and version comparison.
+# Behaviour preserved: package arguments, version splitting, numeric comparison,
+# prerelease ordering, and downgrade decisions use identical runtime objects.
+# History: ae4af4d6 added all affected generics solely to fix compiler warnings.
+# Its parent has the same implementations with plain NSArray declarations.
+# Public API evidence: NSArray and NSTask's arguments API are public on 10.6.
+# Safety: only local and private return types return to their proven spelling.
+diff --git a/Sparkle/SUPackageInstaller.m b/Sparkle/SUPackageInstaller.m
+index b9f63a20..113fd7ad 100644
+--- a/Sparkle/SUPackageInstaller.m
++++ b/Sparkle/SUPackageInstaller.m
+@@ -58 +58 @@
+-    NSArray<NSString *> *args = @[@"-W", @"-n", @"-b", @"com.apple.installer", self.packagePath];
++    NSArray *args = @[@"-W", @"-n", @"-b", @"com.apple.installer", self.packagePath];
+diff --git a/Sparkle/SUStandardVersionComparator.m b/Sparkle/SUStandardVersionComparator.m
+index 07db1bb8..5be06e1b 100644
+--- a/Sparkle/SUStandardVersionComparator.m
++++ b/Sparkle/SUStandardVersionComparator.m
+@@ -56 +56 @@
+-- (NSArray<NSString *> *)splitVersionString:(NSString *)version
++- (NSArray *)splitVersionString:(NSString *)version
+@@ -95,2 +95,2 @@
+-    NSArray<NSString *> *partsA = [self splitVersionString:versionA];
+-    NSArray<NSString *> *partsB = [self splitVersionString:versionB];
++    NSArray *partsA = [self splitVersionString:versionA];
++    NSArray *partsB = [self splitVersionString:versionB];

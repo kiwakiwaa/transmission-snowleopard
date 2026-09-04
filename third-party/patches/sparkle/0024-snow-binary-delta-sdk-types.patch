@@ -1,0 +1,52 @@
+# Snow Leopard compatibility patch 0024
+#
+# Incompatibility: the 10.6 SDK has no NSFileAttributeKey typedef, and Clang
+# does not accept Objective-C dictionary subscripting against that SDK. The
+# exported updater delegate also exposes nested Foundation generics absent
+# from the SDK.
+# Behaviour preserved: binary delta application still inspects every existing
+# destination parent and refuses symbolic links before any archive operation.
+# Delegate values and selector ABI remain unchanged.
+# History: 7b109be5 added the parent-symlink rejection as part of safer binary
+# delta application. That security work is retained in full. 282f0ae5 added
+# compiler-only delegate generics to an API previously declared as NSArray.
+# Public API evidence: NSDictionary, objectForKey:, NSFileType, and NSArray are
+# public in the 10.6 Foundation SDK and return the same runtime objects.
+# Safety: only compile-time type spelling and equivalent dictionary lookup
+# syntax change. No path validation, error, archive, or delegate logic changes.
+diff --git a/Sparkle/SUBinaryDeltaApply.m b/Sparkle/SUBinaryDeltaApply.m
+index 8167f6e..50225a7 100644
+--- a/Sparkle/SUBinaryDeltaApply.m
++++ b/Sparkle/SUBinaryDeltaApply.m
+@@ -248,13 +248,13 @@ BOOL applyBinaryDelta(NSString *source, NSString *destination, NSString *patchFi
+         NSString *destinationFilePath = [destination stringByAppendingPathComponent:path];
+         {
+             NSString *destinationParentDirectory = destinationFilePath.stringByDeletingLastPathComponent;
+-            NSDictionary<NSFileAttributeKey, id> *destinationParentDirectoryAttributes = [fileManager attributesOfItemAtPath:destinationParentDirectory error:NULL];
++            NSDictionary *destinationParentDirectoryAttributes = [fileManager attributesOfItemAtPath:destinationParentDirectory error:NULL];
+             
+             // It is OK for the directory parent to not exist if it has already been removed
+             if (destinationParentDirectoryAttributes != nil) {
+                 // But if it does exist, make sure the entry in the parent directory we're looking at is good
+                 // If it's inside a symlink, this is not good in any circumstance
+-                NSString *fileType = destinationParentDirectoryAttributes[NSFileType];
++                NSString *fileType = [destinationParentDirectoryAttributes objectForKey:NSFileType];
+                 if ([fileType isEqualToString:NSFileTypeSymbolicLink]) {
+                     xar_close(x);
+                     
+diff --git a/Sparkle/SUUpdaterDelegate.h b/Sparkle/SUUpdaterDelegate.h
+index 7057b2e..fe4ac19 100644
+--- a/Sparkle/SUUpdaterDelegate.h
++++ b/Sparkle/SUUpdaterDelegate.h
+@@ -64,7 +64,11 @@ NS_ASSUME_NONNULL_BEGIN
+  
+  \return An array of dictionaries with keys: "key", "value", "displayKey", "displayValue", the latter two being specifically for display to the user.
+  */
++#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
+ - (NSArray<NSDictionary<NSString *, NSString *> *> *)feedParametersForUpdater:(SUUpdater *)updater sendingSystemProfile:(BOOL)sendingProfile;
++#else
++- (NSArray *)feedParametersForUpdater:(SUUpdater *)updater sendingSystemProfile:(BOOL)sendingProfile;
++#endif
+ 
+ /*!
+  Returns a custom appcast URL.

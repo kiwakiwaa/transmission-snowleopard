@@ -1,0 +1,41 @@
+# Snow Leopard compatibility patch 0006
+#
+# Incompatibility: Sparkle became ARC-only in 93e339f3 after upstream dropped
+# 10.6. Modern Clang otherwise requests libarclite, absent from the 10.6 SDK.
+# Behaviour preserved: every Objective-C source remains ARC-compiled, including
+# zeroing weak references. Every delivered Mach-O explicitly links the normal
+# dynamic runtime, whose selector uses Apple's implementation when available.
+# History: 93e339f3 is the accepted ARC conversion. Reverting it would discard
+# later ownership fixes, so no pre-ARC source is restored.
+# Public API evidence: Clang ARC runtime entry points are supplied by the pinned,
+# independently Snow-tested libarc_support implementation already in this tree.
+# Safety: the app, framework, and nested updater processes use one adaptive
+# provider per process rather than duplicating private weak-reference state.
+diff --git a/Configurations/ConfigFileop.xcconfig b/Configurations/ConfigFileop.xcconfig
+index e78ef66c..f63f803d 100644
+--- a/Configurations/ConfigFileop.xcconfig
++++ b/Configurations/ConfigFileop.xcconfig
+@@ -3,3 +3,4 @@
+ PRODUCT_NAME = $(SPARKLE_FILEOP_TOOL_NAME)
+ SKIP_INSTALL = YES
+ CLANG_ENABLE_MODULES = NO
++OTHER_LDFLAGS = $(inherited) $(TR_ARC_SUPPORT_DYLIB)
+diff --git a/Configurations/ConfigFramework.xcconfig b/Configurations/ConfigFramework.xcconfig
+index 38b89900..1618b4db 100644
+--- a/Configurations/ConfigFramework.xcconfig
++++ b/Configurations/ConfigFramework.xcconfig
+@@ -9,3 +9,3 @@
+ GCC_PREPROCESSOR_DEFINITIONS = $(inherited) BUILDING_SPARKLE=1
+-OTHER_LDFLAGS = -Wl,-U,_NSURLQuarantinePropertiesKey
++OTHER_LDFLAGS = -Wl,-U,_NSURLQuarantinePropertiesKey $(TR_ARC_SUPPORT_DYLIB)
+ SKIP_INSTALL = YES
+diff --git a/Configurations/ConfigRelaunch.xcconfig b/Configurations/ConfigRelaunch.xcconfig
+index b4343867..d4231925 100644
+--- a/Configurations/ConfigRelaunch.xcconfig
++++ b/Configurations/ConfigRelaunch.xcconfig
+@@ -5,4 +5,4 @@ PRODUCT_NAME = $(SPARKLE_RELAUNCH_TOOL_NAME)
+ SKIP_INSTALL = YES
+ ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon
+ CLANG_ENABLE_MODULES = NO
+-OTHER_LDFLAGS = -Wl,-U,_NSURLQuarantinePropertiesKey
++OTHER_LDFLAGS = -Wl,-U,_NSURLQuarantinePropertiesKey $(TR_ARC_SUPPORT_DYLIB)

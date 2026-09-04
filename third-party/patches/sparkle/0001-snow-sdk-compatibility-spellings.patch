@@ -1,0 +1,79 @@
+# Snow Leopard compatibility patch 0001
+#
+# Incompatibility: MacOSX10.6.sdk predates Clang annotation macros used by
+# Sparkle 1.27.3 and names a serial dispatch queue attribute as NULL rather
+# than DISPATCH_QUEUE_SERIAL.
+# Behaviour preserved: annotations retain their compiler meaning where Clang
+# supports them, while dispatch_queue_create receives documented 10.6 serial
+# queue spelling.
+# History: c1392bc1 added nullability metadata and b9d11392 added ASL queue
+# logging. Neither change intentionally removed old-runtime behaviour.
+# Public API evidence: Apple's 10.6 libdispatch header documents NULL as serial
+# queue attribute. Annotation fallbacks affect declarations only.
+# Safety: no update, verification, transport, extraction, or install path is
+# changed. Unknown SDKs still use their native definitions.
+diff --git a/Sparkle/SULegacyCompatibility.h b/Sparkle/SULegacyCompatibility.h
+new file mode 100644
+index 00000000..d19c8fd0
+--- /dev/null
++++ b/Sparkle/SULegacyCompatibility.h
+@@ -0,0 +1,59 @@
++//
++//  SULegacyCompatibility.h
++//  Sparkle
++//
++//  Compatibility spellings supplied by Transmission's Snow Leopard overlay.
++//
++
++
++#ifndef SULEGACYCOMPATIBILITY_H
++#define SULEGACYCOMPATIBILITY_H
++
++#include <Availability.h>
++
++#ifdef __OBJC__
++#import <Foundation/Foundation.h>
++#include <dispatch/dispatch.h>
++
++// Snow Leopard's SDK predates these declaration annotations. Modern Clang
++// still understands nullability keywords, so only missing wrappers are empty.
++#ifndef NS_ASSUME_NONNULL_BEGIN
++#define NS_ASSUME_NONNULL_BEGIN
++#define NS_ASSUME_NONNULL_END
++#endif
++
++#ifndef NS_DESIGNATED_INITIALIZER
++#define NS_DESIGNATED_INITIALIZER
++#endif
++
++#ifndef NS_UNAVAILABLE
++#define NS_UNAVAILABLE
++#endif
++
++#ifndef API_AVAILABLE
++#define API_AVAILABLE(...)
++#endif
++
++// Keep fixed underlying enum types used by Sparkle's public ABI. This is the
++// spelling shipped by later Foundation SDKs, not a replacement declaration.
++#ifndef NS_ENUM
++#if __has_feature(objc_fixed_enum)
++#define NS_ENUM(_type, _name) \
++    enum _name : _type _name; enum _name : _type
++#define NS_OPTIONS(_type, _name) \
++    enum _name : _type _name; enum _name : _type
++#else
++#define NS_ENUM(_type, _name) _type _name; enum
++#define NS_OPTIONS(_type, _name) _type _name; enum
++#endif
++#endif
++
++// Passing NULL requests a serial queue on 10.6. Later SDKs added this named
++// constant without changing dispatch_queue_create behaviour. Keep dispatch
++// out of pure C vendor targets that do not use it.
++#ifndef DISPATCH_QUEUE_SERIAL
++#define DISPATCH_QUEUE_SERIAL NULL
++#endif
++#endif
++
++#endif

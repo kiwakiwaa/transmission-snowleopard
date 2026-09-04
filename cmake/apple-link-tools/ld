@@ -1,0 +1,27 @@
+#!/bin/bash
+set -u
+
+args=()
+skip_next=0
+for arg in "$@"; do
+    if [[ "$skip_next" -eq 1 ]]; then
+        skip_next=0
+        continue
+    fi
+    case "$arg" in
+        -lto_library|-mllvm)
+            skip_next=1
+            ;;
+        -no_deduplicate|-demangle)
+            ;;
+        *)
+            args+=("$arg")
+            ;;
+    esac
+done
+
+linker=${TR_SPARKLE_LINKER:-/usr/bin/ld}
+if [[ -z "${TR_SPARKLE_LINKER:-}" && -x /Developer/usr/bin/ld ]]; then
+    linker=/Developer/usr/bin/ld
+fi
+exec "$linker" "${args[@]}"

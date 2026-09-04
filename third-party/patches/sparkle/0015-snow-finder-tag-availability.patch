@@ -1,0 +1,67 @@
+# Snow Leopard compatibility patch 0015
+#
+# Incompatibility: 1.27.3 assumes the 10.9 NSURL Finder-tag key is declared and
+# available because its minimum version had already moved beyond older systems.
+# A weak undefined data symbol still prevents Snow dyld from loading a framework.
+# Behaviour preserved: tags are copied on 10.9 and later. Snow completes the same
+# transactional installation without requesting a key its Foundation lacks.
+# History: 1081dcdd added best-effort tag preservation. b9a4917f guarded it for
+# 10.7 and 10.8. c3c1b1af removed only that guard when the minimum moved to 10.9.
+# The weak-symbol attempt was rejected after a native Snow framework load failed.
+# Public API evidence: NSURLTagNamesKey is public from 10.9. dlsym is the public
+# POSIX lookup for an exported symbol and creates no unavailable load command.
+# Safety: resolution occurs only after the proven 10.9 gate. A missing symbol
+# skips only best-effort tag copying and changes no rollback or error path.
+diff --git a/Sparkle/SULegacyURLTagNamesKey.inc b/Sparkle/SULegacyURLTagNamesKey.inc
+new file mode 100644
+index 00000000..85cdb749
+--- /dev/null
++++ b/Sparkle/SULegacyURLTagNamesKey.inc
+@@ -0,0 +1,18 @@
++#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
++#import <dlfcn.h>
++#endif
++
++static NSString *SUTagNamesResourceKey(void)
++{
++    if (![SUOperatingSystem isOperatingSystemAtLeastVersion:
++            (NSOperatingSystemVersion){10, 9, 0}]) {
++        return nil;
++    }
++#if MAC_OS_X_VERSION_MAX_ALLOWED < 1090
++    NSString * const *tagNamesKeyAddress =
++        (NSString * const *)dlsym(RTLD_DEFAULT, "NSURLTagNamesKey");
++    return tagNamesKeyAddress == NULL ? nil : *tagNamesKeyAddress;
++#else
++    return NSURLTagNamesKey;
++#endif
++}
+diff --git a/Sparkle/SUPlainInstaller.m b/Sparkle/SUPlainInstaller.m
+index 17640233..a07e31c9 100644
+--- a/Sparkle/SUPlainInstaller.m
++++ b/Sparkle/SUPlainInstaller.m
+@@ -17,6 +17,7 @@
+ 
+ 
+ #include "AppKitPrevention.h"
++#include "SULegacyURLTagNamesKey.inc"
+ 
+ @interface SUPlainInstaller ()
+ 
+@@ -210,11 +211,14 @@ - (BOOL)performInstallationToURL:(NSURL *)installationURL fromUpdateAtURL:(NSURL
+     }
+ 
+     // Try to preserve Finder tags. Failure can be accepted without complaint as previous Sparkle versions did not do this at all
++    NSString *tagNamesKey = SUTagNamesResourceKey();
++    if (tagNamesKey != nil) {
+         NSArray *resourceTags;
+-        BOOL success = [oldTempURL getResourceValue:&resourceTags forKey:NSURLTagNamesKey error:NULL];
++        BOOL success = [oldTempURL getResourceValue:&resourceTags forKey:tagNamesKey error:NULL];
+         if (success && resourceTags.count) {
+-            [installationURL setResourceValue:resourceTags forKey:NSURLTagNamesKey error:NULL];
++            [installationURL setResourceValue:resourceTags forKey:tagNamesKey error:NULL];
+         }
++    }
+ 
+     // From here on out, we don't really need to bring up authorization if we haven't done so prior
+     SUFileManager *constrainedFileManager = [fileManager fileManagerByPreservingAuthorizationRights];

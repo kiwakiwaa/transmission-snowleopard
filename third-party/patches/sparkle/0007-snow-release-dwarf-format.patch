@@ -1,0 +1,36 @@
+# Snow Leopard compatibility patch 0007
+#
+# Incompatibility: Xcode 4.2 dsymutil asserts on location operands emitted by
+# clang 20, even when clang emits DWARF v2 for the 10.6 target.
+# Behaviour preserved: release objects and Mach-O outputs retain DWARF debug
+# information; only the incompatible separate dSYM post-processing is omitted.
+# History: 1b48241c selected dwarf-with-dsym for release packaging. Sparkle's
+# Debug configuration has always used supported embedded dwarf.
+# Public API evidence: DEBUG_INFORMATION_FORMAT=dwarf is an Xcode build setting,
+# not an application runtime API, and does not change executable code paths.
+# Safety: optimisation, symbol generation, strip policy, signing, and all
+# updater behaviour remain unchanged.
+diff --git a/Configurations/ConfigCommonRelease.xcconfig b/Configurations/ConfigCommonRelease.xcconfig
+index f95ae0fb..ae734e98 100644
+--- a/Configurations/ConfigCommonRelease.xcconfig
++++ b/Configurations/ConfigCommonRelease.xcconfig
+@@ -1,18 +1,18 @@
+ #include "ConfigCommon.xcconfig"
+ 
+ // Release only
+ 
+ CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+ CLANG_WARN_COMMA = YES;
+ CLANG_WARN_INFINITE_RECURSION = YES;
+ CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+ CLANG_WARN_STRICT_PROTOTYPES = YES;
+ CLANG_WARN_SUSPICIOUS_MOVE = YES;
+ GCC_OPTIMIZATION_LEVEL = s
+-DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
++DEBUG_INFORMATION_FORMAT = dwarf
+ GCC_GENERATE_DEBUGGING_SYMBOLS = YES
+ GCC_PREPROCESSOR_DEFINITIONS = $(GCC_PREPROCESSOR_DEFINITIONS_COMMON)
+ DEAD_CODE_STRIPPING = YES
+ GCC_TREAT_WARNINGS_AS_ERRORS = NO
+ GCC_WARN_UNINITIALIZED_AUTOS = YES
+ COPY_PHASE_STRIP = NO

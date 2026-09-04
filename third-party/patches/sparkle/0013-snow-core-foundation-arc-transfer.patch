@@ -1,0 +1,32 @@
+# Snow Leopard compatibility patch 0013
+#
+# Incompatibility: Foundation 10.6 predates the CFBridgingRelease convenience
+# spelling used by ARC Sparkle sources, although Clang supports bridge transfers.
+# Behaviour preserved: each copied Core Foundation object still transfers its
+# +1 ownership to ARC exactly once, including code-signing error dictionaries.
+# History: 93e339f3 retained ownership transfers during the ARC conversion.
+# 6b86508d fixed unconditional cfError release. 31d03b31 and 0b6b6fe4 reused
+# that spelling in signature validation and fresh bundle metadata reads.
+# Earlier manual-release source was rejected because it predates ARC ownership
+# corrections.
+# Public API evidence: modern Foundation defines CFBridgingRelease as
+# __bridge_transfer, which Clang supports while targeting the 10.6 SDK.
+# Safety: the compatibility macro is restricted to pre-10.7 SDKs and preserves
+# compiler-enforced transfer ownership without changing any verification result.
+diff --git a/Sparkle/SULegacyCompatibility.h b/Sparkle/SULegacyCompatibility.h
+index d19c8fd0..3a86ba13 100644
+--- a/Sparkle/SULegacyCompatibility.h
++++ b/Sparkle/SULegacyCompatibility.h
+@@ -54,6 +54,11 @@
+ #ifndef DISPATCH_QUEUE_SERIAL
+ #define DISPATCH_QUEUE_SERIAL NULL
+ #endif
++
++// Later Foundation defines this as the same compiler ownership transfer.
++#if __has_feature(objc_arc) && MAC_OS_X_VERSION_MAX_ALLOWED < 1070
++#define CFBridgingRelease(value) ((__bridge_transfer id)(value))
++#endif
+ #endif
+-
++
+ #endif

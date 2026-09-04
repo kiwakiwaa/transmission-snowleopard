@@ -1,0 +1,64 @@
+# Snow Leopard compatibility patch 0004
+#
+# Incompatibility: NSFileWriteFileExistsError and
+# createDirectoryAtURL:withIntermediateDirectories:attributes:error: first
+# appear in 10.7 Foundation and are absent from MacOSX10.6.sdk.
+# Behaviour preserved: NSError remains NSCocoaErrorDomain code 516, and directory
+# creation keeps the same no-parent-creation, nil-attributes, NSError contract.
+# History: 984c3dc0 introduced these calls in the transactional file-operation
+# rewrite. No earlier SUFileManager implementation preserves that newer design.
+# Public API evidence: FoundationErrors.h assigns file-exists write error 516;
+# 10.6 exposes equivalent createDirectoryAtPath: API used here.
+# Safety: existing preflight checks, permission-error classification,
+# authorisation fallback, and atomic move/copy implementation are unchanged.
+diff --git a/Sparkle/SUFileManager.m b/Sparkle/SUFileManager.m
+index 975146e5..07805498 100644
+--- a/Sparkle/SUFileManager.m
++++ b/Sparkle/SUFileManager.m
+@@ -22,6 +22,10 @@
+ 
+ static char SUAppleQuarantineIdentifier[] = "com.apple.quarantine";
+ 
++// Foundation added the name in 10.7, but NSError code 516 is stable public ABI.
++// Keep Sparkle's precise failure contract when building against the 10.6 SDK.
++static NSInteger const SUFileWriteFileExistsError = 516;
++
+ static BOOL SUMakeRefFromURL(NSURL *url, FSRef *ref, NSError **error) {
+ 
+     char path[PATH_MAX] = {0};
+@@ -473,7 +477,7 @@ static BOOL SUMakeRefFromURL(NSURL *url, FSRef *ref, NSError **error) {
+ 
+     if ([self _itemExistsAtURL:destinationURL]) {
+         if (error != NULL) {
+-            *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileWriteFileExistsError userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Destination file to copy to (%@) already exists.", destinationURL.lastPathComponent] }];
++            *error = [NSError errorWithDomain:NSCocoaErrorDomain code:SUFileWriteFileExistsError userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Destination file to copy to (%@) already exists.", destinationURL.lastPathComponent] }];
+         }
+         return NO;
+     }
+@@ -583,7 +587,7 @@ static BOOL SUMakeRefFromURL(NSURL *url, FSRef *ref, NSError **error) {
+ 
+     if ([self _itemExistsAtURL:destinationURL]) {
+         if (error != NULL) {
+-            *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileWriteFileExistsError userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Destination file to move (%@) already exists.", destinationURL.lastPathComponent] }];
++            *error = [NSError errorWithDomain:NSCocoaErrorDomain code:SUFileWriteFileExistsError userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Destination file to move (%@) already exists.", destinationURL.lastPathComponent] }];
+         }
+         return NO;
+     }
+@@ -863,7 +867,7 @@ static BOOL SUMakeRefFromURL(NSURL *url, FSRef *ref, NSError **error) {
+ {
+     if ([self _itemExistsAtURL:url]) {
+         if (error != NULL) {
+-            *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileWriteFileExistsError userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Failed to create directory because file %@ already exists.", url.path.lastPathComponent] }];
++            *error = [NSError errorWithDomain:NSCocoaErrorDomain code:SUFileWriteFileExistsError userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Failed to create directory because file %@ already exists.", url.path.lastPathComponent] }];
+         }
+         return NO;
+     }
+@@ -878,7 +882,7 @@ static BOOL SUMakeRefFromURL(NSURL *url, FSRef *ref, NSError **error) {
+     }
+ 
+     NSError *createDirectoryError = nil;
+-    if ([_fileManager createDirectoryAtURL:url withIntermediateDirectories:NO attributes:nil error:&createDirectoryError]) {
++    if ([_fileManager createDirectoryAtPath:url.path withIntermediateDirectories:NO attributes:nil error:&createDirectoryError]) {
+         return YES;
+     }
+ 

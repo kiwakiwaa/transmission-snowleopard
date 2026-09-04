@@ -1,0 +1,71 @@
+# Snow Leopard compatibility patch 0005
+#
+# Incompatibility: NSFileHandle.readabilityHandler is unavailable before 10.7.
+# Sparkle uses it to drain authorised installer output and report progress.
+# Behaviour preserved: output is drained while the child runs, complete UTF-8
+# lines reach the callback in order, and incomplete trailing data is ignored.
+# History: 2a644672 introduced this parser with package progress reporting; no
+# older implementation exists because Sparkle already required a newer OS.
+# Public API evidence: 10.6 NSFileHandle exposes readDataOfLength:, which blocks
+# while draining the same descriptor and avoids a full pipe deadlock.
+# Safety: the implementation retains bounded reads, processes every complete
+# line, never invokes a shell, and leaves child status validation unchanged.
+diff --git a/Sparkle/SUFileManager.m b/Sparkle/SUFileManager.m
+index 07805498..a1fced59 100644
+--- a/Sparkle/SUFileManager.m
++++ b/Sparkle/SUFileManager.m
+@@ -222,26 +222,37 @@ static BOOL SUMakeRefFromURL(NSURL *url, FSRef *ref, NSError **error) {
+     return YES;
+ }
+ 
+-- (void)parseLines:(NSFileHandle *)pipeHandle lineCallback:(void(^)(NSString *))lineCallback {
+-    __block NSMutableData *line = [NSMutableData new];
+-    pipeHandle.readabilityHandler = ^(NSFileHandle *handle){
+-        NSData *data = handle.availableData;
+-        NSUInteger length = data.length;
+-        if (!length) {
+-            return;
+-        }
+-        const char *bytes = data.bytes;
+-        for(NSUInteger i = 0; i < length; i++) {
+-            if (bytes[i] == '\n') {
+-                NSData *dataToEOL = [data subdataWithRange:NSMakeRange(0, i)];
+-                [line appendData:dataToEOL];
+-                NSString *fullLine = [[NSString alloc] initWithData:line encoding:NSUTF8StringEncoding];
+-                lineCallback(fullLine);
+-                line = [[data subdataWithRange:NSMakeRange(i+1, length-i-1)] mutableCopy];
++- (void)parseLines:(NSFileHandle *)pipeHandle lineCallback:(void(^)(NSString *))lineCallback
++{
++    NSMutableData *pendingData = [NSMutableData data];
++    for (;;) {
++        NSData *data = [pipeHandle readDataOfLength:4096];
++        if (data.length == 0) {
++            break;
++        }
++        [pendingData appendData:data];
++
++        for (;;) {
++            const uint8_t *bytes = pendingData.bytes;
++            NSUInteger newlineIndex = NSNotFound;
++            for (NSUInteger index = 0; index < pendingData.length; index++) {
++                if (bytes[index] == '\n') {
++                    newlineIndex = index;
++                    break;
++                }
++            }
++            if (newlineIndex == NSNotFound) {
+                 break;
+             }
++            NSData *lineData = [pendingData subdataWithRange:NSMakeRange(0, newlineIndex)];
++            NSString *line = [[NSString alloc] initWithData:lineData encoding:NSUTF8StringEncoding];
++            if (line != nil) {
++                lineCallback(line);
++            }
++            [pendingData replaceBytesInRange:NSMakeRange(0, newlineIndex + 1)
++                withBytes:NULL length:0];
+         }
+-    };
++    }
+ }
+ 
+ - (void)dealloc

@@ -16,6 +16,9 @@ include(BundleUtilities)
 if(DEFINED TR_DEP_LINK_PREFIX)
     set(TR_FIXUP_BUNDLE_DEP_LINK_PREFIX "${TR_DEP_LINK_PREFIX}")
 endif()
+if(NOT DEFINED TR_INSTALL_NAME_TOOL_EXECUTABLE)
+    set(TR_INSTALL_NAME_TOOL_EXECUTABLE install_name_tool)
+endif()
 
 tr_fixup_bundle_item("${TR_BUNDLE_DIR}" "${TR_BUNDLE_ITEMS}" "${TR_DEP_DIRS}")
 
@@ -24,7 +27,7 @@ set(TR_BUNDLED_LIBCXXABI "${TR_BUNDLE_DIR}/Contents/Frameworks/libc++abi.1.dylib
 if(EXISTS "${TR_BUNDLED_LIBCXX}" AND EXISTS "${TR_BUNDLED_LIBCXXABI}")
     get_filename_component(TR_BUNDLED_LIBCXX_REALPATH "${TR_BUNDLED_LIBCXX}" REALPATH)
     execute_process(
-        COMMAND install_name_tool
+        COMMAND "${TR_INSTALL_NAME_TOOL_EXECUTABLE}"
             -change /usr/lib/libc++abi.dylib
             @loader_path/libc++abi.1.dylib
             "${TR_BUNDLED_LIBCXX_REALPATH}"

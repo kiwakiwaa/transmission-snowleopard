@@ -1,0 +1,174 @@
+# Snow Leopard compatibility patch 0020
+#
+# Incompatibility: Sparkle's old-SDK Touch Bar declarations still assume an
+# availability spelling, collection generics, Auto Layout, and a 10.12 button
+# factory absent from old SDKs.
+# Behaviour preserved: runtime class lookup, delegate items, copied actions,
+# tags, enabled state, Return key, button order, equal sizing, and 8 or 32 point
+# gaps are retained. Touch Bar support remains live on systems that provide it.
+# History: 56db200f and 40750b6f intentionally supplied old-SDK declarations.
+# 118c72e6 added the custom button group and e2426784 added equal widths.
+# No historical manual-layout implementation exists.
+# Public API evidence: the replacement uses only 10.6 NSView and NSButton layout.
+# The 10.12 factory remains selected dynamically when the class responds to it.
+# Safety: no unavailable class symbol or private API is linked on Snow.
+diff --git a/Sparkle/SUTouchBarForwardDeclarations.h b/Sparkle/SUTouchBarForwardDeclarations.h
+index dd913170..3811377c 100644
+--- a/Sparkle/SUTouchBarForwardDeclarations.h
++++ b/Sparkle/SUTouchBarForwardDeclarations.h
+@@ -23,20 +23,19 @@ typedef NSString * NSTouchBarCustomizationIdentifier;
+
+ @protocol NSTouchBarDelegate;
+
+-NS_CLASS_AVAILABLE_MAC(10_12_2)
+ @interface NSTouchBar : NSObject <NSCoding>
+
+ - (instancetype)init NS_DESIGNATED_INITIALIZER;
+ - (nullable instancetype)initWithCoder:(NSCoder *)aDecoder NS_DESIGNATED_INITIALIZER;
+
+ @property (copy, nullable) NSTouchBarCustomizationIdentifier customizationIdentifier;
+-@property (copy) NSArray<NSTouchBarItemIdentifier> *customizationAllowedItemIdentifiers;
+-@property (copy) NSArray<NSTouchBarItemIdentifier> *customizationRequiredItemIdentifiers;
+-@property (copy) NSArray<NSTouchBarItemIdentifier> *defaultItemIdentifiers;
+-@property (copy, readonly) NSArray<NSTouchBarItemIdentifier> *itemIdentifiers;
++@property (copy) NSArray *customizationAllowedItemIdentifiers;
++@property (copy) NSArray *customizationRequiredItemIdentifiers;
++@property (copy) NSArray *defaultItemIdentifiers;
++@property (copy, readonly) NSArray *itemIdentifiers;
+ @property (copy, nullable) NSTouchBarItemIdentifier principalItemIdentifier;
+ @property (copy, nullable) NSTouchBarItemIdentifier escapeKeyReplacementItemIdentifier;
+-@property (copy) NSSet<NSTouchBarItem *> *templateItems;
++@property (copy) NSSet *templateItems;
+ @property (nullable, weak) id <NSTouchBarDelegate> delegate;
+ - (nullable __kindof NSTouchBarItem *)itemForIdentifier:(NSTouchBarItemIdentifier)identifier;
+ @property (readonly, getter=isVisible) BOOL visible;
+@@ -51,7 +50,6 @@ NS_CLASS_AVAILABLE_MAC(10_12_2)
+
+ typedef float NSTouchBarItemPriority;
+
+-NS_CLASS_AVAILABLE_MAC(10_12_2)
+ @interface NSTouchBarItem : NSObject <NSCoding>
+
+ - (instancetype)initWithIdentifier:(NSTouchBarItemIdentifier)identifier NS_DESIGNATED_INITIALIZER;
+@@ -67,7 +65,6 @@ NS_CLASS_AVAILABLE_MAC(10_12_2)
+
+ @end
+
+-NS_CLASS_AVAILABLE_MAC(10_12_2)
+ @interface NSCustomTouchBarItem : NSTouchBarItem
+
+ @property (readwrite, strong) __kindof NSView *view;
+diff --git a/Sparkle/SUTouchBarButtonGroup.h b/Sparkle/SUTouchBarButtonGroup.h
+index 30d16685..1ea01c17 100644
+--- a/Sparkle/SUTouchBarButtonGroup.h
++++ b/Sparkle/SUTouchBarButtonGroup.h
+@@ -15 +15 @@
+-@property (nonatomic, readonly, copy) NSArray<NSButton *> *buttons;
++@property (nonatomic, readonly, copy) NSArray *buttons;
+@@ -17 +17 @@
+-- (instancetype)initByReferencingButtons:(NSArray<NSButton *> *)buttons;
++- (instancetype)initByReferencingButtons:(NSArray *)buttons;
+diff --git a/Sparkle/SUTouchBarButtonGroup.m b/Sparkle/SUTouchBarButtonGroup.m
+index ef27d13..7f99f73 100644
+--- a/Sparkle/SUTouchBarButtonGroup.m
++++ b/Sparkle/SUTouchBarButtonGroup.m
+@@ -20,3 +20,23 @@ @implementation SUTouchBarButtonGroup
+
+-- (instancetype)initByReferencingButtons:(NSArray<NSButton *> *)buttons
++static NSButton *SUCopyTouchBarButton(NSButton *button)
++{
++    NSButton *buttonCopy;
++    if ([NSButton respondsToSelector:
++            @selector(buttonWithTitle:target:action:)]) {
++        buttonCopy = [NSButton buttonWithTitle:[button title]
++            target:[button target] action:[button action]];
++    } else {
++        buttonCopy = [[NSButton alloc] initWithFrame:NSZeroRect];
++        [buttonCopy setButtonType:NSMomentaryPushInButton];
++        [buttonCopy setBezelStyle:NSRoundedBezelStyle];
++        [buttonCopy setTitle:[button title]];
++        [buttonCopy setTarget:[button target]];
++        [buttonCopy setAction:[button action]];
++    }
++    [buttonCopy setTag:[button tag]];
++    [buttonCopy setEnabled:[button isEnabled]];
++    return buttonCopy;
++}
++
++- (instancetype)initByReferencingButtons:(NSArray *)buttons
+ {
+@@ -25,16 +45,9 @@ - (instancetype)initByReferencingButtons:(NSArray<NSButton *> *)buttons
+
+-    NSView *buttonGroup = [[NSView alloc] initWithFrame:NSZeroRect];
+-    self.view = buttonGroup;
+-    NSMutableArray<NSLayoutConstraint *> *constraints = [NSMutableArray array];
+-    NSMutableArray<NSButton *> *buttonCopies = [NSMutableArray arrayWithCapacity:buttons.count];
+-
+-    for (NSUInteger i = 0; i < buttons.count; i++) {
++    NSMutableArray *buttonCopies = [NSMutableArray arrayWithCapacity:
++        [buttons count]];
++    CGFloat buttonWidth = 0.0;
++    CGFloat buttonHeight = 0.0;
++    for (NSUInteger i = 0; i < [buttons count]; i++) {
+         NSButton *button = [buttons objectAtIndex:i];
+-#pragma clang diagnostic push
+-#pragma clang diagnostic ignored "-Wpartial-availability"
+-        NSButton *buttonCopy = [NSButton buttonWithTitle:button.title target:button.target action:button.action];
+-#pragma clang diagnostic pop
+-        buttonCopy.tag = button.tag;
+-        buttonCopy.enabled = button.enabled;
+-
++        NSButton *buttonCopy = SUCopyTouchBarButton(button);
+         // Must be set explicitly, because NSWindow clears it
+@@ -42,30 +55,28 @@ - (instancetype)initByReferencingButtons:(NSArray<NSButton *> *)buttons
+         if (i == 0) {
+-            buttonCopy.keyEquivalent = @"\r";
++            [buttonCopy setKeyEquivalent:@"\r"];
+         }
+-
+-        buttonCopy.translatesAutoresizingMaskIntoConstraints = NO;
+-
+         [buttonCopies addObject:buttonCopy];
+-        [buttonGroup addSubview:buttonCopy];
++        NSSize size = [[buttonCopy cell] cellSize];
++        buttonWidth = MAX(buttonWidth, ceil(size.width));
++        buttonHeight = MAX(buttonHeight, ceil(size.height));
++    }
+
+-        // Custom layout is used for equal width buttons, to look more keyboard-like and mimic standard alerts
+-        // https://github.com/sparkle-project/Sparkle/pull/987#issuecomment-272324726
+-        [constraints addObject:[NSLayoutConstraint constraintWithItem:buttonCopy attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:buttonGroup attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0]];
+-        [constraints addObject:[NSLayoutConstraint constraintWithItem:buttonCopy attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:buttonGroup attribute:NSLayoutAttributeBottom multiplier:1.0 constant:0.0]];
+-        if (i == 0) {
+-            [constraints addObject:[NSLayoutConstraint constraintWithItem:buttonCopy attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:buttonGroup attribute:NSLayoutAttributeTrailing multiplier:1.0 constant:0.0]];
+-        } else {
+-            [constraints addObject:[NSLayoutConstraint constraintWithItem:buttonCopy attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:[buttonCopies objectAtIndex:i - 1] attribute:NSLayoutAttributeLeading multiplier:1.0 constant:(i == 1) ? -8 : -32]];
+-            [constraints addObject:[NSLayoutConstraint constraintWithItem:buttonCopy attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:[buttonCopies objectAtIndex:i - 1] attribute:NSLayoutAttributeWidth multiplier:1.0 constant:0.0]];
+-            constraints.lastObject.priority = 250;
+-        }
+-        if (i == buttons.count - 1) {
+-            [constraints addObject:[NSLayoutConstraint constraintWithItem:buttonCopy attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:buttonGroup attribute:NSLayoutAttributeLeading multiplier:1.0 constant:0.0]];
++    CGFloat groupWidth = buttonWidth * [buttonCopies count];
++    if ([buttonCopies count] > 1) {
++        groupWidth += 8.0 + 32.0 * ([buttonCopies count] - 2);
++    }
++    NSView *buttonGroup = [[NSView alloc] initWithFrame:
++        NSMakeRect(0.0, 0.0, groupWidth, buttonHeight)];
++    self.view = buttonGroup;
++    CGFloat buttonX = groupWidth;
++    for (NSUInteger i = 0; i < [buttonCopies count]; i++) {
++        if (i > 0) {
++            buttonX -= (i == 1) ? 8.0 : 32.0;
+         }
++        buttonX -= buttonWidth;
++        NSButton *buttonCopy = [buttonCopies objectAtIndex:i];
++        [buttonCopy setFrame:NSMakeRect(buttonX, 0.0,
++            buttonWidth, buttonHeight)];
++        [buttonGroup addSubview:buttonCopy];
+     }
+-#pragma clang diagnostic push
+-#pragma clang diagnostic ignored "-Wpartial-availability"
+-    [NSLayoutConstraint activateConstraints:constraints];
+-#pragma clang diagnostic pop
+-
+     _buttons = buttonCopies;

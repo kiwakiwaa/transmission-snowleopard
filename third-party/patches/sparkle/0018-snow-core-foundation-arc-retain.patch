@@ -1,0 +1,20 @@
+# Snow Leopard compatibility patch 0018
+#
+# Incompatibility: Foundation 10.6 lacks CFBridgingRetain, used to keep the
+# termination listener alive through a public CFFileDescriptor context.
+# Behaviour preserved: the listener transfers one +1 retain to Core Foundation
+# and the existing callback or failure paths release it exactly once.
+# History: 0e978e3f introduced the kqueue listener and this ownership contract.
+# Modern Foundation defines CFBridgingRetain as __bridge_retained.
+# Public API evidence: the compiler bridge and CFRelease are public on 10.6.
+# Safety: callback delivery, kqueue recovery, and lifetime semantics are unchanged.
+diff --git a/Sparkle/SULegacyCompatibility.h b/Sparkle/SULegacyCompatibility.h
+index 3a86ba13..f65e2359 100644
+--- a/Sparkle/SULegacyCompatibility.h
++++ b/Sparkle/SULegacyCompatibility.h
+@@ -58,4 +58,5 @@
+ // Later Foundation defines this as the same compiler ownership transfer.
+ #if __has_feature(objc_arc) && MAC_OS_X_VERSION_MAX_ALLOWED < 1070
++#define CFBridgingRetain(value) ((__bridge_retained CFTypeRef)(value))
+ #define CFBridgingRelease(value) ((__bridge_transfer id)(value))
+ #endif

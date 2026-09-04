@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Preserve ARC compilation while avoiding Clang's unavailable 10.6 arclite.
+set -e
+
+compiler=${TR_SPARKLE_C_COMPILER:-clang}
+cxx_compiler=${TR_SPARKLE_CXX_COMPILER:-clang++}
+link_tools=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+is_compile=no
+is_objc=no
+next_is_language=no
+arguments=()
+
+for argument in "$@"; do
+    if test "$next_is_language" = yes; then
+        case "$argument" in
+            objective-c) is_objc=yes ;;
+            objective-c++) is_objc=yes; compiler=$cxx_compiler ;;
+            c++) compiler=$cxx_compiler ;;
+        esac
+        next_is_language=no
+    elif test "$argument" = -x; then
+        next_is_language=yes
+    fi
+
+    test "$argument" = -c && is_compile=yes
+done
+
+for argument in "$@"; do
+    if test "$is_compile" = no; then
+        case "$argument" in
+            -fobjc-arc|-fobjc-link-runtime) continue ;;
+        esac
+    fi
+    arguments+=("$argument")
+done
+
+if test "$is_compile" = yes && test "$is_objc" = yes; then
+    arguments+=(-Xclang -fobjc-runtime-has-weak)
+fi
+
+if test "$is_compile" = no; then
+    # Xcode 3 codesign_allocate cannot extend the newer linker's Mach-O.
+    # Route final links through the reviewed Xcode 3 adapter beside this file.
+    arguments+=("-B$link_tools")
+fi
+
+exec "$compiler" "${arguments[@]}"

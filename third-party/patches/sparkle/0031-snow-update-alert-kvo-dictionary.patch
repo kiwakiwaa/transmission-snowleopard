@@ -1,0 +1,24 @@
+# Snow Leopard compatibility patch 0031
+#
+# Incompatibility: Foundation 10.6 has no NSKeyValueChangeKey typedef and does
+# not declare NSDictionary as a lightweight-generic class.
+# Behaviour preserved: the standard KVO callback keeps the same selector,
+# object, change dictionary, context, and guarded 10.14 appearance handling.
+# History: 3ed5f387 introduced this callback with the generic dictionary while
+# adding effective-appearance observation. a4373e4e and dfff98d1 moved the
+# observed view but retained that compiler-only annotation.
+# Public API evidence: NSObject's 10.6 KVO callback declares change as a plain
+# NSDictionary. Objective-C lightweight generics do not alter selector ABI.
+# Safety: only the parameter spelling changes. No observation or UI code moves.
+diff --git a/Sparkle/SUUpdateAlert.m b/Sparkle/SUUpdateAlert.m
+--- a/Sparkle/SUUpdateAlert.m
++++ b/Sparkle/SUUpdateAlert.m
+@@ -187,7 +187,7 @@
+     }
+ }
+ 
+-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(__attribute__((unused)) NSDictionary<NSKeyValueChangeKey,id> *)change context:(__attribute__((unused)) void *)context {
++- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(__attribute__((unused)) NSDictionary *)change context:(__attribute__((unused)) void *)context {
+ #if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101400
+     if (@available(macOS 10.14, *)) {
+         if (object == self.webView.view && [keyPath isEqualToString:@"effectiveAppearance"]) {

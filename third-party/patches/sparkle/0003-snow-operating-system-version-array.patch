@@ -1,0 +1,25 @@
+# Snow Leopard compatibility patch 0003
+#
+# Incompatibility: Foundation in MacOSX10.6.sdk does not declare NSArray as a
+# parameterised class, so Sparkle's lightweight generic type is rejected.
+# Behaviour preserved: component objects and parsing calls are unchanged. Only
+# compile-time collection metadata is removed from one private local variable.
+# History: 9ae41fe4 added NSArray<NSString *> solely to silence an Xcode 10
+# warning. Its parent used NSArray with identical runtime operations.
+# Public API evidence: componentsSeparatedByString: returns NSArray on 10.6,
+# and each retrieved component still receives integerValue.
+# Safety: version comparison and fallback SystemVersion.plist parsing remain
+# byte-for-byte equivalent at runtime.
+diff --git a/Sparkle/SUOperatingSystem.m b/Sparkle/SUOperatingSystem.m
+index c024ab97..67e20dcb 100644
+--- a/Sparkle/SUOperatingSystem.m
++++ b/Sparkle/SUOperatingSystem.m
+@@ -32,7 +32,7 @@ + (NSOperatingSystemVersion)operatingSystemVersion
+         NSURL *url = [coreServices URLByAppendingPathComponent:@"SystemVersion.plist"];
+         assert(url != nil);
+         NSDictionary *dictionary = [NSDictionary dictionaryWithContentsOfURL:url];
+-        NSArray<NSString *> *components = [ (NSString *)[dictionary objectForKey: @"ProductVersion"] componentsSeparatedByString:@"."];
++        NSArray *components = [ (NSString *)[dictionary objectForKey: @"ProductVersion"] componentsSeparatedByString:@"."];
+         version.majorVersion = components.count > 0 ? [ [components objectAtIndex:0] integerValue] : 0;
+         version.minorVersion = components.count > 1 ? [ [components objectAtIndex:1] integerValue] : 0;
+         version.patchVersion = components.count > 2 ? [ [components objectAtIndex:2] integerValue] : 0;

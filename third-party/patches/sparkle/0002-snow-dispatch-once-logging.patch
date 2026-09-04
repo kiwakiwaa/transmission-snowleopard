@@ -1,0 +1,45 @@
+# Snow Leopard compatibility patch 0002
+#
+# Incompatibility: MacOSX10.6.sdk implements dispatch_once as a variadic macro,
+# so Clang rejects diagnostic pragmas nested inside its block argument.
+# Behaviour preserved: the same one-time ASL or os_log initialisation executes,
+# with the same availability warning suppressed over a slightly wider scope.
+# History: b9d11392 introduced thread-safe ASL and os_log initialisation;
+# a7ba0bea added the older-SDK ASL fallback. Neither changed dispatch ordering.
+# Public API evidence: dispatch/once.h in the 10.6 SDK exposes dispatch_once and
+# documents one-time execution. No private API or alternate logger is used.
+# Safety: only diagnostic directive placement changes. Log level, serialisation,
+# message content, and fail-closed client checks remain intact.
+diff --git a/Sparkle/SULog.m b/Sparkle/SULog.m
+index 0c1984f8..ac12542c 100644
+--- a/Sparkle/SULog.m
++++ b/Sparkle/SULog.m
+@@ -40,6 +40,8 @@ void SULog(SULogLevel level, NSString *format, ...)
+     static os_log_t logger;
+     static BOOL hasOSLogging;
+ 
++#pragma clang diagnostic push
++#pragma clang diagnostic ignored "-Wpartial-availability"
+     dispatch_once(&onceToken, ^{
+         NSBundle *mainBundle = [NSBundle mainBundle];
+ 
+@@ -50,11 +52,8 @@ void SULog(SULogLevel level, NSString *format, ...)
+ 
+         if (hasOSLogging) {
+             const char *subsystem = SPARKLE_BUNDLE_IDENTIFIER;
+-#pragma clang diagnostic push
+-#pragma clang diagnostic ignored "-Wpartial-availability"
+             // This creates a thread-safe object
+             logger = os_log_create(subsystem, "Sparkle");
+-#pragma clang diagnostic pop
+         } else {
+             uint32_t options = ASL_OPT_NO_DELAY;
+             // Act the same way os_log() does; don't log to stderr if a terminal device is attached
+@@ -67,6 +66,7 @@ void SULog(SULogLevel level, NSString *format, ...)
+             queue = dispatch_queue_create(NULL, DISPATCH_QUEUE_SERIAL);
+         }
+     });
++#pragma clang diagnostic pop
+ 
+     if (!hasOSLogging && client == NULL) {
+         return;

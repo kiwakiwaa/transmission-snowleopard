@@ -123,6 +123,16 @@ add_executable(${TR_NAME}-mac MACOSX_BUNDLE)
 
 set(TR_ENABLE_SPARKLE ON)
 
+if(TR_ENABLE_SPARKLE AND TR_USE_SOURCE_SPARKLE)
+    include(SparkleSourceBuild)
+    tr_add_sparkle_source_build()
+    set_property(TARGET ${TR_NAME}-mac PROPERTY TR_LIBARC_SUPPORT_DYNAMIC ON)
+    add_dependencies(${TR_NAME}-mac tr_sparkle)
+    set(TR_MACOS_FIXUP_IGNORED_DEPENDENCIES
+        "@rpath/Sparkle.framework/Versions/A/Sparkle"
+        "@executable_path/../Frameworks/libarc_support.dylib")
+endif()
+
 set(TR_MACOS_XIB_COMPAT_10_6 OFF)
 set(TR_MACOS_XIB_COMPAT_10_7 OFF)
 set(TR_MACOS_XIB_COMPAT_10_8 OFF)
@@ -880,27 +890,32 @@ endif()
 
 set(SPARKLE_LINK_LIBRARIES)
 if(TR_ENABLE_SPARKLE)
-    if(TR_MACOS_DEPLOYMENT_BEFORE_10_5)
-        set(TR_SPARKLE_FRAMEWORK_SEARCH_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Sparkle/1.5.0-beta6-i386)
-    elseif(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
-        if(TR_MACOS_HAS_I386_ARCH)
-            set(TR_SPARKLE_FRAMEWORK_SEARCH_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Sparkle/1.6.1-i386)
-        else()
-            set(TR_SPARKLE_FRAMEWORK_SEARCH_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Sparkle/1.6.1)
-        endif()
-    elseif(TR_MACOS_DEPLOYMENT_BEFORE_10_9)
-        set(TR_SPARKLE_FRAMEWORK_SEARCH_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Sparkle/1.24.0)
+    if(TR_USE_SOURCE_SPARKLE)
+        set(SPARKLE_FRAMEWORK ${TR_SPARKLE_FRAMEWORK_PATH})
+        set(SPARKLE_LINK_LIBRARIES ${SPARKLE_FRAMEWORK})
     else()
-        set(TR_SPARKLE_FRAMEWORK_SEARCH_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-    endif()
+        if(TR_MACOS_DEPLOYMENT_BEFORE_10_5)
+            set(TR_SPARKLE_FRAMEWORK_SEARCH_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Sparkle/1.5.0-beta6-i386)
+        elseif(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
+            if(TR_MACOS_HAS_I386_ARCH)
+                set(TR_SPARKLE_FRAMEWORK_SEARCH_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Sparkle/1.6.1-i386)
+            else()
+                set(TR_SPARKLE_FRAMEWORK_SEARCH_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Sparkle/1.6.1)
+            endif()
+        elseif(TR_MACOS_DEPLOYMENT_BEFORE_10_9)
+            set(TR_SPARKLE_FRAMEWORK_SEARCH_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Sparkle/1.24.0)
+        else()
+            set(TR_SPARKLE_FRAMEWORK_SEARCH_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+        endif()
 
-    find_library(SPARKLE_FRAMEWORK Sparkle
-        PATHS ${TR_SPARKLE_FRAMEWORK_SEARCH_PATH}
-        NO_DEFAULT_PATHS)
-    if(NOT SPARKLE_FRAMEWORK)
-        message(FATAL_ERROR "Sparkle.framework not found in ${TR_SPARKLE_FRAMEWORK_SEARCH_PATH}")
+        find_library(SPARKLE_FRAMEWORK Sparkle
+            PATHS ${TR_SPARKLE_FRAMEWORK_SEARCH_PATH}
+            NO_DEFAULT_PATHS)
+        if(NOT SPARKLE_FRAMEWORK)
+            message(FATAL_ERROR "Sparkle.framework not found in ${TR_SPARKLE_FRAMEWORK_SEARCH_PATH}")
+        endif()
+        set(SPARKLE_LINK_LIBRARIES ${SPARKLE_FRAMEWORK} "-weak_framework Sparkle")
     endif()
-    set(SPARKLE_LINK_LIBRARIES ${SPARKLE_FRAMEWORK} "-weak_framework Sparkle")
 endif()
 
 target_link_libraries(${TR_NAME}-mac
@@ -943,6 +958,16 @@ if(TR_ENABLE_SPARKLE AND NOT CMAKE_GENERATOR STREQUAL Xcode)
         COMMAND /usr/bin/ditto "${SPARKLE_FRAMEWORK}" "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/Frameworks/Sparkle.framework")
 endif()
 
+if(TR_ENABLE_SPARKLE AND TR_USE_SOURCE_SPARKLE AND NOT CMAKE_GENERATOR STREQUAL Xcode)
+    add_custom_command(
+        TARGET ${TR_NAME}-mac
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:arc_support>"
+            "$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>/Contents/Frameworks/libarc_support.dylib"
+        VERBATIM)
+endif()
+
 if(TR_MACOS_BUNDLE_COMPATIBILITY_DEPENDENCIES AND NOT CMAKE_GENERATOR STREQUAL Xcode)
     add_custom_command(
         TARGET ${TR_NAME}-mac
@@ -952,7 +977,22 @@ if(TR_MACOS_BUNDLE_COMPATIBILITY_DEPENDENCIES AND NOT CMAKE_GENERATOR STREQUAL X
             "-DTR_BUNDLE_DIR=$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>"
             "-DTR_BUNDLE_ITEMS=Contents/MacOS/${MAC_BUNDLE_NAME}"
             "-DTR_DEP_DIRS=${TR_MACOS_COMPATIBILITY_BUNDLE_DEP_DIRS}"
+            "-DTR_FIXUP_BUNDLE_IGNORED_DEPENDENCIES=${TR_MACOS_FIXUP_IGNORED_DEPENDENCIES}"
+            "-DTR_INSTALL_NAME_TOOL_EXECUTABLE=${CMAKE_INSTALL_NAME_TOOL}"
             -P "${PROJECT_SOURCE_DIR}/cmake/FixupMacOSBundle.cmake"
+        VERBATIM)
+endif()
+
+if(TR_ENABLE_SPARKLE AND TR_USE_SOURCE_SPARKLE AND NOT CMAKE_GENERATOR STREQUAL Xcode)
+    add_custom_command(
+        TARGET ${TR_NAME}-mac
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND}
+            "-DTR_APP_BUNDLE=$<TARGET_BUNDLE_DIR:${TR_NAME}-mac>"
+            "-DTR_APP_EXECUTABLE=${MAC_BUNDLE_NAME}"
+            "-DTR_NM_EXECUTABLE=${CMAKE_NM}"
+            "-DTR_OTOOL_EXECUTABLE=${TR_SPARKLE_OTOOL_EXECUTABLE}"
+            -P "${PROJECT_SOURCE_DIR}/cmake/VerifyTransmissionSparkleARCClosure.cmake"
         VERBATIM)
 endif()
 
@@ -979,6 +1019,7 @@ endif()
 set_target_properties(
     ${TR_NAME}-mac
     PROPERTIES
+        BUILD_RPATH "@executable_path;@executable_path/../Frameworks"
         INSTALL_RPATH "@executable_path;@executable_path/../Frameworks"
         MACOSX_BUNDLE_GUI_IDENTIFIER "org.m0k.transmission"
         MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in
@@ -997,6 +1038,10 @@ install(CODE
     "list(APPEND CMAKE_MODULE_PATH \"${PROJECT_SOURCE_DIR}/cmake\")
     include(TrMacros)
     include(GetPrerequisites)
+    set(TR_INSTALL_NAME_TOOL_EXECUTABLE \"${CMAKE_INSTALL_NAME_TOOL}\")
+    set(TR_FIXUP_BUNDLE_IGNORED_DEPENDENCIES
+        \"${TR_MACOS_FIXUP_IGNORED_DEPENDENCIES}\")
     tr_fixup_bundle_item(
         \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/Applications/${MAC_BUNDLE_NAME}.app\"
-        \"Contents/MacOS/${MAC_BUNDLE_NAME}\" \"${TR_MACOS_COMPATIBILITY_INSTALL_BUNDLE_DEP_DIRS};${CMAKE_CURRENT_SOURCE_DIR}\")")
+        \"Contents/MacOS/${MAC_BUNDLE_NAME}\"
+        \"${TR_MACOS_COMPATIBILITY_INSTALL_BUNDLE_DEP_DIRS};${CMAKE_CURRENT_SOURCE_DIR}\")")

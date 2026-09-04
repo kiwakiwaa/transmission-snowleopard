@@ -1,0 +1,38 @@
+# Deterministic overlay metadata patch 0035
+#
+# Incompatibility: the generated build overlay intentionally contains no .git,
+# so Sparkle's version phase cannot reproduce the clean pinned tag description.
+# Behaviour preserved: tagged builds retain MARKETING_VERSION, while an explicit
+# non-tag description still appends the same commit-count and hash suffix.
+# History: ec5b2a22 introduced Git metadata. fb22a01a stopped adding a hash for
+# tagged releases. 83759227 made missing Git non-fatal. 8f7fad4d retained the
+# suffix algorithm while moving to MARKETING_VERSION.
+# Public API evidence: Xcode exposes user build settings to run-script phases.
+# The project supplies the validated upstream tag, never data from the overlay.
+# Safety: ordinary upstream Git builds are unchanged. Only an explicit build
+# setting bypasses Git, and the existing suffix and plist logic remain intact.
+diff --git a/Configurations/set-git-version-info.sh b/Configurations/set-git-version-info.sh
+--- a/Configurations/set-git-version-info.sh
++++ b/Configurations/set-git-version-info.sh
+@@ -1,7 +1,7 @@
+ #!/bin/sh
+ set -e
+ 
+-if ! which -s git ; then
++if [ -z "${SPARKLE_GIT_DESCRIBE:-}" ] && ! which -s git ; then
+     exit 0
+ fi
+ 
+@@ -16,7 +16,11 @@
+ version="$MARKETING_VERSION"
+ 
+ # Get version in format 1.x.x-commits-hash
+-gitversion=$( cd "$SRCROOT"; git describe --tags --match '[12].*' || true )
++if [ -n "${SPARKLE_GIT_DESCRIBE:-}" ]; then
++    gitversion="$SPARKLE_GIT_DESCRIBE"
++else
++    gitversion=$( cd "$SRCROOT"; git describe --tags --match '[12].*' || true )
++fi
+ if [ -z "$gitversion" ] ; then
+     echo "$0: Can't find a Git hash!" 1>&2
+     exit 0
