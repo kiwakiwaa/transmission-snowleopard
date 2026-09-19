@@ -4,7 +4,7 @@
 
 #import <AppKit/AppKit.h>
 #include <libtransmission/macos-version.h>
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
 #import <Quartz/Quartz.h>
 #endif
 
@@ -62,7 +62,7 @@ typedef NS_ENUM(NSUInteger, AddType) { //
                             NSSoundDelegate,
                             NSToolbarDelegate,
                             NSWindowDelegate,
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
                             QLPreviewPanelDataSource,
                             QLPreviewPanelDelegate,
 #endif
@@ -104,7 +104,7 @@ typedef NS_ENUM(NSUInteger, AddType) { //
     NSTimer* _fTimer;
     StatusBarController* _fStatusBar;
     FilterBarController* _fFilterBar;
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5 // disable QuickLook for 10.4
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
     QLPreviewPanel* _fPreviewPanel;
 #endif
     BOOL _fQuitting;

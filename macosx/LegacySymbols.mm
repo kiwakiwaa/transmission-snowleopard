@@ -290,7 +290,7 @@ NSImage* TRImageForSystemSymbol(NSString* symbolName, NSString* description)
     NSImage* fallbackImage = TRLegacySystemSymbolImage(symbolName);
     if (fallbackImage != nil)
     {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_6 && !TR_MACOS_SDK_BEFORE_10_6
         fallbackImage.accessibilityDescription = description;
 #endif
         return fallbackImage;

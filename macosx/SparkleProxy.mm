@@ -19,7 +19,7 @@ void SUUpdater_checkForUpdates(id /*self*/, SEL /*_cmd*/, ...)
         alert.messageText = LocalizationNotNeeded(@"Sparkle not configured");
         alert.informativeText = [NSString
             stringWithFormat:@"App needs to be codesigned for Development to support Sparkle with Hardened Runtime. Alternatively, re-codesign without the Hardened Runtime option: `sudo codesign -s - %@`",
-                             NSBundle.mainBundle.bundleURL.lastPathComponent];
+                             NSBundle.mainBundle.bundlePath.lastPathComponent];
         [alert runModal];
     });
 }

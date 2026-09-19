@@ -42,13 +42,13 @@ extern "C" URegularExpression* uregex_clone(URegularExpression const* regex, UEr
 extern "C" void uregex_close(URegularExpression* regex);
 extern "C" int32_t uregex_groupCount(URegularExpression* regex, UErrorCode* status);
 extern "C" void uregex_setText(URegularExpression* regex, UChar const* text, int32_t textLength, UErrorCode* status);
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5 && !TR_MACOS_SDK_BEFORE_10_6
 extern "C" void uregex_setRegion(URegularExpression* regex, int32_t regionStart, int32_t regionLimit, UErrorCode* status);
 #endif
 extern "C" UBool uregex_findNext(URegularExpression* regex, UErrorCode* status);
 extern "C" int32_t uregex_start(URegularExpression* regex, int32_t groupNum, UErrorCode* status);
 extern "C" int32_t uregex_end(URegularExpression* regex, int32_t groupNum, UErrorCode* status);
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5 && !TR_MACOS_SDK_BEFORE_10_6
 extern "C" UBool uregex_hitEnd(URegularExpression* regex, UErrorCode* status);
 extern "C" UBool uregex_requireEnd(URegularExpression* regex, UErrorCode* status);
 extern "C" void uregex_useAnchoringBounds(URegularExpression* regex, UBool b, UErrorCode* status);
@@ -176,7 +176,7 @@ void TRRaiseRangeException(id self, SEL selector)
 
 [[nodiscard]] NSMatchingFlags TRMatchFlags(URegularExpression* regex)
 {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5 || TR_MACOS_SDK_BEFORE_10_6
     (void)regex;
     return 0;
 #else
@@ -198,7 +198,7 @@ void TRRaiseRangeException(id self, SEL selector)
 #endif
 }
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5 && !TR_MACOS_SDK_BEFORE_10_6
 struct TRMatchCallbackContext
 {
     TRNSMatchingBlock block;
@@ -728,7 +728,7 @@ static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(NSRange
         goto completion;
     }
 
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5 || TR_MACOS_SDK_BEFORE_10_6
     characters = TRCopyCharactersInRange(string, range, &stringLength);
     resultOffset = range.location;
 #else
@@ -743,7 +743,7 @@ static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(NSRange
 
     status = U_ZERO_ERROR;
     uregex_setText(regex, characters, stringLength, &status);
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5 && !TR_MACOS_SDK_BEFORE_10_6
     uregex_setRegion(regex, static_cast<int32_t>(range.location), static_cast<int32_t>(NSMaxRange(range)), &status);
     if ((options & NSMatchingWithTransparentBounds) != 0)
     {
@@ -855,7 +855,7 @@ static NSTextCheckingResult* TRRegularExpressionCheckingResultWithRanges(NSRange
 
     if ((options & NSMatchingReportProgress) != 0)
     {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5 && !TR_MACOS_SDK_BEFORE_10_6
         status = U_ZERO_ERROR;
         uregex_setMatchCallback(regex, nullptr, nullptr, &status);
         if (TRSetFindProgressCallbackFunc findProgressCallback = TRGetSetFindProgressCallback())

@@ -435,7 +435,7 @@ static NSString* TRFileOutlinePathTooltip(FileListNode* node)
 - (void)outlineViewSelectionDidChange:(NSNotification*)notification
 {
     [self reloadVisibleRows];
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
     if ([QLPreviewPanel sharedPreviewPanelExists] && [[QLPreviewPanel sharedPreviewPanel] isVisible])
     {
         [[QLPreviewPanel sharedPreviewPanel] reloadData];

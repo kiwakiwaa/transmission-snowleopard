@@ -203,7 +203,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 
     //set tab images and tooltips
     void (^setImageAndToolTipForSegment)(NSImage*, NSString*, NSInteger) = ^(NSImage* image, NSString* toolTip, NSInteger segment) {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_6 && !TR_MACOS_SDK_BEFORE_10_6
         image.accessibilityDescription = toolTip;
 #endif
         [self.fTabs setImage:image forSegment:segment];
@@ -641,7 +641,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
 
 - (void)windowWillClose:(NSNotification*)notification
 {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
     if (self.fCurrentTabTag == TabTagFile && ([QLPreviewPanel sharedPreviewPanelExists] && [[QLPreviewPanel sharedPreviewPanel] isVisible]))
     {
         [[QLPreviewPanel sharedPreviewPanel] reloadData];
@@ -918,7 +918,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
                                                                  views:@{ @"tabs" : self.fTabs, @"view" : view }]];
 #endif
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
     if ((self.fCurrentTabTag == TabTagFile || oldTabTag == TabTagFile) &&
         ([QLPreviewPanel sharedPreviewPanelExists] && [[QLPreviewPanel sharedPreviewPanel] isVisible]))
     {
@@ -980,7 +980,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
     [self.fOptionsViewController updateOptions];
 }
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
 - (NSArray*)quickLookURLs
 {
     return self.fFileViewController.quickLookURLs;
@@ -1092,7 +1092,7 @@ typedef NS_ENUM(NSUInteger, TabTag) {
         }
         else
         {
-#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_6 || TR_MACOS_SDK_BEFORE_10_6
             self.fImageView.image = [NSImage imageNamed:@"NSApplicationIcon"];
 #else
             self.fImageView.image = [NSImage imageNamed:NSImageNameApplicationIcon];

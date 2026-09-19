@@ -30,7 +30,9 @@
 #endif
         formatter.dateStyle = NSDateFormatterFullStyle;
         formatter.timeStyle = NSDateFormatterShortStyle;
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_6 && !TR_MACOS_SDK_BEFORE_10_6
         formatter.doesRelativeDateFormatting = YES;
+#endif
         formatter.timeZone = NSTimeZone.localTimeZone;
     });
     return formatter;

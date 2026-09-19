@@ -4,7 +4,7 @@
 
 #import <AppKit/AppKit.h>
 #include <libtransmission/macos-version.h>
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
 #import <Quartz/Quartz.h>
 #endif
 
@@ -25,7 +25,7 @@
 }
 #endif
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
 @property(nonatomic, readonly) NSArray* quickLookURLs;
 @property(nonatomic, readonly) BOOL canQuickLook;
 #endif
@@ -39,7 +39,7 @@
 - (IBAction)checkAll:(id)sender;
 - (IBAction)uncheckAll:(id)sender;
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
 - (NSRect)quickLookSourceFrameForPreviewItem:(id<QLPreviewItem>)item;
 #endif
 

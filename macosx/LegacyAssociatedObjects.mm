@@ -197,7 +197,8 @@ Class TRClassSuperclass(Class cls)
     }
 
     struct objc_class* runtimeClass = (__bridge struct objc_class*)cls;
-    return (__bridge Class)runtimeClass->super_class;
+    Class const superclass = runtimeClass->super_class;
+    return superclass;
 }
 
 Method TROwnMethod(Class cls, SEL selector)

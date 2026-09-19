@@ -107,7 +107,7 @@ static ToolbarItemIdentifier const ToolbarItemIdentifierPauseSelected = @"Toolba
 static ToolbarItemIdentifier const ToolbarItemIdentifierResumeSelected = @"Toolbar Resume Selected";
 static ToolbarItemIdentifier const ToolbarItemIdentifierPauseResumeSelected = @"Toolbar Pause / Resume Selected";
 static ToolbarItemIdentifier const ToolbarItemIdentifierFilter = @"Toolbar Toggle Filter";
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
 static ToolbarItemIdentifier const ToolbarItemIdentifierQuickLook = @"Toolbar QuickLook";
 #endif
 static ToolbarItemIdentifier const ToolbarItemIdentifierShare = @"Toolbar Share";
@@ -512,7 +512,7 @@ static void removeKeRangerRansomware()
 
 @property(nonatomic) FilterBarController* fFilterBar;
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
 @property(nonatomic) QLPreviewPanel* fPreviewPanel;
 #endif
 @property(nonatomic) BOOL fQuitting;
@@ -588,7 +588,7 @@ static void removeKeRangerRansomware()
 @synthesize fTimer = _fTimer;
 @synthesize fStatusBar = _fStatusBar;
 @synthesize fFilterBar = _fFilterBar;
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
 @synthesize fPreviewPanel = _fPreviewPanel;
 #endif
 @synthesize fQuitting = _fQuitting;
@@ -1338,7 +1338,7 @@ static void removeKeRangerRansomware()
     //remember window states
     [self.fDefaults setBool:[self.fInfoController.window isVisible] forKey:@"InfoVisible"];
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
     if ([QLPreviewPanel sharedPreviewPanelExists] && [[QLPreviewPanel sharedPreviewPanel] isVisible])
     {
         [[QLPreviewPanel sharedPreviewPanel] updateController];
@@ -2735,7 +2735,7 @@ static void removeKeRangerRansomware()
         [self.fInfoController updateInfoStats];
         [self.fInfoController.window makeKeyAndOrderFront:nil];
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
         if (self.fInfoController.canQuickLook && [QLPreviewPanel sharedPreviewPanelExists] && [[QLPreviewPanel sharedPreviewPanel] isVisible])
         {
             [[QLPreviewPanel sharedPreviewPanel] reloadData];
@@ -2750,7 +2750,7 @@ static void removeKeRangerRansomware()
 {
     [self.fInfoController setInfoForTorrents:self.fTableView.selectedTorrents];
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
     if ([QLPreviewPanel sharedPreviewPanelExists] && [[QLPreviewPanel sharedPreviewPanel] isVisible])
     {
         [[QLPreviewPanel sharedPreviewPanel] reloadData];
@@ -4761,7 +4761,7 @@ static void removeKeRangerRansomware()
     [self.fFilterBar focusSearchField];
 }
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
 - (BOOL)acceptsPreviewPanelControl:(QLPreviewPanel*)panel
 {
     return !self.fQuitting;
@@ -5146,7 +5146,7 @@ static void removeKeRangerRansomware()
 
         return item;
     }
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
     else if ([ident isEqualToString:ToolbarItemIdentifierQuickLook])
     {
         ButtonToolbarItem* item = [self standardToolbarButtonWithIdentifier:ident];
@@ -5226,7 +5226,7 @@ static void removeKeRangerRansomware()
         ToolbarItemIdentifierPauseResumeSelected,
         ToolbarItemIdentifierPauseResumeAll,
         ToolbarItemIdentifierShare,
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
         ToolbarItemIdentifierQuickLook,
 #endif
         ToolbarItemIdentifierFilter,
@@ -5246,7 +5246,7 @@ static void removeKeRangerRansomware()
         ToolbarItemIdentifierPauseResumeAll,
         NSToolbarFlexibleSpaceItemIdentifier,
         ToolbarItemIdentifierShare,
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
         ToolbarItemIdentifierQuickLook,
 #endif
         ToolbarItemIdentifierFilter,
@@ -5331,7 +5331,7 @@ static void removeKeRangerRansomware()
         return YES;
     }
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
     //set quick look item
     if ([ident isEqualToString:ToolbarItemIdentifierQuickLook])
     {
@@ -5788,7 +5788,7 @@ static void removeKeRangerRansomware()
 
     if (action == @selector(toggleQuickLook:))
     {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
         BOOL const visible = [QLPreviewPanel sharedPreviewPanelExists] && [[QLPreviewPanel sharedPreviewPanel] isVisible];
         //text consistent with Finder
         NSString* title = !visible ? NSLocalizedString(@"Quick Look", "View menu -> Quick Look") :
@@ -6173,7 +6173,7 @@ static void removeKeRangerRansomware()
 
 - (void)toggleQuickLook:(id)sender
 {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
     if ([[QLPreviewPanel sharedPreviewPanel] isVisible])
     {
         [[QLPreviewPanel sharedPreviewPanel] orderOut:nil];

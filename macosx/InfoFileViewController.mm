@@ -133,7 +133,7 @@
 
 - (void)keyDown:(NSEvent*)event
 {
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
     unichar const firstChar = [event.charactersIgnoringModifiers characterAtIndex:0];
     if (firstChar == ' ')
     {
@@ -146,7 +146,7 @@
     }
 }
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
 - (void)toggleQuickLook:(id)sender
 {
     if ([[QLPreviewPanel sharedPreviewPanel] isVisible])
@@ -271,7 +271,7 @@
     self.fSet = YES;
 }
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
 - (BOOL)canQuickLookFile:(FileListNode*)item
 {
     Torrent* torrent = self.fTorrents[0];

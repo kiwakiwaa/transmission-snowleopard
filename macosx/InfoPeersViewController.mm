@@ -6,6 +6,10 @@
 
 #import "InfoPeersViewController.h"
 #import "CocoaCompatibility.h"
+
+#if !TR_MACOS_SDK_BEFORE_10_5
+#import <QuartzCore/QuartzCore.h>
+#endif
 #import "NSStringAdditions.h"
 #import "PeerProgressIndicatorCell.h"
 #import "Torrent.h"

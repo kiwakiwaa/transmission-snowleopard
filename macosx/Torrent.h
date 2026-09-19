@@ -4,7 +4,7 @@
 
 #import <Foundation/Foundation.h>
 #include <libtransmission/macos-version.h>
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
 #import <Quartz/Quartz.h>
 #endif
 
@@ -17,7 +17,7 @@ typedef NS_ENUM(NSUInteger, TorrentDeterminationType) { TorrentDeterminationAuto
 extern NSString* const kTorrentDidChangeGroupNotification;
 
 @interface Torrent : NSObject<NSCopying
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if TR_MACOS_HAS_QUICKLOOK_PREVIEW_PANEL
                               ,
                               QLPreviewItem
 #endif

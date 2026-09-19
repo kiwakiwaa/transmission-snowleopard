@@ -2228,7 +2228,7 @@ static tr_torrent_rename_done_func makeRenameDoneCallback(NSDictionary* contextI
             NSDictionary* statusInfo = @{@"Status" : @(status), @"WasRunning" : @(wasRunning)};
             [NSNotificationCenter.defaultCenter postNotificationName:@"TorrentFinishedDownloading" object:self userInfo:statusInfo];
 
-#if !TR_MACOS_DEPLOYMENT_BEFORE_10_5
+#if !TR_MACOS_DEPLOYMENT_BEFORE_10_6 && !TR_MACOS_SDK_BEFORE_10_6
             //quarantine the finished data
             NSString* dataLocation = [self.currentDirectory stringByAppendingPathComponent:self.name];
             NSURL* dataLocationUrl = [NSURL fileURLWithPath:dataLocation];
