@@ -29,6 +29,13 @@
 #import "LegacySheets.h"
 #import "LegacyViewController.h"
 
+#if TR_MACOS_SDK_BEFORE_10_7
+static inline uint32_t arc4random_uniform(uint32_t upper_bound)
+{
+    return upper_bound == 0 ? 0 : arc4random() % upper_bound;
+}
+#endif
+
 #ifndef TR_MACOS_OBJC_FRAGILE_RUNTIME
 #define TR_MACOS_OBJC_FRAGILE_RUNTIME 0
 #endif
