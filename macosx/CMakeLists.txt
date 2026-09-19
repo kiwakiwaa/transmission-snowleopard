@@ -486,9 +486,9 @@ if(NOT TR_MACOS_USES_COMPAT_STACK_XIBS)
 endif()
 
 set(TR_DOCUMENT_ICON_NAME TransmissionDocument)
-if(TR_MACOS_DEPLOYMENT_BEFORE_10_5)
-    # Tiger's Icon Services cannot decode the PNG-backed large representations
-    # in the modern document icon.
+if(TR_MACOS_DEPLOYMENT_BEFORE_10_6)
+    # Tiger and Leopard Icon Services cannot decode the PNG-backed large
+    # representations in the modern document icon.
     set(TR_DOCUMENT_ICON_NAME TransmissionDocumentTiger)
 endif()
 
@@ -642,7 +642,7 @@ else()
 endif()
 
 if(TR_MACOS_USE_SOURCE_IMAGE_ASSETS)
-    if(TR_MACOS_DEPLOYMENT_BEFORE_10_5)
+    if(TR_MACOS_DEPLOYMENT_BEFORE_10_6)
         set(TR_APPICON_COMMAND
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 "${CMAKE_CURRENT_SOURCE_DIR}/Images/Transmission.icns"

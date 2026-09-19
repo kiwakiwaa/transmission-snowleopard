@@ -6,7 +6,7 @@
 
 #include <libtransmission/macos-version.h>
 
-#if TR_MACOS_SDK_BEFORE_10_5
+#if TR_MACOS_SDK_BEFORE_10_6
 #define NSImageNamePreferencesGeneral @"NSPreferencesGeneral"
 #define NSImageNameUserGroup @"NSUserGroup"
 #define NSImageNameNetwork @"NSNetwork"
@@ -167,6 +167,9 @@ enum
 @property(nonatomic, readonly) NSButton* suppressionButton;
 @end
 
+#endif
+
+#if TR_MACOS_SDK_BEFORE_10_6
 @interface NSCache : NSObject
 {
   @private
@@ -175,9 +178,7 @@ enum
 - (id)objectForKey:(id)key;
 - (void)setObject:(id)object forKey:(id)key;
 @end
-#endif
 
-#if TR_MACOS_SDK_BEFORE_10_6
 @protocol NSApplicationDelegate
 @end
 
@@ -281,7 +282,9 @@ enum
 @end
 
 @interface NSTableView (TRLegacyReloadDeclarations)
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
 - (NSCell*)preparedCellAtColumn:(NSInteger)column row:(NSInteger)row;
+#endif
 - (void)reloadDataForRowIndexes:(NSIndexSet*)rowIndexes columnIndexes:(NSIndexSet*)columnIndexes;
 @end
 #endif
@@ -375,11 +378,6 @@ static NSTableViewAnimationOptions const NSTableViewAnimationEffectFade = 0;
 #define NSWindowCollectionBehaviorFullScreenPrimary NSWindowCollectionBehaviorFullScreenNone
 #endif
 #endif
-
-static inline uint32_t arc4random_uniform(uint32_t upper_bound)
-{
-    return upper_bound == 0 ? 0 : arc4random() % upper_bound;
-}
 
 #undef NSAssert
 #define NSAssert(condition, desc, ...) \

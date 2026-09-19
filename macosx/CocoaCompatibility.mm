@@ -68,6 +68,9 @@ void TRInstallTigerNamedImageFallbacks(void)
     TRRegisterTigerNamedImage(yellowDot, @"YellowDot", registry);
 }
 
+#endif
+
+#if TR_MACOS_SDK_BEFORE_10_6
 @implementation NSCache
 - (id)init
 {
@@ -177,6 +180,49 @@ void TRInstallTigerNamedImageFallbacks(void)
 - (void)awakeFromNib
 {
 }
+@end
+
+// Modern ibtool emits this connector for user-defined runtime attributes.
+// Leopard's AppKit does not provide the class, so those NIBs otherwise lose
+// the connection step while being unarchived.
+@interface NSIBUserDefinedRuntimeAttributesConnector : NSObject
+{
+    id _object;
+    NSArray* _keyPaths;
+    NSArray* _values;
+}
+@end
+
+@implementation NSIBUserDefinedRuntimeAttributesConnector
+
+- (instancetype)initWithCoder:(NSCoder*)coder
+{
+    if ((self = [super init]))
+    {
+        _object = [coder decodeObjectForKey:@"NSObject"];
+        _keyPaths = [coder decodeObjectForKey:@"NSKeyPaths"];
+        _values = [coder decodeObjectForKey:@"NSValues"];
+    }
+    return self;
+}
+
+- (void)establishConnection
+{
+    NSUInteger const count = MIN(_keyPaths.count, _values.count);
+    for (NSUInteger index = 0; index < count; ++index)
+    {
+        [_object setValue:[_values objectAtIndex:index] forKeyPath:[_keyPaths objectAtIndex:index]];
+    }
+}
+
+- (void)replaceObject:(id)oldObject withObject:(id)newObject
+{
+    if (_object == oldObject)
+    {
+        _object = newObject;
+    }
+}
+
 @end
 
 @implementation NSCell (TRLegacySingleLineModeDeclarations)
@@ -354,9 +400,20 @@ void TRInstallTigerNamedImageFallbacks(void)
     respectFlipped:(BOOL)respectFlipped
              hints:(NSDictionary*)hints
 {
-    (void)respectFlipped;
     (void)hints;
-    [self drawInRect:rect fromRect:fromRect operation:operation fraction:fraction];
+
+    if (respectFlipped)
+    {
+        // Pre-Snow-Leopard AppKit has no respectFlipped: parameter. Draw a
+        // flipped copy because workspace icons are shared between views.
+        NSImage* image = [self copy];
+        [image setFlipped:YES];
+        [image drawInRect:rect fromRect:fromRect operation:operation fraction:fraction];
+    }
+    else
+    {
+        [self drawInRect:rect fromRect:fromRect operation:operation fraction:fraction];
+    }
 }
 
 @end
@@ -450,12 +507,14 @@ void TRInstallTigerNamedImageFallbacks(void)
 
 @implementation NSTableView (TRLegacyReloadDeclarations)
 
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
 - (NSCell*)preparedCellAtColumn:(NSInteger)column row:(NSInteger)row
 {
     (void)row;
     NSTableColumn* tableColumn = [[self tableColumns] objectAtIndex:column];
     return [tableColumn dataCell];
 }
+#endif
 
 - (void)reloadDataForRowIndexes:(NSIndexSet*)rowIndexes columnIndexes:(NSIndexSet*)columnIndexes
 {
