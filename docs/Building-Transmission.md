@@ -2,12 +2,12 @@
 The source code for both official and nightly releases can be found on our [download page](https://transmissionbt.com/download/).
 
 ## On macOS ##
-While the prerequisites for running the app are:
- * macOS 11.0 or newer
+For the default modern build, the prerequisites for running the app are:
+ * macOS 12.0 or newer
 
-The actual software prerequisites for building the app are based on GitHub Actions [macos-14](https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md):
+The software prerequisites for building the modern app are based on GitHub Actions [macos-14](https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md):
  * macOS 14.8.3 or newer
- * Xcode 15.0.1 or newer
+ * Xcode 26 or newer
 
 Building the project on Mac requires the source to be retrieved from GitHub. Pre-packaged source code will not compile.
 ```bash
@@ -30,7 +30,7 @@ cmake --build build -t transmission-mac
 open ./build/macosx/Transmission.app
 ```
 
-For opt-in legacy macOS compatibility builds, see the [Mac OS X 10.6](macOS-10.6.md) notes and the shared [10.7 through 10.13 compatibility build notes](macOS-Legacy.md).
+For opt-in legacy macOS compatibility builds, see the [Mac OS X 10.6](macOS-10.6.md) notes and the shared [10.7 through 10.13 compatibility build notes](macOS-Legacy.md). These CMake builds use an explicit `CMAKE_OSX_DEPLOYMENT_TARGET` and the legacy toolchains described there. The modern build requirements above do not apply to them.
 
 ### Building the GTK app with CMake ###
 Install GTK and build the app:
