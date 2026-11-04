@@ -522,8 +522,6 @@ static CGFloat TRLegacySettingsLabelWidth(NSTextField* label, CGFloat minimumWid
 
 - (void)updateFiles
 {
-    [self.torrent update];
-
     [self.fFileController reloadVisibleRows];
 
     [self updateCheckButtons:nil]; //call in case button state changed by checking

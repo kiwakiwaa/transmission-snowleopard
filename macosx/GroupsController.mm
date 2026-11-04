@@ -52,9 +52,344 @@ static NSString* TRSupportedAnnouncedClientIdentity(NSString* value)
     return nil;
 }
 
+// Store rules as bounded data trees. Archived predicate objects must never be
+// evaluated, even on Foundation versions without secure unarchiving support.
+static NSUInteger const kAutoGroupRuleMaxDepth = 8;
+static NSUInteger const kAutoGroupRuleMaxChildren = 32;
+static NSUInteger const kAutoGroupRuleMaxTotalNodes = 256;
+
+static NSSet* allowedAutoGroupRuleKeyPaths(void)
+{
+    static NSSet* keyPaths;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        // Keep this list aligned with the rule editor templates.
+        keyPaths = [NSSet setWithObjects:@"name", @"comment", @"flatFileList.name", @"allTrackersFlat", nil];
+    });
+    return keyPaths;
+}
+
+static BOOL autoGroupRuleOperatorIsAllowed(NSPredicateOperatorType type)
+{
+    switch (type)
+    {
+    case NSEqualToPredicateOperatorType:
+    case NSNotEqualToPredicateOperatorType:
+    case NSBeginsWithPredicateOperatorType:
+    case NSEndsWithPredicateOperatorType:
+    case (NSPredicateOperatorType)99:
+    case NSMatchesPredicateOperatorType:
+        return YES;
+    case NSLessThanPredicateOperatorType:
+    case NSLessThanOrEqualToPredicateOperatorType:
+    case NSGreaterThanPredicateOperatorType:
+    case NSGreaterThanOrEqualToPredicateOperatorType:
+    case NSLikePredicateOperatorType:
+    case NSInPredicateOperatorType:
+    case NSCustomSelectorPredicateOperatorType:
+#if !TR_MACOS_SDK_BEFORE_10_5
+    case NSBetweenPredicateOperatorType:
+#endif
+        return NO;
+    }
+    return NO;
+}
+
+static BOOL autoGroupRuleModifierIsAllowed(NSComparisonPredicateModifier modifier)
+{
+    return modifier == NSDirectPredicateModifier || modifier == NSAllPredicateModifier || modifier == NSAnyPredicateModifier;
+}
+
+static BOOL autoGroupRuleOptionsAreAllowed(NSUInteger options)
+{
+    return (options & ~(NSCaseInsensitivePredicateOption | NSDiacriticInsensitivePredicateOption)) == 0;
+}
+
+static BOOL autoGroupRuleCompoundTypeIsAllowed(NSCompoundPredicateType type)
+{
+    return type == NSNotPredicateType || type == NSAndPredicateType || type == NSOrPredicateType;
+}
+
+static NSDictionary* safeSchemaFromArchivedAutoGroupRule(NSDictionary*, NSUInteger, NSUInteger*);
+static NSPredicate* autoGroupPredicateFromSafeSchema(NSDictionary*, NSUInteger, NSUInteger*);
+
+static NSDictionary* safeSchemaFromAutoGroupPredicate(NSPredicate* predicate, NSUInteger depth, NSUInteger* remainingNodeBudget)
+{
+    if (depth > kAutoGroupRuleMaxDepth || *remainingNodeBudget == 0)
+    {
+        return nil;
+    }
+    (*remainingNodeBudget)--;
+
+    if ([predicate isKindOfClass:NSCompoundPredicate.class])
+    {
+        NSCompoundPredicate* compound = (NSCompoundPredicate*)predicate;
+        if (!autoGroupRuleCompoundTypeIsAllowed(compound.compoundPredicateType) || compound.subpredicates.count > kAutoGroupRuleMaxChildren)
+        {
+            return nil;
+        }
+
+        NSMutableArray* subSchemas = [NSMutableArray arrayWithCapacity:compound.subpredicates.count];
+        for (NSPredicate* subPredicate in compound.subpredicates)
+        {
+            NSDictionary* subSchema = safeSchemaFromAutoGroupPredicate(subPredicate, depth + 1, remainingNodeBudget);
+            if (!subSchema)
+            {
+                return nil;
+            }
+            [subSchemas addObject:subSchema];
+        }
+
+        // Mutable containers keep the schema readable by older builds.
+        return
+            [@{@"Type" : @"Compound",
+               @"Compound" : @(compound.compoundPredicateType),
+               @"Subpredicates" : subSchemas} mutableCopy];
+    }
+
+    predicate = TRNativePredicateFromLegacyContainsPredicate(predicate);
+    if ([predicate isKindOfClass:TRLegacyContainsPredicate.class])
+    {
+        TRLegacyContainsPredicate* contains = (TRLegacyContainsPredicate*)predicate;
+        NSDictionary* record = @{
+            @"TRArchivedClass" : @"TRLegacyContainsPredicate",
+            @"keyPath" : contains.keyPath,
+            @"value" : contains.value,
+            @"modifier" : @(contains.modifier),
+            @"options" : @(contains.options)
+        };
+        NSDictionary* schema = safeSchemaFromArchivedAutoGroupRule(record, depth, remainingNodeBudget);
+        return autoGroupPredicateFromSafeSchema(schema, 0, remainingNodeBudget) ? schema : nil;
+    }
+    if ([predicate isKindOfClass:NSComparisonPredicate.class])
+    {
+        NSComparisonPredicate* comparison = (NSComparisonPredicate*)predicate;
+        if (!autoGroupRuleOperatorIsAllowed(comparison.predicateOperatorType) ||
+            !autoGroupRuleModifierIsAllowed(comparison.comparisonPredicateModifier) ||
+            !autoGroupRuleOptionsAreAllowed(comparison.options))
+        {
+            return nil;
+        }
+
+        NSExpression* left = comparison.leftExpression;
+        NSExpression* right = comparison.rightExpression;
+        if (left.expressionType != NSKeyPathExpressionType || !left.keyPath || ![allowedAutoGroupRuleKeyPaths() containsObject:left.keyPath])
+        {
+            return nil;
+        }
+        if (right.expressionType != NSConstantValueExpressionType ||
+            (right.constantValue && ![right.constantValue isKindOfClass:NSString.class] &&
+             ![right.constantValue isKindOfClass:NSNumber.class]))
+        {
+            return nil;
+        }
+
+        NSMutableDictionary* schema = [@{
+            @"Type" : @"Comparison",
+            @"KeyPath" : left.keyPath,
+            @"Modifier" : @(comparison.comparisonPredicateModifier),
+            @"Operator" : @(comparison.predicateOperatorType),
+            @"Options" : @(comparison.options)
+        } mutableCopy];
+        if (right.constantValue)
+        {
+            schema[@"Value"] = right.constantValue;
+        }
+        return schema;
+    }
+
+    return nil;
+}
+
+static NSPredicate* autoGroupPredicateFromSafeSchema(NSDictionary* schema, NSUInteger depth, NSUInteger* remainingNodeBudget)
+{
+    if (depth > kAutoGroupRuleMaxDepth || *remainingNodeBudget == 0 || ![schema isKindOfClass:NSDictionary.class])
+    {
+        return nil;
+    }
+    (*remainingNodeBudget)--;
+
+    NSString* type = schema[@"Type"];
+    if (![type isKindOfClass:NSString.class])
+    {
+        return nil;
+    }
+    if ([type isEqualToString:@"Compound"])
+    {
+        NSNumber* compoundTypeNumber = schema[@"Compound"];
+        NSArray* subSchemas = schema[@"Subpredicates"];
+        if (![compoundTypeNumber isKindOfClass:NSNumber.class] || ![subSchemas isKindOfClass:NSArray.class] || subSchemas.count > kAutoGroupRuleMaxChildren)
+        {
+            return nil;
+        }
+
+        NSCompoundPredicateType compoundType = (NSCompoundPredicateType)compoundTypeNumber.integerValue;
+        if (!autoGroupRuleCompoundTypeIsAllowed(compoundType))
+        {
+            return nil;
+        }
+
+        NSMutableArray* subPredicates = [NSMutableArray arrayWithCapacity:subSchemas.count];
+        for (NSDictionary* subSchema in subSchemas)
+        {
+            NSPredicate* subPredicate = autoGroupPredicateFromSafeSchema(subSchema, depth + 1, remainingNodeBudget);
+            if (!subPredicate)
+            {
+                return nil;
+            }
+            [subPredicates addObject:subPredicate];
+        }
+
+        if (compoundType == NSNotPredicateType)
+        {
+            return subPredicates.count == 1 ? [NSCompoundPredicate notPredicateWithSubpredicate:[subPredicates objectAtIndex:0]] : nil;
+        }
+        return [[NSCompoundPredicate alloc] initWithType:compoundType subpredicates:subPredicates];
+    }
+
+    if ([type isEqualToString:@"Comparison"])
+    {
+        NSString* keyPath = schema[@"KeyPath"];
+        NSNumber* modifierNumber = schema[@"Modifier"];
+        NSNumber* operatorNumber = schema[@"Operator"];
+        NSNumber* optionsNumber = schema[@"Options"];
+        id value = schema[@"Value"];
+
+        if (![keyPath isKindOfClass:NSString.class] || ![allowedAutoGroupRuleKeyPaths() containsObject:keyPath] ||
+            ![modifierNumber isKindOfClass:NSNumber.class] || ![operatorNumber isKindOfClass:NSNumber.class] ||
+            ![optionsNumber isKindOfClass:NSNumber.class] ||
+            (value && ![value isKindOfClass:NSString.class] && ![value isKindOfClass:NSNumber.class]))
+        {
+            return nil;
+        }
+
+        NSComparisonPredicateModifier modifier = (NSComparisonPredicateModifier)modifierNumber.integerValue;
+        NSPredicateOperatorType operatorType = (NSPredicateOperatorType)operatorNumber.integerValue;
+        NSUInteger options = optionsNumber.unsignedIntegerValue;
+        if (!autoGroupRuleModifierIsAllowed(modifier) || !autoGroupRuleOperatorIsAllowed(operatorType) ||
+            !autoGroupRuleOptionsAreAllowed(options))
+        {
+            return nil;
+        }
+
+#if TR_MACOS_DEPLOYMENT_BEFORE_10_5
+        if ((NSUInteger)operatorType == 99)
+        {
+            return [[TRLegacyContainsPredicate alloc] initWithKeyPath:keyPath value:value modifier:modifier options:options];
+        }
+#endif
+        NSExpression* left = [NSExpression expressionForKeyPath:keyPath];
+        NSExpression* right = [NSExpression expressionForConstantValue:value];
+        return [NSComparisonPredicate predicateWithLeftExpression:left rightExpression:right modifier:modifier type:operatorType
+                                                          options:options];
+    }
+
+    return nil;
+}
+
+static NSDictionary* safeSchemaFromArchivedAutoGroupRule(NSDictionary* record, NSUInteger depth, NSUInteger* budget)
+{
+    if (depth > kAutoGroupRuleMaxDepth || *budget == 0 || ![record isKindOfClass:NSDictionary.class])
+    {
+        return nil;
+    }
+    --*budget;
+    NSString* className = record[@"TRArchivedClass"];
+    if (![className isKindOfClass:NSString.class])
+    {
+        return nil;
+    }
+    if ([className isEqualToString:@"NSCompoundPredicate"])
+    {
+        NSNumber* type = record[@"NSCompoundPredicateType"];
+        NSArray* children = record[@"NSSubpredicates"];
+        if (![type isKindOfClass:NSNumber.class] || ![children isKindOfClass:NSArray.class] || children.count > kAutoGroupRuleMaxChildren)
+        {
+            return nil;
+        }
+        NSMutableArray* schemas = [NSMutableArray array];
+        for (NSDictionary* child in children)
+        {
+            NSDictionary* schema = safeSchemaFromArchivedAutoGroupRule(child, depth + 1, budget);
+            if (!schema)
+            {
+                return nil;
+            }
+            [schemas addObject:schema];
+        }
+        return @{ @"Type" : @"Compound", @"Compound" : type, @"Subpredicates" : schemas };
+    }
+    if ([className isEqualToString:@"TRLegacyContainsPredicate"])
+    {
+        id key = record[@"keyPath"];
+        id value = record[@"value"];
+        id modifier = record[@"modifier"];
+        id options = record[@"options"];
+        if (![key isKindOfClass:NSString.class] || ![value isKindOfClass:NSString.class] ||
+            ![modifier isKindOfClass:NSNumber.class] || ![options isKindOfClass:NSNumber.class])
+        {
+            return nil;
+        }
+        return @{
+            @"Type" : @"Comparison",
+            @"KeyPath" : key,
+            @"Value" : value,
+            @"Modifier" : modifier,
+            @"Operator" : @99,
+            @"Options" : options
+        };
+    }
+    if (![className isEqualToString:@"NSComparisonPredicate"])
+    {
+        return nil;
+    }
+    NSDictionary* left = record[@"NSLeftExpression"];
+    NSDictionary* right = record[@"NSRightExpression"];
+    NSDictionary* operation = record[@"NSPredicateOperator"];
+    if (![left isKindOfClass:NSDictionary.class] || ![right isKindOfClass:NSDictionary.class] ||
+        ![operation isKindOfClass:NSDictionary.class] || ![left[@"TRArchivedClass"] isEqual:@"NSKeyPathExpression"] ||
+        ![right[@"TRArchivedClass"] isEqual:@"NSConstantValueExpression"])
+    {
+        return nil;
+    }
+    NSArray* arguments = left[@"NSArguments"];
+    if (![arguments isKindOfClass:NSArray.class] || arguments.count != 1 || ![arguments[0] isKindOfClass:NSDictionary.class])
+    {
+        return nil;
+    }
+    NSDictionary* keyExpression = arguments[0];
+    id key = keyExpression[@"NSKeyPath"];
+    id value = right[@"NSConstantValue"];
+    id modifier = operation[@"NSModifier"];
+    id type = operation[@"NSOperatorType"];
+    id options = operation[@"NSFlags"] ?: operation[@"NSOptions"];
+    if (![keyExpression[@"TRArchivedClass"] isEqual:@"NSKeyPathSpecifierExpression"] || ![key isKindOfClass:NSString.class] ||
+        (value && ![value isKindOfClass:NSString.class] && ![value isKindOfClass:NSNumber.class]) ||
+        ![modifier isKindOfClass:NSNumber.class] || ![type isKindOfClass:NSNumber.class] || ![options isKindOfClass:NSNumber.class])
+    {
+        return nil;
+    }
+    NSMutableDictionary* schema = [@{
+        @"Type" : @"Comparison",
+        @"KeyPath" : key,
+        @"Modifier" : modifier,
+        @"Operator" : type,
+        @"Options" : options
+    } mutableCopy];
+    if (value)
+    {
+        schema[@"Value"] = value;
+    }
+    return schema;
+}
+
 @interface GroupsController ()
 
 @property(nonatomic, readonly) NSMutableArray* fGroups;
+
+- (NSMutableArray*)decodedGroupsFromArchivedData:(NSData*)data
+                                                    migratedLegacyRule:(BOOL*)migratedLegacyRule;
+- (void)saveGroups;
 
 @end
 
@@ -82,22 +417,18 @@ static NSString* TRSupportedAnnouncedClientIdentity(NSString* value)
         NSData* data;
         if ((data = [NSUserDefaults.standardUserDefaults dataForKey:@"GroupDicts"]))
         {
-            _fGroups = TRUnarchiveObjectFromData(
-                data,
-                [NSSet setWithObjects:NSMutableArray.class,
-                                      NSMutableDictionary.class,
-                                      NSNumber.class,
-                                      NSColor.class,
-                                      NSString.class,
-                                      NSPredicate.class,
-                                      TRLegacyContainsPredicate.class,
-                                      nil]);
+            BOOL migratedLegacyRule = NO;
+            _fGroups = [self decodedGroupsFromArchivedData:data migratedLegacyRule:&migratedLegacyRule];
+            if (_fGroups != nil && migratedLegacyRule)
+            {
+                // Rewrite supported old rules as data before the next save.
+                [self saveGroups];
+            }
         }
-        else if ((data = [NSUserDefaults.standardUserDefaults dataForKey:@"Groups"])) //handle old groups
+        else if ([NSUserDefaults.standardUserDefaults objectForKey:@"Groups"])
         {
-            _fGroups = TRUnarchiveLegacyObjectFromData(data);
+            // This obsolete format requires unrestricted object decoding.
             [NSUserDefaults.standardUserDefaults removeObjectForKey:@"Groups"];
-            [self saveGroups];
         }
         if (_fGroups == nil)
         {
@@ -266,6 +597,15 @@ static NSString* TRSupportedAnnouncedClientIdentity(NSString* value)
 
     if (predicate)
     {
+        // Catch rule-editor shapes that cannot be saved safely.
+        NSUInteger assertNodeBudget = kAutoGroupRuleMaxTotalNodes;
+        // NSAssert compiles out in Release builds.
+        (void)assertNodeBudget;
+        NSAssert(
+            safeSchemaFromAutoGroupPredicate(predicate, 0, &assertNodeBudget) != nil,
+            @"Auto-assign rule predicate (%@) doesn't match the allowlisted schema and would be silently discarded on save",
+            predicate);
+
         dict[@"AutoGroupRules"] = predicate;
         [GroupsController.groups saveGroups];
     }
@@ -417,14 +757,117 @@ static NSString* TRSupportedAnnouncedClientIdentity(NSString* value)
 
 #pragma mark - Private
 
+- (NSMutableArray*)decodedGroupsFromArchivedData:(NSData*)data
+                                                    migratedLegacyRule:(BOOL*)migratedLegacyRule
+{
+    id decoded;
+    @try
+    {
+        decoded = TRReadGroupArchive(data);
+    }
+    @catch (NSException* exception)
+    {
+        NSLog(@"Error when decoding groups (%@)", exception);
+        return nil;
+    }
+
+    if (![decoded isKindOfClass:NSArray.class])
+    {
+        return nil;
+    }
+
+    NSMutableArray* validatedGroups = [NSMutableArray arrayWithCapacity:[(NSArray*)decoded count]];
+    for (id groupObject in (NSArray*)decoded)
+    {
+        if (![groupObject isKindOfClass:NSDictionary.class] || ![((NSDictionary*)groupObject)[@"Index"] isKindOfClass:NSNumber.class])
+        {
+            // One malformed entry must not prevent other groups from loading.
+            continue;
+        }
+
+        NSMutableDictionary* group = [groupObject mutableCopy];
+        if (![group[@"Name"] isKindOfClass:NSString.class])
+        {
+            group[@"Name"] = @"";
+        }
+        if (![group[@"Color"] isKindOfClass:NSColor.class])
+        {
+            group[@"Color"] = [NSColor grayColor];
+        }
+        for (NSString* key in @[ kAnnouncedClientIdentityKey, kAnnounceClientVersionKey ])
+        {
+            if (group[key] && ![group[key] isKindOfClass:NSString.class])
+            {
+                [group removeObjectForKey:key];
+            }
+        }
+
+        NSDictionary* schema = group[@"AutoGroupRulesSchema"];
+        id legacyPredicate = group[@"AutoGroupRules"];
+        [group removeObjectForKey:@"AutoGroupRulesSchema"];
+
+        NSPredicate* rebuilt = nil;
+        if ([schema isKindOfClass:NSDictionary.class])
+        {
+            NSUInteger nodeBudget = kAutoGroupRuleMaxTotalNodes;
+            rebuilt = autoGroupPredicateFromSafeSchema(schema, 0, &nodeBudget);
+        }
+        else if ([legacyPredicate isKindOfClass:NSDictionary.class])
+        {
+            NSUInteger schemaNodeBudget = kAutoGroupRuleMaxTotalNodes;
+            NSDictionary* legacySchema = safeSchemaFromArchivedAutoGroupRule(legacyPredicate, 0, &schemaNodeBudget);
+            NSUInteger rebuildNodeBudget = kAutoGroupRuleMaxTotalNodes;
+            rebuilt = legacySchema ? autoGroupPredicateFromSafeSchema(legacySchema, 0, &rebuildNodeBudget) : nil;
+            *migratedLegacyRule = YES;
+        }
+
+        if ([schema isKindOfClass:NSDictionary.class] || legacyPredicate != nil)
+        {
+            if (rebuilt)
+            {
+                group[@"AutoGroupRules"] = rebuilt;
+            }
+            else
+            {
+                // Unsupported rules stay disabled rather than being evaluated.
+                [group removeObjectForKey:@"AutoGroupRules"];
+                group[@"UsesAutoGroupRules"] = @(NO);
+                NSLog(@"Transmission: discarded an auto-assign rule with an unsupported predicate structure");
+            }
+        }
+
+        [validatedGroups addObject:group];
+    }
+
+    return validatedGroups;
+}
+
 - (void)saveGroups
 {
-    //don't archive the icon
+    // Icons are transient, and predicates are stored only as validated schemas.
     NSMutableArray* groups = [NSMutableArray arrayWithCapacity:self.fGroups.count];
     for (NSDictionary* dict in self.fGroups)
     {
         NSMutableDictionary* tempDict = [dict mutableCopy];
         [tempDict removeObjectForKey:@"Icon"];
+
+        NSPredicate* predicate = tempDict[@"AutoGroupRules"];
+        if (predicate)
+        {
+            NSUInteger nodeBudget = kAutoGroupRuleMaxTotalNodes;
+            NSDictionary* schema = safeSchemaFromAutoGroupPredicate(predicate, 0, &nodeBudget);
+            if (schema)
+            {
+                tempDict[@"AutoGroupRulesSchema"] = schema;
+            }
+            else
+            {
+                [tempDict removeObjectForKey:@"AutoGroupRulesSchema"];
+                tempDict[@"UsesAutoGroupRules"] = @(NO);
+            }
+            [tempDict removeObjectForKey:@"AutoGroupRules"];
+        }
+
         [groups addObject:tempDict];
     }
 
@@ -483,12 +926,8 @@ static NSString* TRSupportedAnnouncedClientIdentity(NSString* value)
         return NO;
     }
 
+    // The predicate was rebuilt from validated data, so it needs no allowEvaluation.
     NSPredicate* predicate = [self autoAssignRulesForIndex:index];
-    if ([predicate respondsToSelector:@selector(allowEvaluation)])
-    {
-        [predicate allowEvaluation];
-    }
-
     BOOL eval = NO;
     @try
     {

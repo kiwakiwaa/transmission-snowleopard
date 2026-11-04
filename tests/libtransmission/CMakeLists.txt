@@ -75,6 +75,8 @@ target_sources(libtransmission-test
 if(APPLE)
     target_sources(libtransmission-test
         PRIVATE
+            group-archive-test.mm
+            ../../macosx/LegacyArchiving.mm
             utils-apple-test.mm
             legacy-regular-expression-test.mm
             ../../macosx/LegacyRegularExpression.h
@@ -86,7 +88,8 @@ if(APPLE)
 
     target_link_libraries(libtransmission-test
         PRIVATE
-            "-framework Foundation")
+            "-framework Foundation"
+            "-framework AppKit")
 
     if(TR_MACOS_DEPLOYMENT_BEFORE_10_7)
         target_link_libraries(libtransmission-test

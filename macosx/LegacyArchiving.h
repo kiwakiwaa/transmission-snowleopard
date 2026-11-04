@@ -6,4 +6,8 @@
 
 NSData* TRArchivedDataForObject(id object);
 id TRUnarchiveObjectFromData(NSData* data, NSSet* allowedClasses);
-id TRUnarchiveLegacyObjectFromData(NSData* data);
+
+// Read group preferences without instantiating any archived classes.
+id TRReadGroupArchive(NSData* data);
+
+NSIndexSet* TRReadArchivedIndexSet(NSData* data);

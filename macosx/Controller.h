@@ -102,6 +102,7 @@ typedef NS_ENUM(NSUInteger, AddType) { //
     NSString* _fConfigDirectory;
     DragOverlayWindow* _fOverlayWindow;
     NSTimer* _fTimer;
+    BOOL _fTimerStatsPending;
     StatusBarController* _fStatusBar;
     FilterBarController* _fFilterBar;
 #if !TR_MACOS_DEPLOYMENT_BEFORE_10_5 // disable QuickLook for 10.4

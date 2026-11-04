@@ -785,13 +785,12 @@ static NSTimeInterval const kToggleProgressSeconds = 0.175;
         NSData* groupData;
         if ((groupData = [_fDefaults dataForKey:@"CollapsedGroupIndexes"]))
         {
-            _fCollapsedGroups = [TRUnarchiveObjectFromData(groupData, [NSSet setWithObject:NSMutableIndexSet.class]) mutableCopy];
+            _fCollapsedGroups = [TRReadArchivedIndexSet(groupData) mutableCopy];
         }
-        else if ((groupData = [_fDefaults dataForKey:@"CollapsedGroups"])) //handle old groups
+        else if ([_fDefaults objectForKey:@"CollapsedGroups"])
         {
-            _fCollapsedGroups = [TRUnarchiveLegacyObjectFromData(groupData) mutableCopy];
+            // This obsolete format requires unrestricted object decoding.
             [_fDefaults removeObjectForKey:@"CollapsedGroups"];
-            [self saveCollapsedGroups];
         }
         if (_fCollapsedGroups == nil)
         {
